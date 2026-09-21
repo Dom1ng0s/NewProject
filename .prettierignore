@@ -1,0 +1,18 @@
+dist
+dev-dist
+coverage
+test-results
+playwright-report
+docs/prints
+package-lock.json
+
+# Fora do escopo do item 0.2 (ferramentas de orquestração e docs anteriores ao
+# ADR 0002, mantidos pelo orquestrador e por outros agentes, não pela árvore
+# de aplicação em src/e2e/public).
+.claude/
+CLAUDE.md
+README.md
+docs/*.md
+docs/adr/
+setup.mjs
+scripts/

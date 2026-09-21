@@ -70,26 +70,19 @@ Quando a stack estiver pronta para build, envie ao usuário o passo a passo para
 - Se uma regra da especificação parecer errada ou arriscada, avise antes de implementar.
 
 ## Stack
-Decidida em ADR 0001 (D9/D10 em `docs/PLANO.md`), aprovada pelo usuário em 2026-09-21.
+Decidida em ADR 0001 (D9/D10) e detalhada em ADR 0002 (estrutura de pastas e fronteiras entre módulos), ambos em `docs/adr/`. Aprovada pelo usuário em 2026-09-21.
 
-- UI: React 19 + TypeScript strict, React Router
-- Estado: `dexie-react-hooks` (`useLiveQuery`) para dados; Zustand só para estado efêmero de tela
-- Persistência: Dexie 4 sobre IndexedDB; migrações nativas do Dexie, testadas com `fake-indexeddb`
+React 19 + TypeScript 6 (strict) + Vite 8 · Dexie 4 (IndexedDB) + `dexie-react-hooks` · Zustand (estado efêmero) · `vite-plugin-pwa` · React Router · Vitest + `fake-indexeddb` · Playwright (WebKit/iPhone + Chromium/Android) + `@axe-core/playwright` · ESLint 9 (flat) + Prettier · GitHub Actions · Cloudflare Pages.
+
 - `.apkg` (Fase 3): `sql.js` via `import()` dinâmico, só na tela de importação
-- PWA: Vite + `vite-plugin-pwa` (Workbox, `injectManifest`)
 - FSRS (Fase 3): `ts-fsrs`
-- Testes unitários: Vitest
-- Testes e2e/acessibilidade: Playwright (dispositivos iPhone/WebKit e Android/Chromium) + `@axe-core/playwright`
-- Lint/formatação/tipos: ESLint 9 (flat config) + Prettier + `tsc --noEmit`
-- CI: GitHub Actions
-- Hospedagem: Cloudflare Pages (build Vite, saída `dist/`, preview por branch/PR)
-- Não instalar: `dexie-cloud-addon` (sincronização paga, fora do escopo)
+- Não instalar: `dexie-cloud-addon` (sincronização paga, fora do escopo) nem qualquer pacote que faça requisição de rede em tempo de execução
 
 ## Comandos
-<!-- O arquiteto/dominio preenche com precisão exata ao configurar o projeto (item 0.2). -->
 - Instalar: `npm install`
 - Dev: `npm run dev`
 - Testes unitários: `npm run test:unit`
-- Testes e2e: `npm run test:e2e`
-- Lint e tipos: `npm run lint` / `npm run typecheck`
+- Testes e2e: `npm run test:e2e` (prints: `npm run test:e2e:prints`)
+- Lint e tipos: `npm run lint` e `npm run typecheck`
 - Build: `npm run build`
+- Tudo de uma vez: `npm run verificar`

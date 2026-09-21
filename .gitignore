@@ -7,3 +7,9 @@ coverage/
 *.local
 .DS_Store
 Thumbs.db
+
+dev-dist/
+test-results/
+playwright-report/
+.playwright/
+*.tsbuildinfo

@@ -1,0 +1,14 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { App } from './App';
+
+const elementoRaiz = document.getElementById('root');
+if (!elementoRaiz) {
+  throw new Error('Elemento #root nao encontrado.');
+}
+
+createRoot(elementoRaiz).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
