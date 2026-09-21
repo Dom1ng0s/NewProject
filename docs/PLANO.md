@@ -10,7 +10,7 @@ As fases seguem em sequência sem esperar aprovação (decisão D2). O usuário 
 ### Fase 0: fundação
 | # | Item | Status |
 |---|---|---|
-| 0.1 | Proposta de duas stacks e aprovação (bloqueante) | a fazer |
+| 0.1 | Proposta de duas stacks e aprovação (bloqueante) | pronto |
 | 0.2 | Estrutura de pastas por módulo, lint, formatação, tipos estritos | a fazer |
 | 0.3 | CI: lint, tipos, testes e build a cada push | a fazer |
 | 0.4 | Testes unitários, e2e e de acessibilidade rodando (um de cada) | a fazer |
@@ -103,6 +103,8 @@ Nenhuma no momento. A aprovação da stack (item 0.1) chega na Fase 0.
 6. Sugestão de carga com redução de 10%: arredondar para baixo, para o múltiplo do incremento mais próximo.
 7. `.apkg` fica como último item da Fase 3, só se o custo no bundle for aceitável; texto exportado entra antes.
 8. Nome do app: continua `[NOME DO APP]` até você definir.
+9. Nome do app segue como placeholder `[NOME DO APP]`, centralizado no arquivo de tradução pt-BR, para trocar depois sem mexer em nenhuma tela.
+10. Teste de service worker/offline no Playwright: validado em Chromium (mais confiável para essa checagem); WebKit/iPhone fica para layout, interação, acessibilidade e os prints de D6.
 
 ## Decisões
 <!-- AAAA-MM-DD | decisão | motivo | ADR (se houver) -->
@@ -114,6 +116,8 @@ Nenhuma no momento. A aprovação da stack (item 0.1) chega na Fase 0.
 - **D6** | 2026-09-21 | **Relatório de fase vai com prints** das telas principais em iPhone emulado, mais o link de pré-visualização. | O usuário acompanha visualmente sem testar.
 - **D7** | 2026-09-21 | **Revisor em dois níveis:** `revisor` (Sonnet) para itens comuns e `revisor-critico` (Opus) para regras da seção 7, schema e migrações, persistência, backup e privacidade. | Economia de uso sem perder rigor onde erro custa caro.
 - **D8** | 2026-09-21 | **Permissões para trabalho autônomo:** edições e comandos do dia a dia liberados; push só para `origin main`; bloqueados push forçado, `reset --hard`, `rm -rf`, `sudo` e leitura de `.env`. | Evitar que a sessão pare a cada comando.
+- **D9** | 2026-09-21 | **Stack (item 0.1): React 19 + TypeScript strict + Vite + Dexie 4 (IndexedDB)**, `dexie-react-hooks`, Zustand para estado efêmero, `vite-plugin-pwa`, Playwright (WebKit/iPhone + Chromium/Android) + `@axe-core/playwright`, Vitest, ESLint 9 + Prettier, `ts-fsrs`, GitHub Actions. `.apkg` (Fase 3) usa `sql.js` carregado sob demanda só na tela de importação. `dexie-cloud-addon` não será instalado. | Menor risco de plataforma no Safari/iPhone (IndexedDB funciona em qualquer contexto, inclusive aba privada) e menor número de peças para manter num app de um usuário só. Resposta do usuário à proposta do arquiteto. | ADR 0001
+- **D10** | 2026-09-21 | **Hospedagem (item 0.9): Cloudflare Pages**, repositório GitHub conectado, build Vite, saída `dist/`, preview automático por branch/PR. | Preview por branch atende aos relatórios de fase (D6); sem analytics injetado por padrão (princípio 4). Resposta do usuário. | ADR 0001
 
 ## Sugestões fora do escopo
 <!-- Ideias que surgirem durante as fases, para avaliar depois -->

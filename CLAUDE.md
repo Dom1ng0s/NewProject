@@ -70,14 +70,26 @@ Quando a stack estiver pronta para build, envie ao usuário o passo a passo para
 - Se uma regra da especificação parecer errada ou arriscada, avise antes de implementar.
 
 ## Stack
-<!-- Definida na Fase 0 após aprovação. O arquiteto preenche aqui. -->
-A definir.
+Decidida em ADR 0001 (D9/D10 em `docs/PLANO.md`), aprovada pelo usuário em 2026-09-21.
+
+- UI: React 19 + TypeScript strict, React Router
+- Estado: `dexie-react-hooks` (`useLiveQuery`) para dados; Zustand só para estado efêmero de tela
+- Persistência: Dexie 4 sobre IndexedDB; migrações nativas do Dexie, testadas com `fake-indexeddb`
+- `.apkg` (Fase 3): `sql.js` via `import()` dinâmico, só na tela de importação
+- PWA: Vite + `vite-plugin-pwa` (Workbox, `injectManifest`)
+- FSRS (Fase 3): `ts-fsrs`
+- Testes unitários: Vitest
+- Testes e2e/acessibilidade: Playwright (dispositivos iPhone/WebKit e Android/Chromium) + `@axe-core/playwright`
+- Lint/formatação/tipos: ESLint 9 (flat config) + Prettier + `tsc --noEmit`
+- CI: GitHub Actions
+- Hospedagem: Cloudflare Pages (build Vite, saída `dist/`, preview por branch/PR)
+- Não instalar: `dexie-cloud-addon` (sincronização paga, fora do escopo)
 
 ## Comandos
-<!-- O arquiteto preenche na Fase 0. -->
-- Instalar: a definir
-- Dev: a definir
-- Testes unitários: a definir
-- Testes e2e: a definir
-- Lint e tipos: a definir
-- Build: a definir
+<!-- O arquiteto/dominio preenche com precisão exata ao configurar o projeto (item 0.2). -->
+- Instalar: `npm install`
+- Dev: `npm run dev`
+- Testes unitários: `npm run test:unit`
+- Testes e2e: `npm run test:e2e`
+- Lint e tipos: `npm run lint` / `npm run typecheck`
+- Build: `npm run build`
