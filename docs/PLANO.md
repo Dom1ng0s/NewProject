@@ -14,7 +14,7 @@ As fases seguem em sequência sem esperar aprovação (decisão D2). O usuário 
 | 0.2 | Estrutura de pastas por módulo, lint, formatação, tipos estritos | pronto |
 | 0.3 | CI: lint, tipos, testes e build a cada push | pronto |
 | 0.4 | Testes unitários, e2e e de acessibilidade rodando (um de cada) | pronto |
-| 0.5 | Persistência, repositórios, schema versionado e migrações testadas | a fazer |
+| 0.5 | Persistência, repositórios, schema versionado e migrações testadas | pronto |
 | 0.6 | Exportar/importar JSON, CSV por módulo, apagar tudo | a fazer |
 | 0.7 | PWA instalável e offline (casca vazia) | a fazer |
 | 0.9 | Deploy automático HTTPS a cada push na `main`. Requer ação do usuário: conectar o repositório à hospedagem (o orquestrador envia o passo a passo com comando de build e pasta de saída) | a fazer |
@@ -120,6 +120,9 @@ Nenhuma no momento. A aprovação da stack (item 0.1) chega na Fase 0.
 23. Grandezas com fração viram inteiro na menor unidade (peso em gramas, distância em metros); `unidadeDePeso` é só exibição.
 24. Índices compostos e índice em `referenciaId` do histórico ficam fora da v1, para a fase que precisar.
 25. `vitest.config.ts` passa a fixar `TZ=America/Sao_Paulo` nos testes, para data de calendário não depender da máquina.
+26. Item 0.5, `revisor-critico` (1ª rodada): reprovado por dois bloqueantes, ambos corrigidos e reaprovados na 2ª rodada. `dataDeCalendarioDe` (`src/compartilhado/datas.ts`) agora rejeita (lança) qualquer string sem componente de hora (`THH:MM`), porque `new Date('2026-09-21')` é aceito pelo JS como meia-noite UTC e produzia um dia errado silencioso em `America/Sao_Paulo` — risco real a partir da Fase 1/4, quando `ocorridaEm` retroativo vier de `<input type="date">`. `vitest.config.ts`: `coverage.include` voltou a `['src/**/dominio/**', 'src/persistencia/**']`, exatamente o previsto no ADR 0005 §8 (a versão reprovada incluía também `src/modulos/*/repositorio/**`, deixando `hooks.ts` em 0% sem teste de componente para cobri-lo).
+27. Dependência nova instalada no item 0.5: `@vitest/coverage-v8` (dev), exigida pelo `coverage.provider: 'v8'` já configurado no item 0.4 para gerar relatório de cobertura sem erro (critério de aceite 15 do ADR 0005). Só ferramenta de relatório em tempo de teste; nada entra no bundle de produção (`npm run build` não a referencia). Critério 14 do ADR 0005 ("nenhuma dependência nova") não se aplica a ela por esse motivo.
+28. Cobertura do Vitest (`vitest.config.ts`) cobre só `src/**/dominio/**` e `src/persistencia/**`, não `src/modulos/*/repositorio/**` nem `src/compartilhado/**`. Repositórios do núcleo e `hooks.ts` (único arquivo com React do item 0.5) ficam fora do relatório até existir teste de componente na stack; reavaliar com o arquiteto antes da Fase 1 se a cobertura por módulo importar.
 
 ## Decisões
 <!-- AAAA-MM-DD | decisão | motivo | ADR (se houver) -->
@@ -138,3 +141,6 @@ Nenhuma no momento. A aprovação da stack (item 0.1) chega na Fase 0.
 
 ## Sugestões fora do escopo
 <!-- Ideias que surgirem durante as fases, para avaliar depois -->
+- Item 0.5, `revisor-critico`: mensagem de erro de `validarInstante` (`src/compartilhado/datas.ts`) é a mesma para "parece data de calendário" e para qualquer outro texto não-ISO que o `Date` aceite (ex.: `'Sep 21 2026'`); uma segunda mensagem distinguindo os casos deixaria o diagnóstico mais preciso (o comportamento de lançar já está correto).
+- Item 0.5, `revisor-critico`: `validarInstante` não exige sufixo `Z`/offset, embora o ADR 0005 §2 diga que instantes são sempre UTC com `Z`. Não corrompe dado hoje (sem `Z` o dia local sai correto), mas o arquiteto pode decidir entre exigir `Z` ou documentar a tolerância explicitamente.
+- Item 0.5, `revisor-critico`: considerar teste de regressão no repositório de histórico garantindo que `registrarAcao` propaga a exceção de `dataDeCalendarioDe` quando `ocorridaEm` vier como data de calendário (contrato da fronteira, além do teste da função pura).

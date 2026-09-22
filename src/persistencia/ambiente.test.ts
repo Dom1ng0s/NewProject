@@ -1,12 +1,28 @@
 /**
- * Prova de ambiente (item 0.4, ADR 0004 secao 3): comprova que `fake-indexeddb`
- * e Dexie funcionam juntos sob Vitest, antes do schema real (item 0.5) existir.
- * A tabela `provas` e descartavel e NAO-oficial: o item 0.5 nao deve importa-la
- * nem imita-la, e o schema de producao vive em outro arquivo.
+ * Prova de ambiente (item 0.4/0.5, ADR 0005 seção 7): comprova que
+ * `fake-indexeddb` e Dexie funcionam juntos sob Vitest, inclusive
+ * `version().upgrade()`, que nenhum teste real exercita até a Fase 1 criar a
+ * v2. A tabela `provas` é descartável e NÃO-oficial: o item 0.5 não a importa
+ * nem a imita, e o schema de produção vive em `src/persistencia/migracoes/`.
+ *
+ * Isolamento (pendência 17 fechada, ADR 0005 seção 7): o Dexie resolve a
+ * fábrica de IndexedDB no CONSTRUTOR, então trocar `globalThis.indexedDB`
+ * depois de construído não isola nada. A saída é passar uma `new
+ * IDBFactory()` distinta para cada teste — nunca variar o NOME do banco para
+ * simular isolamento (esse era o padrão sorteado por teste que a pendência 17
+ * proíbe copiar para os testes do schema real).
  */
 import Dexie, { type EntityTable } from 'dexie';
+import { IDBFactory } from 'fake-indexeddb';
 import { afterEach, describe, expect, it } from 'vitest';
 import { gerarIdentificador } from '@/compartilhado';
+
+/**
+ * Nome fixo e não-sorteado do banco de prova: propositalmente diferente do
+ * `NOME_DO_BANCO` real (`app-rotina-db`), porque este arquivo usa um schema
+ * (`provas`) que não tem nenhuma relação com o schema de produção.
+ */
+const NOME_DO_BANCO_DE_PROVA = 'ambiente-de-teste-db';
 
 interface ProvaV1 {
   id: string;
@@ -27,8 +43,7 @@ afterEach(() => {
 
 describe('ambiente de teste: fake-indexeddb + Dexie', () => {
   it('grava e le um registro por chave primaria e por indice', async () => {
-    const nomeDoBanco = `prova-${gerarIdentificador()}`;
-    const db = new Dexie(nomeDoBanco) as Dexie & {
+    const db = new Dexie(NOME_DO_BANCO_DE_PROVA, { indexedDB: new IDBFactory() }) as Dexie & {
       provas: EntityTable<ProvaV1, 'id'>;
     };
     db.version(1).stores({ provas: 'id, criadoEm' });
@@ -50,9 +65,9 @@ describe('ambiente de teste: fake-indexeddb + Dexie', () => {
   });
 
   it('migra registros da v1 para a v2 com upgrade()', async () => {
-    const nomeDoBanco = `prova-${gerarIdentificador()}`;
+    const fabrica = new IDBFactory();
 
-    const dbV1 = new Dexie(nomeDoBanco) as Dexie & {
+    const dbV1 = new Dexie(NOME_DO_BANCO_DE_PROVA, { indexedDB: fabrica }) as Dexie & {
       provas: EntityTable<ProvaV1, 'id'>;
     };
     dbV1.version(1).stores({ provas: 'id, criadoEm' });
@@ -64,7 +79,7 @@ describe('ambiente de teste: fake-indexeddb + Dexie', () => {
     await dbV1.provas.add(registro);
     dbV1.close();
 
-    const dbV2 = new Dexie(nomeDoBanco) as Dexie & {
+    const dbV2 = new Dexie(NOME_DO_BANCO_DE_PROVA, { indexedDB: fabrica }) as Dexie & {
       provas: EntityTable<ProvaV2, 'id'>;
     };
     dbV2.version(1).stores({ provas: 'id, criadoEm' });

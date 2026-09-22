@@ -1,6 +1,7 @@
 dist
 dev-dist
 coverage
+coverage-verify
 test-results
 playwright-report
 docs/prints

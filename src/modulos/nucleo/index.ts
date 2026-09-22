@@ -1,4 +1,10 @@
 export type { IdDeModulo, CartaoDeHoje, ArquivoCsv, ContratoDeDadosDeModulo } from './tipos';
+export type { Configuracoes, MudancasDeConfiguracoes } from './dominio/configuracoes';
+export type { AcaoDoHistorico, EntradaDeAcao, TipoDeAcao } from './dominio/historico';
+export { CONFIGURACOES_PADRAO } from './dominio/configuracoes';
+export { obterConfiguracoes, salvarConfiguracoes } from './repositorio/configuracoes';
+export { registrarAcao, listarAcoesDoPeriodo, excluirAcao } from './repositorio/historico';
+export { useConfiguracoes } from './repositorio/hooks';
 
 import type { CartaoDeHoje, ContratoDeDadosDeModulo } from './tipos';
 import { CartaoNucleo } from './componentes/CartaoNucleo';
