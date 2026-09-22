@@ -12,7 +12,7 @@ As fases seguem em sequência sem esperar aprovação (decisão D2). O usuário 
 |---|---|---|
 | 0.1 | Proposta de duas stacks e aprovação (bloqueante) | pronto |
 | 0.2 | Estrutura de pastas por módulo, lint, formatação, tipos estritos | pronto |
-| 0.3 | CI: lint, tipos, testes e build a cada push | a fazer |
+| 0.3 | CI: lint, tipos, testes e build a cada push | pronto |
 | 0.4 | Testes unitários, e2e e de acessibilidade rodando (um de cada) | a fazer |
 | 0.5 | Persistência, repositórios, schema versionado e migrações testadas | a fazer |
 | 0.6 | Exportar/importar JSON, CSV por módulo, apagar tudo | a fazer |
@@ -106,6 +106,8 @@ Nenhuma no momento. A aprovação da stack (item 0.1) chega na Fase 0.
 9. Nome do app segue como placeholder `[NOME DO APP]`, centralizado no arquivo de tradução pt-BR, para trocar depois sem mexer em nenhuma tela.
 10. Teste de service worker/offline no Playwright: validado em Chromium (mais confiável para essa checagem); WebKit/iPhone fica para layout, interação, acessibilidade e os prints de D6.
 11. `e2e/placeholder.spec.ts` (criado no item 0.2 só para o critério de aceite 8) é escopo do `testador`: deve ser substituído/removido no item 0.4 junto com a suíte real.
+12. CI (ADR 0003, item 0.3): critérios de aceite 2 a 5 e 7 a 9 da seção 9 do ADR dependem do primeiro push real ao GitHub Actions (disparo, falha proposital, filtro de navegador, `paths-ignore`, determinismo, tempo) — confirmar após o push deste commit e registrar aqui.
+13. Proteção de branch na `main` (status check obrigatório) não foi ativada agora — decisão do arquiteto no ADR 0003, para não travar push direto (D8) enquanto não há fluxo de PR. Ação do usuário no GitHub, não bloqueante.
 
 ## Decisões
 <!-- AAAA-MM-DD | decisão | motivo | ADR (se houver) -->

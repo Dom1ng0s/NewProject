@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**/*.md', 'docs/**', '.claude/**']
+  pull_request:
+    branches: [main]
+    paths-ignore: ['**/*.md', 'docs/**', '.claude/**']
+  workflow_dispatch:
+
+# Menor privilegio: o CI so le o repositorio. Nao ha deploy nem secret aqui:
+# o deploy e feito pela integracao do Cloudflare Pages com o GitHub (ADR 0001).
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # Em branch, o push novo cancela o anterior. Em main, cada commit guarda seu resultado.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  verificar:
+    name: Lint, formatacao, tipos, unitarios e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v7
+
+      - name: Preparar Node 24 (Active LTS)
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Os passos abaixo usam `!cancelled()` de proposito: o primeiro erro nao esconde
+      # os seguintes, e quem for corrigir ve tudo numa rodada so.
+      - name: Dependencia proibida (ADR 0001)
+        if: ${{ !cancelled() }}
+        run: |
+          if grep -q '"node_modules/dexie-cloud-addon"' package-lock.json; then
+            echo "::error::dexie-cloud-addon e proibido pelo ADR 0001 (sincronizacao paga, envia dados para fora do dispositivo)."
+            exit 1
+          fi
+
+      - name: Lint
+        if: ${{ !cancelled() }}
+        run: npm run lint
+
+      - name: Formatacao
+        if: ${{ !cancelled() }}
+        run: npm run format:check
+
+      - name: Tipos
+        if: ${{ !cancelled() }}
+        run: npm run typecheck
+
+      - name: Testes unitarios
+        if: ${{ !cancelled() }}
+        run: npm run test:unit
+
+      - name: Build
+        if: ${{ !cancelled() }}
+        run: npm run build
+
+  e2e:
+    name: E2e (WebKit/iPhone e Chromium/Android)
+    needs: verificar
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v7
+
+      - name: Preparar Node 24 (Active LTS)
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # So os dois navegadores de D3. Nada de firefox.
+      - name: Instalar navegadores do Playwright
+        run: npx playwright install --with-deps webkit chromium
+
+      # O servidor de preview sobe pelo `webServer` do playwright.config.ts
+      # (`npm run build && npm run preview`). Os prints (D6) ficam de fora: sao
+      # gerados sob demanda pelo `npm run test:e2e:prints` e versionados no git.
+      - name: Testes e2e
+        run: npm run test:e2e -- --grep-invert "@prints"
+
+      - name: Guardar relatorio do Playwright
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore
