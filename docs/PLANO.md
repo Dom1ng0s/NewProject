@@ -13,7 +13,7 @@ As fases seguem em sequência sem esperar aprovação (decisão D2). O usuário 
 | 0.1 | Proposta de duas stacks e aprovação (bloqueante) | pronto |
 | 0.2 | Estrutura de pastas por módulo, lint, formatação, tipos estritos | pronto |
 | 0.3 | CI: lint, tipos, testes e build a cada push | pronto |
-| 0.4 | Testes unitários, e2e e de acessibilidade rodando (um de cada) | a fazer |
+| 0.4 | Testes unitários, e2e e de acessibilidade rodando (um de cada) | pronto |
 | 0.5 | Persistência, repositórios, schema versionado e migrações testadas | a fazer |
 | 0.6 | Exportar/importar JSON, CSV por módulo, apagar tudo | a fazer |
 | 0.7 | PWA instalável e offline (casca vazia) | a fazer |
@@ -108,6 +108,10 @@ Nenhuma no momento. A aprovação da stack (item 0.1) chega na Fase 0.
 11. `e2e/placeholder.spec.ts` (criado no item 0.2 só para o critério de aceite 8) é escopo do `testador`: deve ser substituído/removido no item 0.4 junto com a suíte real.
 12. CI (ADR 0003, item 0.3): confirmado no primeiro push real (commit 2362df1, run 35678172127) — os dois jobs terminaram verdes (`verificar` 30s, `e2e` 1m23s). Critérios que exigem falha proposital (3, 4) e push só de documentação (7) ainda não foram testados; não bloqueante, testar quando a oportunidade surgir naturalmente.
 13. Proteção de branch na `main` (status check obrigatório) não foi ativada agora — decisão do arquiteto no ADR 0003, para não travar push direto (D8) enquanto não há fluxo de PR. Ação do usuário no GitHub, não bloqueante.
+14. Testes (ADR 0004, item 0.4): `@testing-library/react` e `@testing-library/user-event` **não** entram no 0.4 (nenhum componente com comportamento para testar ainda). Instalação movida para o item 0.10/0.11. Altera o que o ADR 0002 previa.
+15. Acessibilidade (ADR 0004): o portão do axe usa as cinco etiquetas WCAG (`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`), porque elas não são cumulativas e a seção 9 pede WCAG 2.2 AA. A etiqueta `best-practice` (landmark `main`, um `h1`, `region`) fica fora do portão até existir tela real; reavaliar no item 0.11, promovendo o que fizer sentido a requisito de tela.
+16. Item 0.4: o `testador` precisa apagar `e2e/placeholder.spec.ts`, e nem `git rm` nem `rm` estão no `allow` do `.claude/settings.json`. O orquestrador autoriza o comando na hora ou remove o arquivo por outro meio.
+17. Item 0.5 (persistência real): NÃO copiar o padrão de isolamento por nome de banco único (`prova-${gerarIdentificador()}`) usado no teste de ambiente do item 0.4 — o banco real tem nome fixo. Usar `globalThis.indexedDB = new IDBFactory()` em `beforeEach` (isolamento real e limpeza de graça) ou o repositório aceitando o nome do banco por parâmetro. Decidir isso na especificação do arquiteto antes do primeiro teste de migração real (apontado pelo revisor-crítico na revisão do item 0.4).
 
 ## Decisões
 <!-- AAAA-MM-DD | decisão | motivo | ADR (se houver) -->
