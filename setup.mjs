@@ -15,17 +15,37 @@ const aviso = m => console.log(`\x1b[33m!\x1b[0m ${m}`);
 const erro = m => console.log(`\x1b[31m✘\x1b[0m ${m}`);
 const titulo = m => console.log(`\n\x1b[1m== ${m} ==\x1b[0m`);
 const rodar = (cmd, silencioso = true) =>
-  spawnSync(cmd, { shell: true, stdio: silencioso ? "pipe" : "inherit", encoding: "utf8" });
+  spawnSync(cmd, { shell: true, stdio: silencioso ? "pipe" : ["ignore", "inherit", "inherit"], encoding: "utf8" });
 const existe = cmd => rodar(`${cmd} --version`).status === 0;
 
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-let oculto = false;
-rl._writeToOutput = s => { if (!oculto) process.stdout.write(s); };
-const perguntar = q => new Promise(r => rl.question(q, a => r(a.trim())));
-const secreto = q => new Promise(r => {
+// Cada pergunta abre e fecha a própria leitura do teclado.
+// Isso evita o travamento do terminal do Windows depois de rodar outros comandos.
+const perguntar = q => new Promise(res => {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  rl.question(q, a => { rl.close(); res(a.trim()); });
+});
+// Entrada oculta: mostra * a cada caractere (colar com botão direito ou Ctrl+V funciona).
+const secreto = q => new Promise(res => {
   process.stdout.write(q);
-  oculto = true;
-  rl.question("", a => { oculto = false; process.stdout.write("\n"); r(a.trim()); });
+  const entrada = process.stdin;
+  if (entrada.isTTY) entrada.setRawMode(true);
+  entrada.setEncoding("utf8");
+  entrada.resume();
+  let valor = "";
+  const aoDigitar = pedaco => {
+    for (const c of pedaco) {
+      if (c === "\r" || c === "\n") {
+        entrada.removeListener("data", aoDigitar);
+        if (entrada.isTTY) entrada.setRawMode(false);
+        entrada.pause();
+        process.stdout.write("\n");
+        return res(valor.trim());
+      } else if (c === "\u0003") { process.stdout.write("\n"); process.exit(1); }
+      else if (c === "\u007f" || c === "\b") { if (valor) { valor = valor.slice(0, -1); process.stdout.write("\b \b"); } }
+      else if (c >= " ") { valor += c; process.stdout.write("*"); }
+    }
+  };
+  entrada.on("data", aoDigitar);
 });
 const sim = async q => /^s/i.test(await perguntar(`${q} [s/N] `));
 const salvar = (arquivo, conteudo) => {
@@ -135,4 +155,4 @@ console.log("  2. Mande qualquer mensagem ao bot NOVO; ele responde com um códi
 console.log("  3. No Claude Code: /telegram:access pair <código>");
 console.log("  4. Depois: /telegram:access policy allowlist");
 console.log("  5. Por fim: /construir");
-rl.close();
+process.exit(0);
