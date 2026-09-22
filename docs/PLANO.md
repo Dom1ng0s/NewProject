@@ -112,6 +112,7 @@ Nenhuma no momento. A aprovação da stack (item 0.1) chega na Fase 0.
 15. Acessibilidade (ADR 0004): o portão do axe usa as cinco etiquetas WCAG (`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`), porque elas não são cumulativas e a seção 9 pede WCAG 2.2 AA. A etiqueta `best-practice` (landmark `main`, um `h1`, `region`) fica fora do portão até existir tela real; reavaliar no item 0.11, promovendo o que fizer sentido a requisito de tela.
 16. Item 0.4: o `testador` precisa apagar `e2e/placeholder.spec.ts`, e nem `git rm` nem `rm` estão no `allow` do `.claude/settings.json`. O orquestrador autoriza o comando na hora ou remove o arquivo por outro meio.
 17. Item 0.5 (persistência real): NÃO copiar o padrão de isolamento por nome de banco único (`prova-${gerarIdentificador()}`) usado no teste de ambiente do item 0.4 — o banco real tem nome fixo. Usar `globalThis.indexedDB = new IDBFactory()` em `beforeEach` (isolamento real e limpeza de graça) ou o repositório aceitando o nome do banco por parâmetro. Decidir isso na especificação do arquiteto antes do primeiro teste de migração real (apontado pelo revisor-crítico na revisão do item 0.4).
+18. CI (item 0.3/0.4): confirmado verde no push do commit 3277d59 (run 35679550763).
 
 ## Decisões
 <!-- AAAA-MM-DD | decisão | motivo | ADR (se houver) -->
