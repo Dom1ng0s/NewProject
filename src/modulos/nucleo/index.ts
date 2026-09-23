@@ -5,6 +5,7 @@ export { CONFIGURACOES_PADRAO } from './dominio/configuracoes';
 export { obterConfiguracoes, salvarConfiguracoes } from './repositorio/configuracoes';
 export { registrarAcao, listarAcoesDoPeriodo, excluirAcao } from './repositorio/historico';
 export { useConfiguracoes } from './repositorio/hooks';
+export { solicitarArmazenamentoPersistente } from './repositorio/armazenamento';
 
 export {
   exportarBackup,

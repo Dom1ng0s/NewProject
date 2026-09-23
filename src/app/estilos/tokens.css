@@ -7,14 +7,19 @@
 :root {
   color-scheme: light dark;
 
-  /* Superfícies e texto */
+  /* Superfícies e texto. `--cor-fundo` (tema claro) está duplicado no
+     manifesto (`background_color`/`theme_color` em vite.config.ts) e nas
+     metas `theme-color` de index.html; os três precisam mudar juntos
+     (ADR 0007, seção 2). */
   --cor-fundo: #ffffff;
   --cor-fundo-elevado: #f2f2f4;
   --cor-texto: #1a1a1a;
   --cor-texto-suave: #4b4b4f;
   --cor-borda: #b9b9bf;
 
-  /* Ações */
+  /* Ações. `--cor-primaria` também está duplicada em `scripts/gerar-icones.mjs`
+     (fundo dos ícones do PWA): trocar aqui exige rodar `npm run icones` de
+     novo e commitar os PNGs. */
   --cor-primaria: #0a5cb8;
   --cor-primaria-texto: #ffffff;
   --cor-secundaria-fundo: #e4e4e7;
