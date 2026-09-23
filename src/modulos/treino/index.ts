@@ -1,3 +1,4 @@
+import { ErroDeBackup } from '@/modulos/nucleo';
 import type { CartaoDeHoje, ContratoDeDadosDeModulo } from '@/modulos/nucleo';
 import { CartaoTreino } from './componentes/CartaoTreino';
 
@@ -14,7 +15,12 @@ export const cartaoDeHoje: CartaoDeHoje = {
 export const contratoDeDados: ContratoDeDadosDeModulo = {
   modulo: 'treino',
   exportarJson: () => Promise.resolve({}),
-  importarJson: () => Promise.resolve(),
+  importarJson: (dados) => {
+    if (Object.keys(dados).length > 0) {
+      throw new ErroDeBackup('registroInvalido', 'Modulo "treino" ainda nao possui tabelas.');
+    }
+    return Promise.resolve();
+  },
   exportarCsv: () => Promise.resolve([]),
   apagarTudo: () => Promise.resolve(),
 };

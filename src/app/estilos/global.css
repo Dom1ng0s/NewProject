@@ -1,0 +1,151 @@
+@import './tokens.css';
+
+/**
+ * Reset curto + classes dos componentes de `src/ui/` (Botao, Campo, Aviso) +
+ * bloco de `prefers-reduced-motion` (ADR 0006, seção 7.6/7.8). Único CSS
+ * global do app, importado uma vez em `src/app/main.tsx`.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: var(--fonte-base);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol {
+  margin: 0 0 var(--espaco-4) 0;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--cor-primaria);
+}
+
+/* Foco sempre visível (WCAG 2.2 AA), inclusive por teclado. */
+:focus-visible {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 2px;
+}
+
+/* --- src/ui/Botao.tsx --- */
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-2);
+  min-height: var(--alvo-minimo);
+  min-width: var(--alvo-minimo);
+  padding: var(--espaco-2) var(--espaco-4);
+  border-radius: var(--raio);
+  border: 2px solid transparent;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.botao:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.botao--primario {
+  background-color: var(--cor-primaria);
+  color: var(--cor-primaria-texto);
+}
+
+.botao--secundario {
+  background-color: var(--cor-secundaria-fundo);
+  color: var(--cor-secundaria-texto);
+  border-color: var(--cor-secundaria-borda);
+}
+
+.botao--destrutivo {
+  background-color: var(--cor-destrutiva);
+  color: var(--cor-destrutiva-texto);
+}
+
+/* --- src/ui/Campo.tsx --- */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-1);
+  margin-bottom: var(--espaco-4);
+  max-width: 32rem;
+}
+
+.campo__rotulo {
+  font-weight: 600;
+}
+
+.campo__entrada {
+  min-height: var(--alvo-minimo);
+  padding: var(--espaco-2) var(--espaco-3);
+  border: 2px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+}
+
+.campo__dica {
+  color: var(--cor-texto-suave);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* --- src/ui/Aviso.tsx --- */
+.aviso {
+  padding: var(--espaco-3) var(--espaco-4);
+  border-radius: var(--raio);
+  border: 2px solid;
+  margin-bottom: var(--espaco-4);
+}
+
+.aviso--status {
+  background-color: var(--cor-status-fundo);
+  border-color: var(--cor-status-borda);
+  color: var(--cor-status-texto);
+}
+
+.aviso--alerta {
+  background-color: var(--cor-alerta-fundo);
+  border-color: var(--cor-alerta-borda);
+  color: var(--cor-alerta-texto);
+}
+
+/* WCAG 2.2 AA — nenhuma animação/transição roda para quem pediu menos
+   movimento. Toda transição futura nasce atrás deste bloco. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

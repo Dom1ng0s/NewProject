@@ -5,7 +5,7 @@
  */
 export { db, criarBanco, tabela, TABELAS, NOME_DO_BANCO, VERSAO_DO_SCHEMA } from './db';
 export type { NomeDeTabela, OpcoesDoBanco } from './db';
-export { emTransacao } from './transacao';
+export { emTransacao, emTransacaoDeLeitura } from './transacao';
 export {
   criarRegistro,
   atualizarRegistro,

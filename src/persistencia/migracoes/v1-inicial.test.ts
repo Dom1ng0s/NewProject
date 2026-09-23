@@ -132,6 +132,9 @@ describe('critérios estáticos do ADR 0005 seção 9', () => {
       'NOME_DO_BANCO',
       'VERSAO_DO_SCHEMA',
       'emTransacao',
+      // ADR 0006, seção 4.1 (item 0.6): variante de leitura para exportar um
+      // snapshot consistente, acrescentada ao combinado original do ADR 0005.
+      'emTransacaoDeLeitura',
       'criarRegistro',
       'atualizarRegistro',
       'marcarComoExcluido',
@@ -153,7 +156,7 @@ describe('critérios estáticos do ADR 0005 seção 9', () => {
       const dentroDaPersistencia = relativo.startsWith('persistencia/');
       if (dentroDoRepositorio || dentroDaPersistencia) continue;
 
-      const conteudo = await readFile(arquivo, 'utf-8');
+      const conteudo = removerComentarios(await readFile(arquivo, 'utf-8'));
       if (conteudo.includes('@/persistencia')) ofensores.push(relativo);
     }
 

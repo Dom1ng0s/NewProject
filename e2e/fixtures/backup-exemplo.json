@@ -1,0 +1,55 @@
+{
+  "metadados": {
+    "formato": "app-rotina-backup",
+    "versaoDoFormato": 1,
+    "versaoDoSchema": 1,
+    "geradoEm": "2026-01-10T12:00:00.000Z"
+  },
+  "modulos": {
+    "nucleo": {
+      "configuracoes": [
+        {
+          "id": "configuracoes-unicas",
+          "createdAt": "2026-01-10T11:00:00.000Z",
+          "updatedAt": "2026-01-10T11:30:00.000Z",
+          "deletedAt": null,
+          "metaSemanalDeFocoEmMinutos": 300,
+          "metaSemanalDeTreinos": 4,
+          "orcamentoMensalEmCentavos": 150000,
+          "unidadeDePeso": "kg",
+          "tema": "escuro",
+          "onboardingConcluidoEm": "2026-01-10T11:00:00.000Z"
+        }
+      ],
+      "historicoDeAcoes": [
+        {
+          "id": "018f4c9a-0000-7000-8000-000000000001",
+          "createdAt": "2026-01-10T11:05:00.000Z",
+          "updatedAt": "2026-01-10T11:05:00.000Z",
+          "deletedAt": null,
+          "tipo": "nucleo.configuracoesSalvas",
+          "modulo": "nucleo",
+          "ocorridaEm": "2026-01-10T11:05:00.000Z",
+          "dia": "2026-01-10",
+          "referenciaId": null,
+          "quantidade": null
+        },
+        {
+          "id": "018f4c9a-0000-7000-8000-000000000002",
+          "createdAt": "2026-01-10T11:10:00.000Z",
+          "updatedAt": "2026-01-10T11:20:00.000Z",
+          "deletedAt": "2026-01-10T11:20:00.000Z",
+          "tipo": "nucleo.configuracoesSalvas",
+          "modulo": "nucleo",
+          "ocorridaEm": "2026-01-10T11:10:00.000Z",
+          "dia": "2026-01-10",
+          "referenciaId": null,
+          "quantidade": null
+        }
+      ]
+    },
+    "treino": {},
+    "estudos": {},
+    "financas": {}
+  }
+}

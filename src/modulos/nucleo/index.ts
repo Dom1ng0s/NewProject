@@ -6,8 +6,41 @@ export { obterConfiguracoes, salvarConfiguracoes } from './repositorio/configura
 export { registrarAcao, listarAcoesDoPeriodo, excluirAcao } from './repositorio/historico';
 export { useConfiguracoes } from './repositorio/hooks';
 
+export {
+  exportarBackup,
+  exportarCsvPorModulo,
+  importarBackup,
+  apagarTudo,
+  VERSAO_DO_SCHEMA,
+} from './repositorio/backup';
+export type { CsvsDeModulo, ResultadoDaImportacao } from './repositorio/backup';
+export {
+  serializarBackup,
+  lerBackup,
+  resumirBackup,
+  montarCsv,
+  nomeDoArquivoDeBackup,
+  nomeDoArquivoCsv,
+  ErroDeBackup,
+  ehErroDeBackup,
+  FORMATO_DO_BACKUP,
+  VERSAO_DO_FORMATO_DE_BACKUP,
+} from './dominio/backup';
+export type {
+  ArquivoDeBackup,
+  MetadadosDoBackup,
+  DadosDeModulo,
+  ResumoDoBackup,
+  ResumoDeModulo,
+  ResumoDeTabela,
+  LeituraDeBackup,
+  CodigoDeErroDeBackup,
+  ColunaCsv,
+} from './dominio/backup';
+
 import type { CartaoDeHoje, ContratoDeDadosDeModulo } from './tipos';
 import { CartaoNucleo } from './componentes/CartaoNucleo';
+import { contratoDeDadosDoNucleo } from './repositorio/contrato-de-dados';
 
 export const cartaoDeHoje: CartaoDeHoje = {
   modulo: 'nucleo',
@@ -15,15 +48,8 @@ export const cartaoDeHoje: CartaoDeHoje = {
   Componente: CartaoNucleo,
 };
 
-/**
- * Backup real (exportar/importar/apagar tudo) chega no item 0.6. Por ora o
- * núcleo ainda não tem tabelas próprias (configurações, histórico chegam nos
- * itens 0.10 e 0.12), então o contrato devolve estruturas vazias.
- */
-export const contratoDeDados: ContratoDeDadosDeModulo = {
-  modulo: 'nucleo',
-  exportarJson: () => Promise.resolve({}),
-  importarJson: () => Promise.resolve(),
-  exportarCsv: () => Promise.resolve([]),
-  apagarTudo: () => Promise.resolve(),
-};
+export const contratoDeDados: ContratoDeDadosDeModulo = contratoDeDadosDoNucleo;
+
+/** A tela de dados/backup (ADR 0006, seção 7). `rotas.tsx` monta a rota `/dados`. */
+export { Dados } from './telas/Dados';
+export type { DadosProps } from './telas/Dados';

@@ -1,0 +1,76 @@
+/**
+ * Tokens visuais (ADR 0006, seção 7.8): cores com contraste AA, espaçamento,
+ * `--alvo-minimo` (WCAG 2.2 AA, alvo de toque 44×44px) e tema claro/escuro
+ * seguindo `prefers-color-scheme` (nunca um switch manual). Nasce mínimo:
+ * o sistema visual definitivo chega nos itens 0.7/0.10/0.11.
+ */
+:root {
+  color-scheme: light dark;
+
+  /* Superfícies e texto */
+  --cor-fundo: #ffffff;
+  --cor-fundo-elevado: #f2f2f4;
+  --cor-texto: #1a1a1a;
+  --cor-texto-suave: #4b4b4f;
+  --cor-borda: #b9b9bf;
+
+  /* Ações */
+  --cor-primaria: #0a5cb8;
+  --cor-primaria-texto: #ffffff;
+  --cor-secundaria-fundo: #e4e4e7;
+  --cor-secundaria-texto: #1a1a1a;
+  --cor-secundaria-borda: #86868c;
+  --cor-destrutiva: #b3261e;
+  --cor-destrutiva-texto: #ffffff;
+
+  /* Avisos */
+  --cor-status-fundo: #e5f4ea;
+  --cor-status-borda: #1e7a34;
+  --cor-status-texto: #123a1d;
+  --cor-alerta-fundo: #fdecea;
+  --cor-alerta-borda: #b3261e;
+  --cor-alerta-texto: #5c1712;
+
+  --cor-foco: #0a5cb8;
+
+  /* Espaçamento e forma */
+  --espaco-1: 4px;
+  --espaco-2: 8px;
+  --espaco-3: 12px;
+  --espaco-4: 16px;
+  --espaco-5: 24px;
+  --espaco-6: 32px;
+  --raio: 8px;
+
+  /* WCAG 2.2 AA — alvo de toque mínimo */
+  --alvo-minimo: 44px;
+
+  --fonte-base: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cor-fundo: #121212;
+    --cor-fundo-elevado: #1e1e1f;
+    --cor-texto: #f2f2f2;
+    --cor-texto-suave: #c7c7cc;
+    --cor-borda: #4a4a4d;
+
+    --cor-primaria: #6bb4ff;
+    --cor-primaria-texto: #0a1a2b;
+    --cor-secundaria-fundo: #2c2c2e;
+    --cor-secundaria-texto: #f2f2f2;
+    --cor-secundaria-borda: #7d7d82;
+    --cor-destrutiva: #ff6961;
+    --cor-destrutiva-texto: #2b0906;
+
+    --cor-status-fundo: #123a1d;
+    --cor-status-borda: #4caf6a;
+    --cor-status-texto: #d9f3e0;
+    --cor-alerta-fundo: #3a1310;
+    --cor-alerta-borda: #ff6961;
+    --cor-alerta-texto: #ffd9d6;
+
+    --cor-foco: #6bb4ff;
+  }
+}

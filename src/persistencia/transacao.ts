@@ -25,3 +25,17 @@ export function emTransacao<T>(
 ): Promise<T> {
   return db.transaction('rw', tabelas as readonly string[], operacao);
 }
+
+/**
+ * Snapshot consistente para exportar (ADR 0006, seção 4.1): ler várias
+ * tabelas soltas, uma promessa por vez, pode capturar meio registro gravado
+ * no meio do caminho por outra aba ou operação concorrente. Modo `'r'`:
+ * tentar gravar dentro dela rejeita, o que é desejado — exportar não
+ * escreve.
+ */
+export function emTransacaoDeLeitura<T>(
+  tabelas: readonly NomeDeTabela[],
+  operacao: () => Promise<T>,
+): Promise<T> {
+  return db.transaction('r', tabelas as readonly string[], operacao);
+}
