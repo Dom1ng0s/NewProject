@@ -20,7 +20,7 @@ As fases seguem em sequência sem esperar aprovação (decisão D2). O usuário 
 | 0.9 | Deploy automático HTTPS a cada push na `main`. Requer ação do usuário: conectar o repositório à hospedagem (o orquestrador envia o passo a passo com comando de build e pasta de saída) | a fazer |
 | 0.10 | Tela de configurações: metas semanais de foco e treino, orçamento mensal, unidades (kg/lb), tema | pronto |
 | 0.11 | Tela Hoje básica: layout com espaços para os cartões de cada pilar e botão de registro rápido | a fazer |
-| 0.12 | Registro de ações (histórico com data) que servirá de base para o XP (ver D5) | a fazer |
+| 0.12 | Registro de ações (histórico com data) que servirá de base para o XP (ver D5) | pronto |
 | 0.13 | Prints automáticos das telas principais em iPhone emulado, gerados pela suíte e2e (ver D6) | a fazer |
 | 0.8 | README, CHANGELOG, ADR 0001 (stack) | a fazer |
 
@@ -156,6 +156,7 @@ Nenhuma no momento. A aprovação da stack (item 0.1) chega na Fase 0.
 59. Item 0.10: tela de configurações ganha link para `/dados` (especificação trata "Configurações e dados" como um só lugar, seção 6.4); `problemasDeConfiguracoes` (nova) é a fonte única de regra, `validarConfiguracoes` passa a derivar dela sem mudar mensagens nem assinatura.
 60. Item 0.10, `revisor-critico` (1ª rodada): reprovado por 2 bloqueantes, ambos corrigidos e reaprovados na 2ª rodada. `lerCentavosDeReais` (`src/compartilhado/dinheiro.ts`) tinha um bug real: a regex aceitava ponto decimal seguido de vírgula (ex.: `'10.00,50'`) e truncava o valor em silêncio em vez de rejeitar — corrigido restringindo a vírgula decimal para só valer depois dos ramos de milhar/sem separador, nunca depois do ramo de ponto decimal. Também corrigido um erro do próprio orquestrador: a tentativa inicial de consertar `e2e/pwa.spec.ts` (teste do item 0.7 que comparava `package.json` contra `git show HEAD:...`, quebrado porque o commit do item 0.7 virou o próprio `HEAD`) usou um hash de commit fixo, que por sua vez quebraria no CI (clone raso, sem `fetch-depth`) — substituído por uma lista fixa de dependências aprovadas, sem depender de git.
 61. Item 0.10, `revisor-critico` (2ª rodada): 3 sugestões não bloqueantes, não tratadas nesta entrega — ver "Sugestões fora do escopo": campo de texto tocado antes da primeira leitura do banco pode ficar mostrando o valor padrão desatualizado até a próxima mudança; `blur` e `visibilitychange` disparando juntos antes da gravação terminar podem gerar duas ações de histórico para uma única edição; instabilidade ocasional no teste e2e do critério 13 (provavelmente relacionada a tempo de carregamento, não a um bug de gravação).
+62. Item 0.12 marcado pronto sem novo ciclo de implementação: `registrarAcao`, `listarAcoesDoPeriodo` e `excluirAcao` (`src/modulos/nucleo/repositorio/historico.ts`) já existem, testados e exportados publicamente, desde o item 0.5 (ADR 0005) — que já entregou o schema e o repositório completo de `historicoDeAcoes`. Em uso real desde os itens 0.6 (backup/importação) e 0.10 (`salvarConfiguracoes` registra ação a cada campo alterado, pendência 21). Nenhum trabalho adicional identificado para satisfazer a descrição do item.
 
 ## Decisões
 <!-- AAAA-MM-DD | decisão | motivo | ADR (se houver) -->
