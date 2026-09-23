@@ -1,11 +1,12 @@
 /**
- * Tokens visuais (ADR 0006, seção 7.8): cores com contraste AA, espaçamento,
- * `--alvo-minimo` (WCAG 2.2 AA, alvo de toque 44×44px) e tema claro/escuro
- * seguindo `prefers-color-scheme` (nunca um switch manual). Nasce mínimo:
- * o sistema visual definitivo chega nos itens 0.7/0.10/0.11.
+ * Tokens visuais (ADR 0006, seção 7.8; tema em ADR 0008, seção 6): cores com
+ * contraste AA, espaçamento, `--alvo-minimo` (WCAG 2.2 AA, alvo de toque
+ * 44×44px). O tema (claro/escuro) é resolvido em JavaScript e aplicado via
+ * `data-tema` no `<html>` (`src/app/tema/`), nunca por `@media
+ * (prefers-color-scheme)` — isso permite a escolha manual do usuário.
  */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   /* Superfícies e texto. `--cor-fundo` (tema claro) está duplicado no
      manifesto (`background_color`/`theme_color` em vite.config.ts) e nas
@@ -53,29 +54,29 @@
   --fonte-base: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --cor-fundo: #121212;
-    --cor-fundo-elevado: #1e1e1f;
-    --cor-texto: #f2f2f2;
-    --cor-texto-suave: #c7c7cc;
-    --cor-borda: #4a4a4d;
+:root[data-tema='escuro'] {
+  color-scheme: dark;
 
-    --cor-primaria: #6bb4ff;
-    --cor-primaria-texto: #0a1a2b;
-    --cor-secundaria-fundo: #2c2c2e;
-    --cor-secundaria-texto: #f2f2f2;
-    --cor-secundaria-borda: #7d7d82;
-    --cor-destrutiva: #ff6961;
-    --cor-destrutiva-texto: #2b0906;
+  --cor-fundo: #121212;
+  --cor-fundo-elevado: #1e1e1f;
+  --cor-texto: #f2f2f2;
+  --cor-texto-suave: #c7c7cc;
+  --cor-borda: #4a4a4d;
 
-    --cor-status-fundo: #123a1d;
-    --cor-status-borda: #4caf6a;
-    --cor-status-texto: #d9f3e0;
-    --cor-alerta-fundo: #3a1310;
-    --cor-alerta-borda: #ff6961;
-    --cor-alerta-texto: #ffd9d6;
+  --cor-primaria: #6bb4ff;
+  --cor-primaria-texto: #0a1a2b;
+  --cor-secundaria-fundo: #2c2c2e;
+  --cor-secundaria-texto: #f2f2f2;
+  --cor-secundaria-borda: #7d7d82;
+  --cor-destrutiva: #ff6961;
+  --cor-destrutiva-texto: #2b0906;
 
-    --cor-foco: #6bb4ff;
-  }
+  --cor-status-fundo: #123a1d;
+  --cor-status-borda: #4caf6a;
+  --cor-status-texto: #d9f3e0;
+  --cor-alerta-fundo: #3a1310;
+  --cor-alerta-borda: #ff6961;
+  --cor-alerta-texto: #ffd9d6;
+
+  --cor-foco: #6bb4ff;
 }

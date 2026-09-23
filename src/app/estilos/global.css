@@ -117,6 +117,48 @@ a {
   margin: 0;
 }
 
+/* Fica no DOM mesmo vazio (região viva `role="alert"` montada antes do
+   primeiro erro — ADR 0008, seção 4/11): nunca `display: none`, para não
+   arriscar que o leitor de tela deixe de anunciar a mutação de conteúdo. */
+.campo__erro {
+  min-height: 1.3125em;
+  color: var(--cor-alerta-borda);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* --- src/ui/GrupoDeOpcoes.tsx --- */
+.grupo-de-opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-2);
+  margin: 0 0 var(--espaco-4) 0;
+  padding: 0;
+  border: none;
+  max-width: 32rem;
+}
+
+.grupo-de-opcoes__legenda {
+  font-weight: 600;
+  padding: 0;
+}
+
+.grupo-de-opcoes__dica {
+  color: var(--cor-texto-suave);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.grupo-de-opcoes__opcao {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  min-height: var(--alvo-minimo);
+  width: 100%;
+  accent-color: var(--cor-primaria);
+}
+
 /* --- src/ui/Aviso.tsx --- */
 .aviso {
   padding: var(--espaco-3) var(--espaco-4);

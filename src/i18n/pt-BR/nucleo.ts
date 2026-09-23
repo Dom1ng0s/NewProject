@@ -2,6 +2,7 @@ export const nucleo = {
   hoje: {
     tituloDoCartao: 'Núcleo',
     linkParaDados: 'Dados',
+    linkParaConfiguracoes: 'Configurações',
   },
   /** Textos da tela `/dados` (ADR 0006, seção 7.7). */
   dados: {
@@ -76,6 +77,58 @@ export const nucleo = {
       estruturaInvalida: 'A estrutura deste arquivo não é a de um backup válido.',
       registroInvalido: 'Um dos registros deste arquivo não tem a forma esperada.',
       falhaInesperada: 'Algo deu errado. Tente novamente.',
+    },
+  },
+  /** Textos da tela `/configuracoes` (ADR 0008, seção 10). */
+  configuracoes: {
+    titulo: 'Configurações',
+    introducao: 'As mudanças são salvas sozinhas quando você sai de cada campo.',
+    metas: {
+      titulo: 'Metas da semana',
+      rotuloFoco: 'Horas de foco por semana',
+      dicaFoco: 'Use horas inteiras ou com uma casa decimal, por exemplo 10 ou 7,5.',
+      rotuloTreinos: 'Treinos por semana',
+      dicaTreinos: 'Use 0 se não quiser meta de treino.',
+    },
+    orcamento: {
+      titulo: 'Orçamento',
+      rotulo: 'Orçamento do mês (R$)',
+      dica: 'Deixe em branco para não usar orçamento. Sem orçamento, a tela Hoje não calcula quanto você pode gastar.',
+    },
+    unidades: {
+      titulo: 'Unidades',
+      legendaPeso: 'Unidade de peso',
+      dicaPeso: 'Muda só como os pesos aparecem. Nada do que você registrou é alterado.',
+      kg: 'Quilogramas (kg)',
+      lb: 'Libras (lb)',
+    },
+    aparencia: {
+      titulo: 'Aparência',
+      legendaTema: 'Tema',
+      sistema: 'Seguir o sistema',
+      claro: 'Claro',
+      escuro: 'Escuro',
+    },
+    dados: {
+      titulo: 'Dados',
+      link: 'Backup, exportar e apagar dados',
+    },
+    salvo: {
+      metaSemanalDeFocoEmMinutos: 'Meta de foco salva.',
+      metaSemanalDeTreinos: 'Meta de treinos salva.',
+      orcamentoMensalEmCentavos: 'Orçamento salvo.',
+      orcamentoRemovido: 'Orçamento removido.',
+      unidadeDePeso: 'Unidade de peso salva.',
+      tema: 'Tema salvo.',
+    },
+    erros: {
+      formatoFoco: 'Digite as horas com no máximo uma casa decimal, por exemplo 10 ou 7,5.',
+      negativoFoco: 'A meta de foco não pode ser negativa.',
+      formatoTreinos: 'Digite um número inteiro, por exemplo 3.',
+      negativoTreinos: 'A meta de treinos não pode ser negativa.',
+      formatoOrcamento: 'Digite um valor em reais, por exemplo 1.500,00.',
+      negativoOrcamento: 'O orçamento não pode ser negativo.',
+      falhaAoSalvar: 'Não foi possível salvar. Tente de novo.',
     },
   },
 } as const;

@@ -1,7 +1,15 @@
 export type { IdDeModulo, CartaoDeHoje, ArquivoCsv, ContratoDeDadosDeModulo } from './tipos';
 export type { Configuracoes, MudancasDeConfiguracoes } from './dominio/configuracoes';
+export type {
+  CampoNumericoDeConfiguracoes,
+  ProblemaDeConfiguracoes,
+} from './dominio/configuracoes';
 export type { AcaoDoHistorico, EntradaDeAcao, TipoDeAcao } from './dominio/historico';
-export { CONFIGURACOES_PADRAO } from './dominio/configuracoes';
+export {
+  CONFIGURACOES_PADRAO,
+  aplicarMudancas,
+  problemasDeConfiguracoes,
+} from './dominio/configuracoes';
 export { obterConfiguracoes, salvarConfiguracoes } from './repositorio/configuracoes';
 export { registrarAcao, listarAcoesDoPeriodo, excluirAcao } from './repositorio/historico';
 export { useConfiguracoes } from './repositorio/hooks';
@@ -54,3 +62,6 @@ export const contratoDeDados: ContratoDeDadosDeModulo = contratoDeDadosDoNucleo;
 /** A tela de dados/backup (ADR 0006, seção 7). `rotas.tsx` monta a rota `/dados`. */
 export { Dados } from './telas/Dados';
 export type { DadosProps } from './telas/Dados';
+
+/** A tela de configurações (ADR 0008). `rotas.tsx` monta a rota `/configuracoes`. */
+export { TelaDeConfiguracoes } from './telas/Configuracoes';

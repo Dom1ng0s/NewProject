@@ -95,33 +95,67 @@ function tamanhoDoPng(caminho: string): { largura: number; altura: number } {
 // ---------------------------------------------------------------------------
 
 testeDeArquivo.describe('nenhuma dependência nova (critério 2)', () => {
+  // Instantâneo fixo das dependências aprovadas na ADR 0001 (stack) + o que
+  // cada ADR seguinte instalou explicitamente (nenhuma, até aqui). Comparar
+  // contra `git show HEAD:...` parecia mais "vivo", mas quebra assim que o
+  // commit que o introduziu vira o próprio HEAD (a comparação passa a ser
+  // "consigo mesma") — e comparar contra um hash fixo quebraria no CI, que
+  // faz clone raso (`actions/checkout` sem `fetch-depth`, só HEAD disponível).
+  // Uma lista fixa não depende de git nem de profundidade de clone: quando um
+  // ADR futuro aprovar uma dependência nova de verdade, este teste falha de
+  // propósito e quem o edita sabe exatamente por quê.
+  const DEPENDENCIES_APROVADAS = [
+    'dexie',
+    'dexie-react-hooks',
+    'react',
+    'react-dom',
+    'react-router',
+    'zustand',
+  ] as const;
+  const DEV_DEPENDENCIES_APROVADAS = [
+    '@axe-core/playwright',
+    '@eslint/js',
+    '@playwright/test',
+    '@types/node',
+    '@types/react',
+    '@types/react-dom',
+    '@vitejs/plugin-react',
+    '@vitest/coverage-v8',
+    'eslint',
+    'eslint-config-prettier',
+    'eslint-plugin-react-hooks',
+    'eslint-plugin-react-refresh',
+    'fake-indexeddb',
+    'globals',
+    'jsdom',
+    'prettier',
+    'typescript',
+    'typescript-eslint',
+    'vite',
+    'vite-plugin-pwa',
+    'vitest',
+  ] as const;
+
   testeDeArquivo(
-    'package.json: dependencies/devDependencies iguais ao commit anterior (item 0.6); só o script "icones" foi acrescentado',
+    'package.json: dependencies/devDependencies são exatamente a lista aprovada (ADR 0001); nenhuma dependência nova em nenhum item posterior',
     () => {
-      const pacoteAtual = JSON.parse(
+      const pacote = JSON.parse(
         readFileSync(path.join(RAIZ_DO_REPOSITORIO, 'package.json'), 'utf-8'),
       ) as {
         dependencies: Record<string, string>;
         devDependencies: Record<string, string>;
         scripts: Record<string, string>;
       };
-      const textoAnterior = execFileSync('git', ['show', 'HEAD:package.json'], {
-        cwd: RAIZ_DO_REPOSITORIO,
-        encoding: 'utf-8',
-      });
-      const pacoteAnterior = JSON.parse(textoAnterior) as typeof pacoteAtual;
 
-      expectDeArquivo(pacoteAtual.dependencies).toEqual(pacoteAnterior.dependencies);
-      expectDeArquivo(pacoteAtual.devDependencies).toEqual(pacoteAnterior.devDependencies);
-
-      // Só o script "icones" muda: mesmas chaves de `scripts`, mais uma.
-      const chavesNovas = Object.keys(pacoteAtual.scripts).filter(
-        (chave) => !(chave in pacoteAnterior.scripts),
+      expectDeArquivo(Object.keys(pacote.dependencies).sort()).toEqual(
+        [...DEPENDENCIES_APROVADAS].sort(),
       );
-      expectDeArquivo(chavesNovas).toEqual(['icones']);
-      for (const chave of Object.keys(pacoteAnterior.scripts)) {
-        expectDeArquivo(pacoteAtual.scripts[chave]).toBe(pacoteAnterior.scripts[chave]);
-      }
+      expectDeArquivo(Object.keys(pacote.devDependencies).sort()).toEqual(
+        [...DEV_DEPENDENCIES_APROVADAS].sort(),
+      );
+
+      // O script "icones" (item 0.7) precisa continuar existindo.
+      expectDeArquivo(pacote.scripts).toHaveProperty('icones', 'node scripts/gerar-icones.mjs');
     },
   );
 

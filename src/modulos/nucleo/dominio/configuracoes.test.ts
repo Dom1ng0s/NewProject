@@ -3,7 +3,12 @@
  * Puro: sem React, sem banco, sem relógio.
  */
 import { describe, expect, it } from 'vitest';
-import { CONFIGURACOES_PADRAO, aplicarMudancas, validarConfiguracoes } from './configuracoes';
+import {
+  CONFIGURACOES_PADRAO,
+  aplicarMudancas,
+  problemasDeConfiguracoes,
+  validarConfiguracoes,
+} from './configuracoes';
 import type { Configuracoes } from './configuracoes';
 
 describe('validarConfiguracoes', () => {
@@ -78,6 +83,94 @@ describe('validarConfiguracoes', () => {
       orcamentoMensalEmCentavos: -1,
     });
     expect(problemas).toHaveLength(3);
+  });
+});
+
+/**
+ * `problemasDeConfiguracoes` (ADR 0008, seção 4/12, critério de aceite 5):
+ * fonte única das regras, devolve problemas estruturados. As mensagens são as
+ * mesmas já verificadas acima via `validarConfiguracoes`.
+ */
+describe('problemasDeConfiguracoes', () => {
+  it('configurações padrão: lista vazia', () => {
+    expect(problemasDeConfiguracoes(CONFIGURACOES_PADRAO)).toEqual([]);
+  });
+
+  it('metaSemanalDeFocoEmMinutos: -1 gera um problema {campo, codigo: "negativo"}', () => {
+    const problemas = problemasDeConfiguracoes({
+      ...CONFIGURACOES_PADRAO,
+      metaSemanalDeFocoEmMinutos: -1,
+    });
+    expect(problemas).toHaveLength(1);
+    expect(problemas[0]).toMatchObject({
+      campo: 'metaSemanalDeFocoEmMinutos',
+      codigo: 'negativo',
+    });
+  });
+
+  it('metaSemanalDeFocoEmMinutos: 1.5 gera um problema com codigo "naoEhInteiro"', () => {
+    const problemas = problemasDeConfiguracoes({
+      ...CONFIGURACOES_PADRAO,
+      metaSemanalDeFocoEmMinutos: 1.5,
+    });
+    expect(problemas).toHaveLength(1);
+    expect(problemas[0]).toMatchObject({
+      campo: 'metaSemanalDeFocoEmMinutos',
+      codigo: 'naoEhInteiro',
+    });
+  });
+
+  it('metaSemanalDeTreinos: -1 gera um problema com codigo "negativo"', () => {
+    const problemas = problemasDeConfiguracoes({
+      ...CONFIGURACOES_PADRAO,
+      metaSemanalDeTreinos: -1,
+    });
+    expect(problemas).toHaveLength(1);
+    expect(problemas[0]).toMatchObject({ campo: 'metaSemanalDeTreinos', codigo: 'negativo' });
+  });
+
+  it('orcamentoMensalEmCentavos: null e 0 não geram problema (lista vazia)', () => {
+    expect(
+      problemasDeConfiguracoes({ ...CONFIGURACOES_PADRAO, orcamentoMensalEmCentavos: null }),
+    ).toEqual([]);
+    expect(
+      problemasDeConfiguracoes({ ...CONFIGURACOES_PADRAO, orcamentoMensalEmCentavos: 0 }),
+    ).toEqual([]);
+  });
+
+  it('orcamentoMensalEmCentavos: -100 gera um problema com codigo "negativo"', () => {
+    const problemas = problemasDeConfiguracoes({
+      ...CONFIGURACOES_PADRAO,
+      orcamentoMensalEmCentavos: -100,
+    });
+    expect(problemas).toHaveLength(1);
+    expect(problemas[0]).toMatchObject({
+      campo: 'orcamentoMensalEmCentavos',
+      codigo: 'negativo',
+    });
+  });
+
+  it('três campos inválidos ao mesmo tempo geram três problemas, um por campo', () => {
+    const problemas = problemasDeConfiguracoes({
+      ...CONFIGURACOES_PADRAO,
+      metaSemanalDeFocoEmMinutos: -1,
+      metaSemanalDeTreinos: -1,
+      orcamentoMensalEmCentavos: -1,
+    });
+    expect(problemas).toHaveLength(3);
+    expect(problemas.map((p) => p.campo).sort()).toEqual(
+      ['metaSemanalDeFocoEmMinutos', 'metaSemanalDeTreinos', 'orcamentoMensalEmCentavos'].sort(),
+    );
+  });
+
+  it('`validarConfiguracoes` continua a devolver as mesmas mensagens de `problemasDeConfiguracoes`', () => {
+    const configuracoesInvalidas: Configuracoes = {
+      ...CONFIGURACOES_PADRAO,
+      metaSemanalDeFocoEmMinutos: -1,
+    };
+    expect(validarConfiguracoes(configuracoesInvalidas)).toEqual(
+      problemasDeConfiguracoes(configuracoesInvalidas).map((p) => p.mensagem),
+    );
   });
 });
 

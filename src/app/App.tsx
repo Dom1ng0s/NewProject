@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { RotasDoApp } from './rotas';
 import { AvisoDeAtualizacao } from './atualizacao/AvisoDeAtualizacao';
 import { useAtualizacaoDoApp } from './atualizacao/useAtualizacaoDoApp';
+import { useAplicarTema } from './tema/useAplicarTema';
 
 export function App() {
+  useAplicarTema();
   const { haVersaoNova, atualizar, dispensar } = useAtualizacaoDoApp();
   const [atualizando, setAtualizando] = useState(false);
 

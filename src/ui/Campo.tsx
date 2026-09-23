@@ -6,6 +6,14 @@ export interface CampoProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   readonly rotulo: string;
   readonly dica?: ReactNode;
   readonly id?: string;
+  /**
+   * Mensagem de erro (ADR 0008, seção 4/8.1). Sem esta prop, o `Campo`
+   * renderiza exatamente como antes (sem `aria-invalid`, sem `role="alert"`).
+   * Com a prop presente (mesmo `''`), um elemento `role="alert"` é montado
+   * (vazio quando não há erro) e ligado por `aria-describedby`; `aria-invalid`
+   * só aparece quando `erro !== ''`.
+   */
+  readonly erro?: string;
 }
 
 /**
@@ -13,10 +21,13 @@ export interface CampoProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
  * pelo token `--alvo-minimo` em `min-height`. Serve tanto para texto quanto
  * para `type="file"` (a tela Dados usa os dois).
  */
-export function Campo({ rotulo, dica, id, className, ...props }: CampoProps) {
+export function Campo({ rotulo, dica, id, erro, className, ...props }: CampoProps) {
   const idGerado = useId();
   const idFinal = id ?? idGerado;
   const idDaDica = dica !== undefined ? `${idFinal}-dica` : undefined;
+  const temErro = erro !== undefined;
+  const idDoErro = temErro ? `${idFinal}-erro` : undefined;
+  const idsDaDescricao = [idDaDica, idDoErro].filter(Boolean).join(' ') || undefined;
 
   return (
     <div className="campo">
@@ -26,12 +37,18 @@ export function Campo({ rotulo, dica, id, className, ...props }: CampoProps) {
       <input
         id={idFinal}
         className={['campo__entrada', className].filter(Boolean).join(' ')}
-        aria-describedby={idDaDica}
+        aria-describedby={idsDaDescricao}
+        aria-invalid={temErro && erro !== '' ? 'true' : undefined}
         {...props}
       />
       {dica !== undefined ? (
         <p className="campo__dica" id={idDaDica}>
           {dica}
+        </p>
+      ) : null}
+      {temErro ? (
+        <p className="campo__erro" id={idDoErro} role="alert">
+          {erro}
         </p>
       ) : null}
     </div>

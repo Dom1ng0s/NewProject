@@ -33,30 +33,78 @@ export const CONFIGURACOES_PADRAO: Configuracoes = Object.freeze({
   onboardingConcluidoEm: null,
 });
 
-/** Devolve a lista de problemas; vazia = válido. Mensagens são de desenvolvedor. */
-export function validarConfiguracoes(configuracoes: Configuracoes): string[] {
-  const problemas: string[] = [];
+/** Campos numéricos de `Configuracoes` (ADR 0008, seção 4). */
+export type CampoNumericoDeConfiguracoes =
+  'metaSemanalDeFocoEmMinutos' | 'metaSemanalDeTreinos' | 'orcamentoMensalEmCentavos';
 
-  if (
-    !Number.isInteger(configuracoes.metaSemanalDeFocoEmMinutos) ||
-    configuracoes.metaSemanalDeFocoEmMinutos < 0
-  ) {
-    problemas.push('metaSemanalDeFocoEmMinutos deve ser um inteiro maior ou igual a zero.');
+/** Um problema de validação estruturado (ADR 0008, seção 4). */
+export interface ProblemaDeConfiguracoes {
+  readonly campo: CampoNumericoDeConfiguracoes;
+  readonly codigo: 'naoEhInteiro' | 'negativo';
+  /** Texto de desenvolvedor, igual ao que `validarConfiguracoes` já devolve hoje. */
+  readonly mensagem: string;
+}
+
+function problemaDoCampoNumerico(
+  campo: CampoNumericoDeConfiguracoes,
+  valor: number,
+  mensagem: string,
+): ProblemaDeConfiguracoes | null {
+  if (!Number.isInteger(valor)) {
+    return { campo, codigo: 'naoEhInteiro', mensagem };
+  }
+  if (valor < 0) {
+    return { campo, codigo: 'negativo', mensagem };
+  }
+  return null;
+}
+
+/**
+ * Fonte única das regras de validação de `Configuracoes` (ADR 0008, seção 4).
+ * Lista vazia = válido. `unidadeDePeso` e `tema` não entram: são uniões de
+ * literais, já garantidas pelo tipo.
+ */
+export function problemasDeConfiguracoes(
+  configuracoes: Configuracoes,
+): readonly ProblemaDeConfiguracoes[] {
+  const problemas: ProblemaDeConfiguracoes[] = [];
+
+  const problemaDeFoco = problemaDoCampoNumerico(
+    'metaSemanalDeFocoEmMinutos',
+    configuracoes.metaSemanalDeFocoEmMinutos,
+    'metaSemanalDeFocoEmMinutos deve ser um inteiro maior ou igual a zero.',
+  );
+  if (problemaDeFoco !== null) {
+    problemas.push(problemaDeFoco);
   }
 
-  if (
-    !Number.isInteger(configuracoes.metaSemanalDeTreinos) ||
-    configuracoes.metaSemanalDeTreinos < 0
-  ) {
-    problemas.push('metaSemanalDeTreinos deve ser um inteiro maior ou igual a zero.');
+  const problemaDeTreinos = problemaDoCampoNumerico(
+    'metaSemanalDeTreinos',
+    configuracoes.metaSemanalDeTreinos,
+    'metaSemanalDeTreinos deve ser um inteiro maior ou igual a zero.',
+  );
+  if (problemaDeTreinos !== null) {
+    problemas.push(problemaDeTreinos);
   }
 
   const orcamento = configuracoes.orcamentoMensalEmCentavos;
-  if (orcamento !== null && (!Number.isInteger(orcamento) || orcamento < 0)) {
-    problemas.push('orcamentoMensalEmCentavos deve ser null ou um inteiro maior ou igual a zero.');
+  if (orcamento !== null) {
+    const problemaDeOrcamento = problemaDoCampoNumerico(
+      'orcamentoMensalEmCentavos',
+      orcamento,
+      'orcamentoMensalEmCentavos deve ser null ou um inteiro maior ou igual a zero.',
+    );
+    if (problemaDeOrcamento !== null) {
+      problemas.push(problemaDeOrcamento);
+    }
   }
 
   return problemas;
+}
+
+/** Devolve a lista de problemas; vazia = válido. Mensagens são de desenvolvedor. */
+export function validarConfiguracoes(configuracoes: Configuracoes): string[] {
+  return problemasDeConfiguracoes(configuracoes).map((problema) => problema.mensagem);
 }
 
 /** Mescla pura, sem relógio e sem banco. */

@@ -7,6 +7,9 @@ export type { BotaoProps, VarianteDoBotao } from './Botao';
 export { Campo } from './Campo';
 export type { CampoProps } from './Campo';
 
+export { GrupoDeOpcoes } from './GrupoDeOpcoes';
+export type { GrupoDeOpcoesProps, OpcaoDoGrupo } from './GrupoDeOpcoes';
+
 export { Aviso } from './Aviso';
 export type { AvisoProps, VarianteDoAviso } from './Aviso';
 

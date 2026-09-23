@@ -1,0 +1,33 @@
+.pagina {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--espaco-5) var(--espaco-4) var(--espaco-6);
+}
+
+.introducao {
+  color: var(--cor-texto-suave);
+}
+
+/* Região de status (ADR 0008, seção 5): sempre montada, mesmo vazia — a
+   altura mínima evita que o layout "pule" quando a mensagem aparece. */
+.status {
+  min-height: 1.5em;
+  font-weight: 600;
+  color: var(--cor-status-borda);
+}
+
+.secao {
+  padding: var(--espaco-4) 0;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.secao:first-of-type {
+  border-top: none;
+}
+
+.linkParaDados {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--alvo-minimo);
+  font-weight: 600;
+}
