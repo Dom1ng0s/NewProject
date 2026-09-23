@@ -1,9 +1,11 @@
 import { textos } from '@/i18n';
+import estilos from './CartaoNucleo.module.css';
 
 /**
- * Placeholder do cartão do núcleo na tela Hoje (item 0.2, scaffolding).
- * O conteúdo real (configurações, backup, XP) chega nos itens 0.10 a 0.12 e na Fase 5.
+ * Conteúdo do cartão do núcleo na Hoje (ADR 0009, seção 3): só o `<p>`,
+ * sem `<section>` nem `<h2>` — a moldura da Hoje desenha os dois. Placeholder
+ * até o item 5.2 decidir se o cartão continua existindo.
  */
 export function CartaoNucleo() {
-  return <p>{textos.nucleo.hoje.tituloDoCartao}</p>;
+  return <p className={estilos['texto']}>{textos.nucleo.hoje.emBreve}</p>;
 }

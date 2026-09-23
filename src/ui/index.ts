@@ -15,3 +15,5 @@ export type { AvisoProps, VarianteDoAviso } from './Aviso';
 
 export { salvarArquivo, lerTextoDeArquivo } from './arquivos';
 export type { ArquivoParaSalvar, ResultadoDeSalvar } from './arquivos';
+
+export { useTituloDaPagina } from './useTituloDaPagina';

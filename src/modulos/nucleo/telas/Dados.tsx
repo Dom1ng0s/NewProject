@@ -22,7 +22,7 @@ import type {
   ResumoDoBackup,
 } from '@/modulos/nucleo';
 import { hojeEmDataDeCalendario } from '@/compartilhado';
-import { Aviso, Botao, Campo, lerTextoDeArquivo, salvarArquivo } from '@/ui';
+import { Aviso, Botao, Campo, lerTextoDeArquivo, salvarArquivo, useTituloDaPagina } from '@/ui';
 import type { ArquivoParaSalvar, VarianteDoBotao } from '@/ui';
 import { textos } from '@/i18n';
 import estilos from './Dados.module.css';
@@ -493,6 +493,7 @@ function Secao({ titulo, children }: { readonly titulo: string; readonly childre
 }
 
 export function Dados({ contratos }: DadosProps) {
+  useTituloDaPagina(textos.comum.tituloDaPagina('Dados'));
   return (
     <main className={estilos['pagina']}>
       <h1>{textosDeDados.titulo}</h1>

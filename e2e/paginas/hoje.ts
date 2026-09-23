@@ -1,27 +1,46 @@
 import type { Locator, Page, Response } from '@playwright/test';
 import { textos } from '@/i18n';
+import { PaginaConfiguracoes } from './configuracoes';
+
+const textosDeNavegacao = textos.comum.navegacao;
+const textosDaHoje = textos.nucleo.hoje;
 
 /**
- * Page object minimo da tela Hoje. O item 0.11 acrescenta os cartoes de cada
- * pilar e os atalhos de registro; hoje o app so renderiza a casca
- * (`<p>Hoje <a>Dados</a> <a>Configurações</a></p>` dentro de `#root`, ADR
- * 0006 secao 7 / ADR 0008 secao 9), com os links para `/dados` e
- * `/configuracoes` usados pelo e2e do backup e de configuracoes.
+ * Page object da tela Hoje (`/`, ADR 0009). A moldura só tem dois destinos
+ * na `<nav>` (Hoje e Configurações, seção 1): não existe mais link direto
+ * para `/dados` na Hoje — `navegarParaDados` passa por Configurações, do
+ * mesmo jeito que o usuário faria de verdade.
  */
 export class PaginaHoje {
   static readonly caminho = '/';
 
   readonly pagina: Page;
+  /** `#root` inteiro: smoke test de "algo montou" (`app-carrega.spec.ts`, `pwa.spec.ts`). */
   readonly raiz: Locator;
-  readonly linkParaDados: Locator;
-  readonly linkParaConfiguracoes: Locator;
+  readonly titulo: Locator;
+  readonly tituloDoRegistroRapido: Locator;
+  readonly textoDeRegistroVazio: Locator;
+  readonly listaDeAtalhos: Locator;
+  readonly linkDeNavegacaoHoje: Locator;
+  readonly linkDeNavegacaoConfiguracoes: Locator;
 
   constructor(page: Page) {
     this.pagina = page;
     this.raiz = page.locator('#root');
-    this.linkParaDados = page.getByRole('link', { name: textos.nucleo.hoje.linkParaDados });
-    this.linkParaConfiguracoes = page.getByRole('link', {
-      name: textos.nucleo.hoje.linkParaConfiguracoes,
+    this.titulo = page.getByRole('heading', { level: 1, name: textosDaHoje.titulo, exact: true });
+    this.tituloDoRegistroRapido = page.getByRole('heading', {
+      level: 2,
+      name: textosDaHoje.registroRapido.titulo,
+    });
+    this.textoDeRegistroVazio = page.getByText(textosDaHoje.registroRapido.vazio);
+    this.listaDeAtalhos = page.getByRole('list').filter({ has: page.getByRole('link') });
+
+    const navegacaoPrincipal = page.getByRole('navigation', { name: textosDeNavegacao.rotulo });
+    this.linkDeNavegacaoHoje = navegacaoPrincipal.getByRole('link', {
+      name: textosDeNavegacao.hoje,
+    });
+    this.linkDeNavegacaoConfiguracoes = navegacaoPrincipal.getByRole('link', {
+      name: textosDeNavegacao.configuracoes,
     });
   }
 
@@ -30,15 +49,29 @@ export class PaginaHoje {
     if (!resposta) {
       throw new Error('Navegar para a tela Hoje nao retornou resposta HTTP.');
     }
-    await this.raiz.waitFor({ state: 'attached' });
+    await this.titulo.waitFor({ state: 'visible' });
     return resposta;
   }
 
-  async navegarParaDados(): Promise<void> {
-    await this.linkParaDados.click();
+  /** `<h2>` que a Hoje desenha para o cartão de um módulo (ADR 0009, seção 3). */
+  tituloDoCartao(titulo: string): Locator {
+    return this.pagina.getByRole('heading', { level: 2, name: titulo, exact: true });
   }
 
   async navegarParaConfiguracoes(): Promise<void> {
-    await this.linkParaConfiguracoes.click();
+    await this.linkDeNavegacaoConfiguracoes.click();
+  }
+
+  /**
+   * Não existe mais link direto Hoje → Dados (ADR 0009, seção 1): a Hoje só
+   * navega para Configurações, e é o link "Backup, exportar e apagar dados"
+   * de lá que leva a `/dados`. Três toques (Hoje → Configurações → Dados) é
+   * aceitável para uma ação rara.
+   */
+  async navegarParaDados(): Promise<void> {
+    await this.navegarParaConfiguracoes();
+    const configuracoes = new PaginaConfiguracoes(this.pagina);
+    await configuracoes.titulo.waitFor({ state: 'visible' });
+    await configuracoes.linkParaDados.click();
   }
 }

@@ -25,7 +25,7 @@ import {
   VERSAO_DO_SCHEMA,
 } from '@/modulos/nucleo';
 import type { ArquivoDeBackup } from '@/modulos/nucleo';
-import { contratosDeDados } from './modulos';
+import { atalhosDeRegistro, cartoesDaHoje, contratosDeDados } from './modulos';
 
 function semGeradoEm(arquivo: ArquivoDeBackup): unknown {
   return { ...arquivo, metadados: { ...arquivo.metadados, geradoEm: 'IGNORADO' } };
@@ -93,5 +93,38 @@ describe('contratosDeDados reais do app (ADR 0006, critérios 4/7/13/14)', () =>
     const depoisDeApagar = await exportarBackup(contratosDeDados);
     expect(depoisDeApagar.modulos.nucleo?.['configuracoes']).toEqual([]);
     expect(depoisDeApagar.modulos.nucleo?.['historicoDeAcoes']).toEqual([]);
+  });
+});
+
+describe('cartoesDaHoje e atalhosDeRegistro (ADR 0009, critério 5)', () => {
+  it('cartoesDaHoje tem 4 itens, um por IdDeModulo, com `ordem` únicas e `titulo` não vazio', () => {
+    expect(cartoesDaHoje).toHaveLength(4);
+
+    const modulos = cartoesDaHoje.map((cartao) => cartao.modulo);
+    expect(new Set(modulos).size).toBe(4);
+    expect(new Set(modulos)).toEqual(new Set(['nucleo', 'treino', 'estudos', 'financas']));
+
+    const ordens = cartoesDaHoje.map((cartao) => cartao.ordem);
+    expect(new Set(ordens).size).toBe(4);
+
+    for (const cartao of cartoesDaHoje) {
+      expect(typeof cartao.titulo).toBe('string');
+      expect(cartao.titulo.trim().length).toBeGreaterThan(0);
+      expect(typeof cartao.Componente).toBe('function');
+    }
+  });
+
+  it('ordenados por `ordem`, os módulos saem financas, estudos, treino, nucleo', () => {
+    const ordenados = [...cartoesDaHoje].sort((a, b) => a.ordem - b.ordem);
+    expect(ordenados.map((cartao) => cartao.modulo)).toEqual([
+      'financas',
+      'estudos',
+      'treino',
+      'nucleo',
+    ]);
+  });
+
+  it('atalhosDeRegistro é [] nesta fase (o primeiro atalho real chega no item 1.10)', () => {
+    expect(atalhosDeRegistro).toEqual([]);
   });
 });

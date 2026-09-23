@@ -1,4 +1,10 @@
-export type { IdDeModulo, CartaoDeHoje, ArquivoCsv, ContratoDeDadosDeModulo } from './tipos';
+export type {
+  IdDeModulo,
+  CartaoDeHoje,
+  AtalhoDeRegistro,
+  ArquivoCsv,
+  ContratoDeDadosDeModulo,
+} from './tipos';
 export type { Configuracoes, MudancasDeConfiguracoes } from './dominio/configuracoes';
 export type {
   CampoNumericoDeConfiguracoes,
@@ -48,12 +54,14 @@ export type {
 } from './dominio/backup';
 
 import type { CartaoDeHoje, ContratoDeDadosDeModulo } from './tipos';
+import { textos } from '@/i18n';
 import { CartaoNucleo } from './componentes/CartaoNucleo';
 import { contratoDeDadosDoNucleo } from './repositorio/contrato-de-dados';
 
 export const cartaoDeHoje: CartaoDeHoje = {
   modulo: 'nucleo',
-  ordem: 0,
+  ordem: 4,
+  titulo: textos.nucleo.hoje.tituloDoCartao,
   Componente: CartaoNucleo,
 };
 
@@ -65,3 +73,7 @@ export type { DadosProps } from './telas/Dados';
 
 /** A tela de configurações (ADR 0008). `rotas.tsx` monta a rota `/configuracoes`. */
 export { TelaDeConfiguracoes } from './telas/Configuracoes';
+
+/** A tela Hoje (ADR 0009). `rotas.tsx` monta a rota `/`. */
+export { TelaHoje } from './telas/Hoje';
+export type { TelaHojeProps } from './telas/Hoje';

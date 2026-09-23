@@ -15,7 +15,7 @@ import {
   lerHorasEmMinutos,
   lerInteiro,
 } from '@/compartilhado';
-import { Aviso, Campo, GrupoDeOpcoes } from '@/ui';
+import { Aviso, Campo, GrupoDeOpcoes, useTituloDaPagina } from '@/ui';
 import { textos } from '@/i18n';
 import estilos from './Configuracoes.module.css';
 
@@ -258,6 +258,7 @@ function useCampoTema(
  * interfaces públicas de `@/modulos/nucleo`.
  */
 export function TelaDeConfiguracoes() {
+  useTituloDaPagina(textos.comum.tituloDaPagina('Configurações'));
   const configuracoes = useConfiguracoes();
   const [mensagemDeStatus, setMensagemDeStatus] = useState('');
 

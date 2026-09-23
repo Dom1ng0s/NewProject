@@ -1,8 +1,13 @@
 export const nucleo = {
   hoje: {
-    tituloDoCartao: 'Núcleo',
-    linkParaDados: 'Dados',
-    linkParaConfiguracoes: 'Configurações',
+    titulo: 'Hoje',
+    tituloDoCartao: 'Seu progresso',
+    emBreve: 'Em breve: sua evolução em estudos, finanças e treino.',
+    registroRapido: {
+      titulo: 'Registrar agora',
+      vazio:
+        'Os atalhos para registrar um gasto, uma série de treino ou uma sessão de foco aparecem aqui assim que cada área estiver pronta.',
+    },
   },
   /** Textos da tela `/dados` (ADR 0006, seção 7.7). */
   dados: {

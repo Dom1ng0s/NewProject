@@ -1,30 +1,27 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router';
-import { Dados, TelaDeConfiguracoes } from '@/modulos/nucleo';
-import { textos } from '@/i18n';
-import { contratosDeDados } from './modulos';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { Dados, TelaDeConfiguracoes, TelaHoje } from '@/modulos/nucleo';
+import { Moldura } from './layout/Moldura';
+import { atalhosDeRegistro, cartoesDaHoje, contratosDeDados } from './modulos';
 
 /**
- * Placeholder minimo para o item 0.2 (scaffolding). A tela Hoje de verdade
- * chega no item 0.11, consumindo `cartoesDaHoje` de `./modulos`. Os links
- * para `/dados` e `/configuracoes` aqui são só o suficiente para as rotas
- * serem alcançáveis; a navegação de verdade (menu, cartões) chega no item 0.11.
+ * Rotas do app (ADR 0009, seção 1). Uma rota de layout (`<Moldura />`)
+ * envolve as três telas: Hoje (`/`), Configurações e Dados (alcançada só
+ * pelo link dentro de Configurações). Rota desconhecida volta para a Hoje,
+ * em vez de tela em branco — importante offline.
  */
-function Hoje() {
-  return (
-    <p>
-      Hoje <Link to="/dados">{textos.nucleo.hoje.linkParaDados}</Link>{' '}
-      <Link to="/configuracoes">{textos.nucleo.hoje.linkParaConfiguracoes}</Link>
-    </p>
-  );
-}
-
 export function RotasDoApp() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Hoje />} />
-        <Route path="/dados" element={<Dados contratos={contratosDeDados} />} />
-        <Route path="/configuracoes" element={<TelaDeConfiguracoes />} />
+        <Route element={<Moldura />}>
+          <Route
+            path="/"
+            element={<TelaHoje cartoes={cartoesDaHoje} atalhos={atalhosDeRegistro} />}
+          />
+          <Route path="/configuracoes" element={<TelaDeConfiguracoes />} />
+          <Route path="/dados" element={<Dados contratos={contratosDeDados} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

@@ -34,6 +34,7 @@ import { textos, NOME_DO_APP, DESCRICAO_DO_APP } from '@/i18n';
 import { test, expect } from './fixtures/base';
 import { PaginaHoje } from './paginas/hoje';
 import { PaginaDados } from './paginas/dados';
+import { PaginaConfiguracoes } from './paginas/configuracoes';
 
 const RAIZ_DO_REPOSITORIO = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIRETORIO_DESTE_ARQUIVO = path.dirname(fileURLToPath(import.meta.url));
@@ -732,6 +733,20 @@ test.describe('aviso de atualização não aparece à toa (critério 12)', () =>
   }) => {
     const dados = new PaginaDados(page);
     await dados.abrir();
+
+    await expect(page.getByText(textos.comum.atualizacao.mensagem)).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: textos.comum.atualizacao.atualizarAgora }),
+    ).toHaveCount(0);
+  });
+
+  // ADR 0009, seção 5/critério 11: o aviso migrou de `App.tsx` para dentro do
+  // `<header>` da moldura, que agora envolve `/configuracoes` também.
+  test('/configuracoes numa carga normal não mostra a mensagem nem o botão "Atualizar agora"', async ({
+    page,
+  }) => {
+    const config = new PaginaConfiguracoes(page);
+    await config.abrir();
 
     await expect(page.getByText(textos.comum.atualizacao.mensagem)).toHaveCount(0);
     await expect(

@@ -1,11 +1,11 @@
 import { textos } from '@/i18n';
+import estilos from './CartaoEstudos.module.css';
 
 /**
- * Placeholder do cartão de estudos na tela Hoje (item 0.2, scaffolding).
- * O cartão real agrega foco e flashcards a partir da Fase 2/3. Pasta criada
- * fora da árvore literal do ADR 0002 (que só lista `foco/componentes` e
- * `flashcards/componentes`) para manter o `index.ts` do módulo livre de JSX.
+ * Conteúdo do cartão de estudos na Hoje (ADR 0009, seção 3): só o `<p>`,
+ * sem `<section>` nem `<h2>` — a moldura da Hoje desenha os dois. Substituído
+ * pelo conteúdo real nos itens 2.6 e 3.6.
  */
 export function CartaoEstudos() {
-  return <p>{textos.estudos.hoje.tituloDoCartao}</p>;
+  return <p className={estilos['texto']}>{textos.estudos.hoje.emBreve}</p>;
 }

@@ -1,9 +1,11 @@
 import { textos } from '@/i18n';
+import estilos from './CartaoFinancas.module.css';
 
 /**
- * Placeholder do cartão de finanças na tela Hoje (item 0.2, scaffolding).
- * O conteúdo real chega na Fase 4.
+ * Conteúdo do cartão de finanças na Hoje (ADR 0009, seção 3): só o `<p>`,
+ * sem `<section>` nem `<h2>` — a moldura da Hoje desenha os dois. Substituído
+ * pelo conteúdo real no item 4.6.
  */
 export function CartaoFinancas() {
-  return <p>{textos.financas.hoje.tituloDoCartao}</p>;
+  return <p className={estilos['texto']}>{textos.financas.hoje.emBreve}</p>;
 }

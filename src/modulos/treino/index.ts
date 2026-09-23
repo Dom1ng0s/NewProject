@@ -1,5 +1,6 @@
 import { ErroDeBackup } from '@/modulos/nucleo';
 import type { CartaoDeHoje, ContratoDeDadosDeModulo } from '@/modulos/nucleo';
+import { textos } from '@/i18n';
 import { CartaoTreino } from './componentes/CartaoTreino';
 
 /**
@@ -8,7 +9,8 @@ import { CartaoTreino } from './componentes/CartaoTreino';
  */
 export const cartaoDeHoje: CartaoDeHoje = {
   modulo: 'treino',
-  ordem: 1,
+  ordem: 3,
+  titulo: textos.treino.hoje.tituloDoCartao,
   Componente: CartaoTreino,
 };
 
