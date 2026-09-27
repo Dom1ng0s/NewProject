@@ -1,0 +1,33 @@
+.pagina {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--espaco-5) var(--espaco-4) var(--espaco-6);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-1);
+  margin-bottom: var(--espaco-4);
+  max-width: 32rem;
+}
+
+.rotulo {
+  font-weight: 600;
+}
+
+.selecao {
+  min-height: var(--alvo-minimo);
+  padding: var(--espaco-2) var(--espaco-3);
+  border: 2px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-3);
+  margin-top: var(--espaco-4);
+}

@@ -131,6 +131,54 @@ function falha(codigo: CodigoDeErroDeBackup, detalhe: string): LeituraDeBackup {
 }
 
 /**
+ * Conversores de versão de schema do backup (ADR 0006, seção 5.3; pendência
+ * 33 do `docs/PLANO.md`): um item por par de versões adjacentes (`índice 0`
+ * converte de `1` para `2`). Puro e genérico — só ajusta o envelope; dado de
+ * negócio que uma versão antiga nunca teve (ex.: as tabelas de `financas` não
+ * existiam na v1) é tratado por cada módulo em `importarJson`, que já trata
+ * "tabela ausente" como estado válido (ADR 0006, seção 4.2, regra 3). A
+ * entrega que cria a migração `vN+1` do banco acrescenta aqui, no mesmo
+ * commit, como um backup `vN` é lido por este app.
+ */
+type ConversorDeVersaoDeBackup = (arquivo: ArquivoDeBackup) => ArquivoDeBackup;
+
+const CONVERSORES_DE_BACKUP: readonly ConversorDeVersaoDeBackup[] = [
+  // v1 -> v2 (financas, item 1.1 do plano): nenhuma tabela de v1 mudou de
+  // forma; o módulo financas trata a ausência das suas tabelas em
+  // `importarJson` (semeia as categorias padrão quando "categorias" não vem
+  // no arquivo).
+  (arquivo) => arquivo,
+];
+
+/** Menor `versaoDoSchema` de backup que este app ainda sabe converter. */
+const VERSAO_DE_SCHEMA_MAIS_ANTIGA_SUPORTADA = 1;
+
+/**
+ * Aplica, em sequência, os conversores necessários para levar `arquivo` da
+ * sua `versaoDoSchema` até `versaoDoSchemaAtual`. `null` quando a versão de
+ * origem é mais antiga do que este app sabe converter.
+ */
+function converterBackupParaVersaoAtual(
+  arquivo: ArquivoDeBackup,
+  versaoDoSchemaAtual: number,
+): ArquivoDeBackup | null {
+  if (arquivo.metadados.versaoDoSchema < VERSAO_DE_SCHEMA_MAIS_ANTIGA_SUPORTADA) return null;
+
+  let convertido = arquivo;
+  for (let versao = arquivo.metadados.versaoDoSchema; versao < versaoDoSchemaAtual; versao += 1) {
+    const conversor = CONVERSORES_DE_BACKUP[versao - 1];
+    if (!conversor) return null;
+    convertido = conversor(convertido);
+  }
+
+  return montarBackup({
+    geradoEm: convertido.metadados.geradoEm,
+    versaoDoSchema: versaoDoSchemaAtual,
+    modulos: convertido.modulos,
+  });
+}
+
+/**
  * Parse + validação do envelope. NÃO toca no banco e NÃO valida campo de
  * negócio (isso é de cada módulo, seção 5.2). `versaoDoSchemaAtual` entra
  * por parâmetro porque `dominio/` não pode importar a camada de persistência.
@@ -184,12 +232,6 @@ export function lerBackup(texto: string, versaoDoSchemaAtual: number): LeituraDe
       `versaoDoSchema ${String(versaoDoSchema)} e mais novo que o atual (${String(versaoDoSchemaAtual)}).`,
     );
   }
-  if (versaoDoSchema < versaoDoSchemaAtual) {
-    return falha(
-      'schemaMaisAntigo',
-      `versaoDoSchema ${String(versaoDoSchema)} e mais antigo que o atual (${String(versaoDoSchemaAtual)}).`,
-    );
-  }
 
   const geradoEm = metadadosBruto['geradoEm'];
   if (!ehInstanteIso(geradoEm)) {
@@ -226,5 +268,19 @@ export function lerBackup(texto: string, versaoDoSchemaAtual: number): LeituraDe
     modulos[chaveDeModulo] = dadosDoModulo;
   }
 
-  return { ok: true, arquivo: montarBackup({ geradoEm, versaoDoSchema, modulos }) };
+  const arquivo = montarBackup({ geradoEm, versaoDoSchema, modulos });
+  if (versaoDoSchema === versaoDoSchemaAtual) {
+    return { ok: true, arquivo };
+  }
+
+  // versaoDoSchema < versaoDoSchemaAtual (o caso "mais novo" já retornou
+  // acima): tenta converter em vez de bloquear (ADR 0006, seção 5.3).
+  const convertido = converterBackupParaVersaoAtual(arquivo, versaoDoSchemaAtual);
+  if (convertido === null) {
+    return falha(
+      'schemaMaisAntigo',
+      `versaoDoSchema ${String(versaoDoSchema)} e mais antigo do que este app sabe converter (atual: ${String(versaoDoSchemaAtual)}).`,
+    );
+  }
+  return { ok: true, arquivo: convertido };
 }

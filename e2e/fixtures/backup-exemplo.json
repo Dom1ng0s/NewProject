@@ -2,8 +2,8 @@
   "metadados": {
     "formato": "app-rotina-backup",
     "versaoDoFormato": 1,
-    "versaoDoSchema": 1,
-    "geradoEm": "2026-01-10T12:00:00.000Z"
+    "versaoDoSchema": 2,
+    "geradoEm": "2026-09-20T12:00:00.000Z"
   },
   "modulos": {
     "nucleo": {
@@ -50,6 +50,53 @@
     },
     "treino": {},
     "estudos": {},
-    "financas": {}
+    "financas": {
+      "categorias": [
+        {
+          "id": "018f9a10-0000-7000-8000-000000000001",
+          "createdAt": "2026-09-01T12:00:00.000Z",
+          "updatedAt": "2026-09-01T12:00:00.000Z",
+          "deletedAt": null,
+          "nome": "Alimentação"
+        },
+        {
+          "id": "018f9a10-0000-7000-8000-000000000002",
+          "createdAt": "2026-09-01T12:00:00.000Z",
+          "updatedAt": "2026-09-01T12:00:00.000Z",
+          "deletedAt": null,
+          "nome": "Transporte"
+        }
+      ],
+      "lancamentos": [
+        {
+          "id": "018f9a10-0000-7000-8000-000000000011",
+          "createdAt": "2026-09-05T12:00:00.000Z",
+          "updatedAt": "2026-09-05T12:00:00.000Z",
+          "deletedAt": null,
+          "tipo": "gasto",
+          "valorCentavos": 5000,
+          "categoriaId": "018f9a10-0000-7000-8000-000000000001",
+          "descricao": "Mercado",
+          "data": "2026-09-05",
+          "assinaturaId": null
+        },
+        {
+          "id": "018f9a10-0000-7000-8000-000000000012",
+          "createdAt": "2026-09-15T12:00:00.000Z",
+          "updatedAt": "2026-09-15T12:00:00.000Z",
+          "deletedAt": null,
+          "tipo": "gasto",
+          "valorCentavos": 1200,
+          "categoriaId": "018f9a10-0000-7000-8000-000000000002",
+          "descricao": null,
+          "data": "2026-09-15",
+          "assinaturaId": null
+        }
+      ],
+      "assinaturas": [],
+      "usosDeAssinatura": [],
+      "cofrinhos": [],
+      "movimentosDeCofrinho": []
+    }
   }
 }

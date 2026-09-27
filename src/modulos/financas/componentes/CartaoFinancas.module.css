@@ -1,4 +1,17 @@
 .texto {
   color: var(--cor-texto-suave);
-  margin: 0;
+  margin: 0 0 var(--espaco-2) 0;
+}
+
+.destaque {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 var(--espaco-2) 0;
+}
+
+.destaqueNegativo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--cor-alerta-borda);
+  margin: 0 0 var(--espaco-2) 0;
 }

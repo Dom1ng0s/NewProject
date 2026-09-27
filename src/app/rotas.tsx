@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { Dados, TelaDeConfiguracoes, TelaHoje } from '@/modulos/nucleo';
+import { Categorias, EditarLancamento, Financas, NovoLancamento } from '@/modulos/financas';
 import { Moldura } from './layout/Moldura';
 import { atalhosDeRegistro, cartoesDaHoje, contratosDeDados } from './modulos';
 
@@ -20,6 +21,10 @@ export function RotasDoApp() {
           />
           <Route path="/configuracoes" element={<TelaDeConfiguracoes />} />
           <Route path="/dados" element={<Dados contratos={contratosDeDados} />} />
+          <Route path="/financas" element={<Financas />} />
+          <Route path="/financas/novo-lancamento" element={<NovoLancamento />} />
+          <Route path="/financas/categorias" element={<Categorias />} />
+          <Route path="/financas/lancamentos/:id/editar" element={<EditarLancamento />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

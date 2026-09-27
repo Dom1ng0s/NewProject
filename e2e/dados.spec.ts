@@ -71,8 +71,9 @@ test('fluxo crítico completo: importar, revisar resumo, confirmar, exportar e c
   await test.step('importar a fixture e conferir o resumo ANTES de confirmar', async () => {
     await dados.escolherArquivoParaImportar(CAMINHO_DA_FIXTURE);
     await expect(dados.resumoImportacao).toBeVisible();
-    // 1 configuração + 2 ações (inclusive a soft-deleted) = 3 registros no total.
-    await expect(page.getByText(t.importar.resumoTotalDeRegistros(3))).toBeVisible();
+    // nucleo: 1 configuração + 2 ações (inclusive a soft-deleted) = 3.
+    // financas (v2, item 1.1): 2 categorias + 2 lançamentos = 4. Total: 7.
+    await expect(page.getByText(t.importar.resumoTotalDeRegistros(7))).toBeVisible();
     // Ainda NÃO confirmado: nada deve ter mudado no banco ainda.
     await expect(dados.botaoConfirmarImportacao).toBeVisible();
   });

@@ -81,13 +81,22 @@ describe('contratosDeDados reais do app (ADR 0006, critérios 4/7/13/14)', () =>
     expect(resultado.registrosImportados).toBeGreaterThan(0);
   });
 
-  it('critério 4/14: exportarBackup traz {} para os três pilares reais e apagarTudo os mantém vazios', async () => {
+  it('critério 4/14: exportarBackup traz {} para treino/estudos (ainda sem tabela) e as 6 tabelas vazias de financas (v2); apagarTudo os mantém vazios', async () => {
     await semearNucleo();
 
     const arquivo = await exportarBackup(contratosDeDados);
     expect(arquivo.modulos.treino).toEqual({});
     expect(arquivo.modulos.estudos).toEqual({});
-    expect(arquivo.modulos.financas).toEqual({});
+    // financas ganhou tabela na migração v2 (item 1.1); `beforeEach` já rodou
+    // `apagarTudo`, então as 6 tabelas existem, mas vazias.
+    expect(arquivo.modulos.financas).toEqual({
+      categorias: [],
+      lancamentos: [],
+      assinaturas: [],
+      usosDeAssinatura: [],
+      cofrinhos: [],
+      movimentosDeCofrinho: [],
+    });
 
     await apagarTudo(contratosDeDados);
     const depoisDeApagar = await exportarBackup(contratosDeDados);
@@ -124,7 +133,11 @@ describe('cartoesDaHoje e atalhosDeRegistro (ADR 0009, critério 5)', () => {
     ]);
   });
 
-  it('atalhosDeRegistro é [] nesta fase (o primeiro atalho real chega no item 1.10)', () => {
-    expect(atalhosDeRegistro).toEqual([]);
+  it('atalhosDeRegistro tem o atalho de financas (item 1.1); os demais chegam com o registro rápido de cada pilar', () => {
+    expect(atalhosDeRegistro).toHaveLength(1);
+    expect(atalhosDeRegistro[0]).toMatchObject({
+      modulo: 'financas',
+      destino: '/financas/novo-lancamento',
+    });
   });
 });

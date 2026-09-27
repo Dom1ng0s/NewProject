@@ -8,7 +8,12 @@
  * o relógio).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { agoraEmIso, dataDeCalendarioDe, hojeEmDataDeCalendario } from './datas';
+import {
+  agoraEmIso,
+  dataDeCalendarioDe,
+  ehDataDeCalendarioValida,
+  hojeEmDataDeCalendario,
+} from './datas';
 
 describe('dataDeCalendarioDe', () => {
   it('23h30 em America/Sao_Paulo (UTC-3) fica no dia local, não no dia UTC (critério 11)', () => {
@@ -75,5 +80,35 @@ describe('hojeEmDataDeCalendario', () => {
 
     expect(hojeEmDataDeCalendario()).toBe('2026-09-21');
     expect(hojeEmDataDeCalendario()).toBe(dataDeCalendarioDe(agoraEmIso()));
+  });
+});
+
+describe('ehDataDeCalendarioValida', () => {
+  it('aceita datas reais de calendário', () => {
+    expect(ehDataDeCalendarioValida('2026-09-21')).toBe(true);
+    expect(ehDataDeCalendarioValida('2026-01-01')).toBe(true);
+    expect(ehDataDeCalendarioValida('2026-12-31')).toBe(true);
+  });
+
+  it('aceita 29 de fevereiro em ano bissexto e rejeita em ano comum', () => {
+    expect(ehDataDeCalendarioValida('2028-02-29')).toBe(true); // 2028 é bissexto
+    expect(ehDataDeCalendarioValida('2026-02-29')).toBe(false); // 2026 não é
+  });
+
+  it('rejeita mês fora do intervalo 01-12', () => {
+    expect(ehDataDeCalendarioValida('2026-13-01')).toBe(false);
+    expect(ehDataDeCalendarioValida('2026-00-01')).toBe(false);
+  });
+
+  it('rejeita dia inexistente no mês (30 de fevereiro, 31 de abril)', () => {
+    expect(ehDataDeCalendarioValida('2026-02-30')).toBe(false);
+    expect(ehDataDeCalendarioValida('2026-04-31')).toBe(false);
+  });
+
+  it('rejeita texto fora do formato AAAA-MM-DD, inclusive vazio e instante ISO', () => {
+    expect(ehDataDeCalendarioValida('')).toBe(false);
+    expect(ehDataDeCalendarioValida('21/09/2026')).toBe(false);
+    expect(ehDataDeCalendarioValida('2026-09-21T00:00:00.000Z')).toBe(false);
+    expect(ehDataDeCalendarioValida('2026-9-1')).toBe(false);
   });
 });

@@ -4,6 +4,7 @@ import { test, expect } from './fixtures/base';
 import { PaginaHoje } from './paginas/hoje';
 import { PaginaDados } from './paginas/dados';
 import { PaginaConfiguracoes } from './paginas/configuracoes';
+import { PaginaCategorias, PaginaFinancas, PaginaNovoLancamento } from './paginas/financas';
 import { verificarAcessibilidade } from './utilitarios/acessibilidade';
 
 const textosDeNavegacao = textos.comum.navegacao;
@@ -18,6 +19,16 @@ const TELAS = [
     nome: 'configuracoes-tema-claro',
     abrir: (page: Page) => new PaginaConfiguracoes(page).abrir(),
   },
+  // Item 1.1/1.2/1.6 (Fase 1, Finanças): telas novas (pendência 68).
+  { nome: 'financas', abrir: (page: Page) => new PaginaFinancas(page).abrir() },
+  {
+    nome: 'financas-novo-lancamento',
+    abrir: async (page: Page) => {
+      await page.goto(PaginaNovoLancamento.caminho);
+      await new PaginaNovoLancamento(page).tituloGasto.waitFor({ state: 'visible' });
+    },
+  },
+  { nome: 'financas-categorias', abrir: (page: Page) => new PaginaCategorias(page).abrir() },
 ];
 
 for (const tela of TELAS) {

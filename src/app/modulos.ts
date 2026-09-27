@@ -19,8 +19,8 @@ export const contratosDeDados = [
 
 /**
  * Atalhos de registro rápido na área "Registrar agora" da Hoje (ADR 0009,
- * seção 4). Vazio nesta fase: cada pilar acrescenta o seu
- * (`atalhoDeRegistro`) quando ganhar uma tela de registro — treino (1.10),
- * estudos (2.6), finanças (4.6).
+ * seção 4). Financas entra no item 1.1 (Fase 1); os demais pilares
+ * acrescentam o seu quando ganharem tela de registro — estudos (2.6), treino
+ * (3.9).
  */
-export const atalhosDeRegistro: readonly AtalhoDeRegistro[] = [];
+export const atalhosDeRegistro: readonly AtalhoDeRegistro[] = [financas.atalhoDeRegistro];

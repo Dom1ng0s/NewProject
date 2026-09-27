@@ -11,7 +11,17 @@ import type { RegistroBase } from './tipos';
  */
 export const NOME_DO_BANCO = 'app-rotina-db';
 
-export const TABELAS = ['configuracoes', 'historicoDeAcoes'] as const;
+export const TABELAS = [
+  'configuracoes',
+  'historicoDeAcoes',
+  // Fase 1 (v2, financas): ver `migracoes/v2-financas.ts`.
+  'categorias',
+  'lancamentos',
+  'assinaturas',
+  'usosDeAssinatura',
+  'cofrinhos',
+  'movimentosDeCofrinho',
+] as const;
 export type NomeDeTabela = (typeof TABELAS)[number];
 
 export interface OpcoesDoBanco {
@@ -26,6 +36,20 @@ export function criarBanco(opcoes: OpcoesDoBanco = {}): Dexie {
     const versao = banco.version(migracao.versao).stores(migracao.stores);
     if (migracao.upgrade) versao.upgrade(migracao.upgrade);
   }
+
+  // `db.on('populate')` só dispara quando o banco é criado do ZERO (nenhum
+  // `upgrade()` de migração roda nesse caso — ver `Migracao.popular`). Uma
+  // migração que precisa semear dado tanto para quem atualiza quanto para
+  // instalação nova declara os dois (`upgrade` e `popular`).
+  const migracoesComSemente = MIGRACOES.filter((migracao) => migracao.popular);
+  if (migracoesComSemente.length > 0) {
+    banco.on('populate', async (transacao) => {
+      for (const migracao of migracoesComSemente) {
+        await migracao.popular?.(transacao);
+      }
+    });
+  }
+
   return banco;
 }
 

@@ -31,6 +31,14 @@ export function Moldura() {
     // disparo vê `pathnameAnterior === pathname` e não faz nada).
     if (pathnameAnterior === null || pathnameAnterior === pathname) return;
 
+    // Se a tela nova já moveu o foco de propósito no próprio efeito de
+    // montagem (ex.: o campo de valor do "gasto em 3 toques", item 1.1) —
+    // efeitos de componente filho rodam antes dos do pai, então isso já
+    // aconteceu quando este efeito roda — não sobrescreve. Sem foco nenhum
+    // ainda, o elemento ativo continua `<body>` (o antigo elemento focado
+    // saiu do documento com a troca de rota), e o `<h1>` assume como sempre.
+    if (document.activeElement && document.activeElement !== document.body) return;
+
     const tituloDaTela = document.querySelector<HTMLElement>('main h1');
     if (!tituloDaTela) return;
     tituloDaTela.tabIndex = -1;

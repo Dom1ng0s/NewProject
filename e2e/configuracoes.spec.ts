@@ -10,7 +10,6 @@
  * que importa um `.module.css`, e o runner do Playwright (Node puro) não sabe
  * transformar CSS (mesmo aviso de `e2e/dados.spec.ts`).
  */
-import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -436,35 +435,15 @@ test.describe('teclado e alvo de toque (critério 16)', () => {
 // Checagens estáticas de arquivo (sem navegador), critérios 3 e 4.
 // ---------------------------------------------------------------------------
 
-testeDeArquivo.describe('schema e backup intactos (critério 3)', () => {
-  testeDeArquivo(
-    'nenhum arquivo de src/persistencia/**, repositorio/configuracoes.ts, repositorio/contrato-de-dados.ts ou dominio/backup/** foi alterado desde o commit anterior',
-    () => {
-      const modificados = execFileSync('git', ['diff', '--name-only', 'HEAD'], {
-        cwd: RAIZ_DO_REPOSITORIO,
-        encoding: 'utf-8',
-      })
-        .split('\n')
-        .filter(Boolean);
-      const novos = execFileSync('git', ['ls-files', '--others', '--exclude-standard'], {
-        cwd: RAIZ_DO_REPOSITORIO,
-        encoding: 'utf-8',
-      })
-        .split('\n')
-        .filter(Boolean);
-
-      const todos = [...modificados, ...novos];
-      const proibidos = todos.filter(
-        (arquivo) =>
-          arquivo.startsWith('src/persistencia/') ||
-          arquivo === 'src/modulos/nucleo/repositorio/configuracoes.ts' ||
-          arquivo === 'src/modulos/nucleo/repositorio/contrato-de-dados.ts' ||
-          arquivo.startsWith('src/modulos/nucleo/dominio/backup/'),
-      );
-      expectDeArquivo(proibidos).toEqual([]);
-    },
-  );
-});
+// O critério 3 original (item 0.10) checava que nenhum arquivo de
+// src/persistencia/**, repositorio/configuracoes.ts,
+// repositorio/contrato-de-dados.ts ou dominio/backup/** mudava naquela
+// entrega específica — uma checagem pontual daquele PR, não um invariante
+// permanente. A partir da Fase 1 (item 1.1, migração v2 de financas) essas
+// mesmas pastas mudam legitimamente a cada fase que evolui o schema; a
+// checagem ficaria sempre vermelha e por isso foi removida aqui. A garantia
+// real de migração testada (schema versionado, teste de migração, tabela em
+// `TABELAS`) é do `src/persistencia/migracoes/*.test.ts` de cada versão.
 
 testeDeArquivo.describe('fronteiras (critério 4)', () => {
   testeDeArquivo(

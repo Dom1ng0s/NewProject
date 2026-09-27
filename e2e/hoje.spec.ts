@@ -15,7 +15,7 @@ import { PaginaDados } from './paginas/dados';
 const textosDaHoje = textos.nucleo.hoje;
 
 test.describe('layout da Hoje (critério 7)', () => {
-  test('h1 "Hoje", "Registrar agora" com o texto de estado vazio, e os 4 cartões dos pilares na ordem Finanças/Estudos/Treino/Seu progresso, cada um com "Em breve"', async ({
+  test('h1 "Hoje", atalho "Gasto" em "Registrar agora", e os 4 cartões dos pilares na ordem Finanças/Estudos/Treino/Seu progresso', async ({
     page,
   }) => {
     const hoje = new PaginaHoje(page);
@@ -23,7 +23,11 @@ test.describe('layout da Hoje (critério 7)', () => {
 
     await expect(hoje.titulo).toBeVisible();
     await expect(hoje.tituloDoRegistroRapido).toBeVisible();
-    await expect(hoje.textoDeRegistroVazio).toBeVisible();
+    // Item 1.1 (Fase 1, Finanças) preenche o atalho: a área de registro
+    // rápido deixa de mostrar o texto de estado vazio.
+    await expect(hoje.textoDeRegistroVazio).toHaveCount(0);
+    await expect(hoje.atalhoDeGasto).toBeVisible();
+    await expect(hoje.atalhoDeGasto).toHaveAttribute('href', '/financas/novo-lancamento');
 
     // Ordem no DOM: "Registrar agora" primeiro (seção 2), depois os 4
     // cartões na ordem Finanças, Estudos, Treino, Seu progresso (seção 3.2).
@@ -36,7 +40,9 @@ test.describe('layout da Hoje (critério 7)', () => {
       textosDaHoje.tituloDoCartao,
     ]);
 
-    await expect(page.getByText(textos.financas.hoje.emBreve)).toBeVisible();
+    // Finanças (item 1.6): sem orçamento definido (banco novo), mostra o
+    // convite para configurar em vez de calcular com um valor inventado (D11).
+    await expect(page.getByText(textos.financas.hoje.semOrcamento)).toBeVisible();
     await expect(page.getByText(textos.estudos.hoje.emBreve)).toBeVisible();
     await expect(page.getByText(textos.treino.hoje.emBreve)).toBeVisible();
     await expect(page.getByText(textosDaHoje.emBreve)).toBeVisible();

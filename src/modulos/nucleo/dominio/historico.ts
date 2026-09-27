@@ -9,8 +9,8 @@ import type { IdDeModulo } from '../tipos';
  * O `switch-exhaustiveness-check` do ESLint faz o cálculo de XP falhar a
  * compilação quando um tipo novo entra sem peso definido.
  */
-export type TipoDeAcao = 'nucleo.configuracoesSalvas';
-// Fase 1 acrescenta 'treino.serieRegistrada', 'treino.cardioRegistrado', ...
+export type TipoDeAcao = 'nucleo.configuracoesSalvas' | 'financas.lancamentoRegistrado';
+// Fases seguintes acrescentam 'treino.serieRegistrada', 'estudos.sessaoDeFocoConcluida', ...
 
 export interface AcaoDoHistorico {
   tipo: TipoDeAcao;

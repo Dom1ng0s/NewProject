@@ -1,0 +1,40 @@
+.pagina {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--espaco-5) var(--espaco-4) var(--espaco-6);
+}
+
+.introducao {
+  color: var(--cor-texto-suave);
+}
+
+.status {
+  min-height: 1.5em;
+  font-weight: 600;
+  color: var(--cor-status-borda);
+}
+
+.lista {
+  list-style: none;
+  padding: 0;
+  margin: var(--espaco-4) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+  padding: var(--espaco-2) 0;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-2);
+}

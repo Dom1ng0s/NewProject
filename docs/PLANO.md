@@ -27,12 +27,12 @@ As fases seguem em sequência sem esperar aprovação (D2). O usuário testa man
 ### Fase 1: Finanças
 | # | Item | Status |
 |---|---|---|
-| 1.1 | Gastos em 3 toques, categorias editáveis, entradas opcionais | a fazer |
-| 1.2 | Orçamento mensal + regra 7.3 (disponível hoje) | a fazer |
+| 1.1 | Gastos em 3 toques, categorias editáveis, entradas opcionais | pronto |
+| 1.2 | Orçamento mensal + regra 7.3 (disponível hoje) | pronto |
 | 1.3 | Assinaturas: totais, "usei hoje", custo por uso, cobrança automática | a fazer |
 | 1.4 | Aviso de renovação dentro do app: faixa na tela Hoje e selo no ícone quando suportado (ver D1) | a fazer |
 | 1.5 | Cofrinhos + regra 7.4 (projeção) | a fazer |
-| 1.6 | Tela Hoje: disponível para hoje, aviso de renovação, atalho de gasto | a fazer |
+| 1.6 | Tela Hoje: disponível para hoje, aviso de renovação, atalho de gasto | em andamento |
 
 ### Fase 2: Foco e Prazos
 | # | Item | Status |
@@ -104,7 +104,7 @@ Números preservados de propósito: comentários no código e ADRs citam "pendê
 2. 7.3: uma assinatura cobrada vira gasto; `assinaturasAVencerNoMes` inclui só as cobranças ainda não geradas no mês, para não descontar duas vezes.
 3. 7.2: "menos de 7 dias de histórico" = menos de 7 dias desde a primeira sessão de foco. Sessões `dispersa` contam na capacidade, porque o tempo foi gasto.
 4. Assinaturas com várias cobranças atrasadas (app sem abrir por meses): gerar todos os lançamentos retroativos, cada um na sua data.
-5. "3 interações" no gasto: abrir o lançamento, digitar o valor, tocar na categoria (que salva).
+5. "3 interações" no gasto: abrir o lançamento, digitar o valor, tocar na categoria (que salva). Categoria é obrigatória também em entradas (1.1).
 6. Sugestão de carga com redução de 10%: arredondar para baixo, para o múltiplo do incremento mais próximo.
 7. `.apkg` foi adiado para a Fase 6 (D14); a importação por texto exportado (4.4) cobre o caso.
 9. Nome do app segue como placeholder `[NOME DO APP]`, centralizado no i18n pt-BR. `short_name` separado só se o nome real passar de 12 caracteres (limite do iPhone).

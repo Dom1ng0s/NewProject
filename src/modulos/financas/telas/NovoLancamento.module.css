@@ -1,0 +1,19 @@
+.pagina {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--espaco-5) var(--espaco-4) var(--espaco-6);
+}
+
+.dica {
+  color: var(--cor-texto-suave);
+  font-size: 0.9375rem;
+}
+
+.listaDeCategorias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-3);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--espaco-5) 0;
+}

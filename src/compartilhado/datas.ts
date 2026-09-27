@@ -59,3 +59,27 @@ export function dataDeCalendarioDe(instanteIso: string): string {
 export function hojeEmDataDeCalendario(): string {
   return dataDeCalendarioDe(agoraEmIso());
 }
+
+const PADRAO_DE_DATA_DE_CALENDARIO = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * `true` só para uma `AAAA-MM-DD` que corresponde a um dia real do
+ * calendário: rejeita mês/dia fora do intervalo (`2026-13-01`) e dia
+ * inexistente no mês (`2026-02-30`), que um regex sozinho aceitaria. Usada
+ * para validar data retroativa digitada pelo usuário (ex.: `<input
+ * type="date">` de um gasto).
+ */
+export function ehDataDeCalendarioValida(texto: string): boolean {
+  const combinacao = PADRAO_DE_DATA_DE_CALENDARIO.exec(texto);
+  if (!combinacao) return false;
+
+  const anoTexto = combinacao[1] ?? '';
+  const mesTexto = combinacao[2] ?? '';
+  const diaTexto = combinacao[3] ?? '';
+  const ano = Number(anoTexto);
+  const mes = Number(mesTexto);
+  const dia = Number(diaTexto);
+
+  const data = new Date(ano, mes - 1, dia);
+  return data.getFullYear() === ano && data.getMonth() === mes - 1 && data.getDate() === dia;
+}

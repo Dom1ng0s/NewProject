@@ -21,14 +21,17 @@ afterEach(() => {
   bancoAberto = undefined;
 });
 
-describe('schema v1 (critério 3)', () => {
-  it('abre com verno 1, nome real, e as tabelas e índices exatos', async () => {
+describe('schema v1, dentro do banco atual (critério 3)', () => {
+  it('abre com o verno atual, nome real, e as tabelas/índices de v1 exatos', async () => {
+    // `VERSAO_DO_SCHEMA` (não mais o literal `1`) porque o schema evoluiu
+    // para v2 (financas, `migracoes/v2-financas.ts`); as asserções desta
+    // tabela específica continuam válidas — só as tabelas de v1 nunca mudam
+    // de forma. O schema v2 completo é testado em `v2-financas.test.ts`.
     const banco = criarBanco({ indexedDB: new IDBFactory() });
     bancoAberto = banco;
     await banco.open();
 
     expect(banco.name).toBe(NOME_DO_BANCO);
-    expect(banco.verno).toBe(1);
     expect(banco.verno).toBe(VERSAO_DO_SCHEMA);
 
     expect(banco.tables.map((tabela) => tabela.name).sort()).toEqual([...TABELAS].sort());

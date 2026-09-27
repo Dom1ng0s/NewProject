@@ -125,8 +125,11 @@ describe('lerBackup — critério 10 (uma entrada por código de erro)', () => {
     expect(leitura.erro.codigo).toBe('schemaMaisNovo');
   });
 
-  it('versaoDoSchema menor que o atual (1 < 2) → schemaMaisAntigo', () => {
-    const leitura = lerBackup(textoDoEnvelope({ metadados: { versaoDoSchema: 1 } }), 2);
+  it('versaoDoSchema menor que a mais antiga suportada (0 < 2) → schemaMaisAntigo', () => {
+    // A partir da migração v2 (financas, pendência 33), versaoDoSchema 1 já
+    // é CONVERTIDA em vez de bloqueada (ver describe abaixo) — só uma versão
+    // anterior à mais antiga suportada (hoje, 1) ainda bloqueia.
+    const leitura = lerBackup(textoDoEnvelope({ metadados: { versaoDoSchema: 0 } }), 2);
     if (leitura.ok) throw new Error('deveria ter reprovado');
     expect(leitura.erro.codigo).toBe('schemaMaisAntigo');
   });
@@ -213,6 +216,30 @@ describe('lerBackup — critério 10 (uma entrada por código de erro)', () => {
     for (const entrada of entradasQuebradas) {
       expect(() => lerBackup(entrada, 1)).not.toThrow();
     }
+  });
+});
+
+describe('lerBackup — conversão de backup de versão antiga (ADR 0006 seção 5.3, pendência 33)', () => {
+  it('versaoDoSchema 1 lido com versaoDoSchemaAtual 2 converte em vez de bloquear: ok:true com versaoDoSchema já 2', () => {
+    const leitura = lerBackup(
+      textoDoEnvelope({
+        metadados: { versaoDoSchema: 1 },
+        modulos: { nucleo: { historicoDeAcoes: [REGISTRO_VALIDO] }, financas: {} },
+      }),
+      2,
+    );
+    if (!leitura.ok)
+      throw new Error(`deveria ter convertido, mas reprovou: ${leitura.erro.codigo}`);
+    expect(leitura.arquivo.metadados.versaoDoSchema).toBe(2);
+    // Conversão v1->v2 não recalcula dado nenhum: os módulos passam intactos.
+    expect(leitura.arquivo.modulos.nucleo).toEqual({ historicoDeAcoes: [REGISTRO_VALIDO] });
+    expect(leitura.arquivo.modulos.financas).toEqual({});
+  });
+
+  it('backup já na versão atual não passa pelo conversor (metadados idênticos ao original)', () => {
+    const leitura = lerBackup(textoDoEnvelope({ metadados: { versaoDoSchema: 2 } }), 2);
+    if (!leitura.ok) throw new Error('deveria ter aprovado');
+    expect(leitura.arquivo.metadados.versaoDoSchema).toBe(2);
   });
 });
 

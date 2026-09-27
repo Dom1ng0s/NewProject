@@ -21,6 +21,11 @@ export class PaginaHoje {
   readonly tituloDoRegistroRapido: Locator;
   readonly textoDeRegistroVazio: Locator;
   readonly listaDeAtalhos: Locator;
+  /** Atalho "Gasto" (item 1.1 do plano; 1º dos 3 toques do gasto). */
+  readonly atalhoDeGasto: Locator;
+  /** Texto "Disponível hoje: ..." ou "Você já passou ... do disponível de hoje." no cartão de Finanças (regra 7.3). */
+  readonly disponivelHojeNoCartao: Locator;
+  readonly linkVerFinancas: Locator;
   readonly linkDeNavegacaoHoje: Locator;
   readonly linkDeNavegacaoConfiguracoes: Locator;
 
@@ -34,6 +39,9 @@ export class PaginaHoje {
     });
     this.textoDeRegistroVazio = page.getByText(textosDaHoje.registroRapido.vazio);
     this.listaDeAtalhos = page.getByRole('list').filter({ has: page.getByRole('link') });
+    this.atalhoDeGasto = page.getByRole('link', { name: textos.financas.atalhoGasto, exact: true });
+    this.disponivelHojeNoCartao = page.getByText(/^(Disponível hoje: |Você já passou )/u);
+    this.linkVerFinancas = page.getByRole('link', { name: textos.financas.hoje.linkVerFinancas });
 
     const navegacaoPrincipal = page.getByRole('navigation', { name: textosDeNavegacao.rotulo });
     this.linkDeNavegacaoHoje = navegacaoPrincipal.getByRole('link', {

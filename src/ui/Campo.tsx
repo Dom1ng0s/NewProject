@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { forwardRef, useId } from 'react';
 import type { InputHTMLAttributes, ReactNode } from 'react';
 
 export interface CampoProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
@@ -19,9 +19,15 @@ export interface CampoProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 /**
  * Rótulo + input + dica (ADR 0006, seção 7.8). Alvo de toque mínimo garantido
  * pelo token `--alvo-minimo` em `min-height`. Serve tanto para texto quanto
- * para `type="file"` (a tela Dados usa os dois).
+ * para `type="file"` (a tela Dados usa os dois). Encaminha `ref` (mesmo
+ * padrão de `Botao`/`Aviso`) para os fluxos que precisam focar o `<input>`
+ * por código — o atributo HTML `autoFocus` não é confiável em navegação de
+ * SPA (o elemento nasce depois do carregamento inicial da página).
  */
-export function Campo({ rotulo, dica, id, erro, className, ...props }: CampoProps) {
+export const Campo = forwardRef<HTMLInputElement, CampoProps>(function Campo(
+  { rotulo, dica, id, erro, className, ...props },
+  ref,
+) {
   const idGerado = useId();
   const idFinal = id ?? idGerado;
   const idDaDica = dica !== undefined ? `${idFinal}-dica` : undefined;
@@ -35,6 +41,7 @@ export function Campo({ rotulo, dica, id, erro, className, ...props }: CampoProp
         {rotulo}
       </label>
       <input
+        ref={ref}
         id={idFinal}
         className={['campo__entrada', className].filter(Boolean).join(' ')}
         aria-describedby={idsDaDescricao}
@@ -53,4 +60,4 @@ export function Campo({ rotulo, dica, id, erro, className, ...props }: CampoProp
       ) : null}
     </div>
   );
-}
+});
