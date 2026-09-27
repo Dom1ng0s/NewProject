@@ -43,7 +43,7 @@ PWA puro: site instalável pelo Safari/Chrome, offline. Sem app nativo, sem Capa
 
 ## Fases (decisão D2)
 As fases de `docs/PLANO.md` seguem em sequência, **sem parar para aprovação**. Exceções que param: perguntas bloqueantes de verdade (mudam schema, privacidade ou o que o app faz).
-No fim de cada fase: 3 a 5 linhas (pronto, pendente, suposições) e siga. Prints só no fim de cada fase, em `docs/prints/fase-N/`. O usuário testa o produto final; na Fase 5 envie o link de produção, o guia de instalação no iPhone e o roteiro de teste manual (item 5.8).
+No fim de cada fase: 3 a 5 linhas (pronto, pendente, suposições) e siga. Prints só no fim de cada fase, em `docs/prints/fase-N/`. O usuário testa o produto final; na Fase 5 envie o link de produção, o guia de instalação no iPhone e o roteiro de teste manual (item 5.7).
 
 ## Tela Hoje e configurações (decisão D4)
 Toda fase termina com o cartão e o atalho do seu pilar na Hoje. Regras que usam metas, orçamento ou unidades leem as configurações — nunca valores fixos no código.

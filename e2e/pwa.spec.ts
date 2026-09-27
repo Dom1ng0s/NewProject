@@ -321,7 +321,7 @@ test.describe('manifesto (critério 4)', () => {
 // Critério 5: instalabilidade via CDP, só em Chromium.
 // ---------------------------------------------------------------------------
 
-test.describe('instalabilidade (critério 5, só Chromium)', () => {
+test.describe('instalabilidade (critério 5) @chromium', () => {
   test('Page.getAppManifest sem erros e Page.getInstallabilityErrors vazio (tolerando só in-incognito)', async ({
     page,
     context,
@@ -402,7 +402,7 @@ testeDeArquivo.describe('index.html sem placeholder sobrando (critério 6, parte
 // Critério 7: offline completo depois do primeiro carregamento (só Chromium).
 // ---------------------------------------------------------------------------
 
-test.describe('offline completo (critério 7, só Chromium, D3/pendência 10)', () => {
+test.describe('offline completo (critério 7) @chromium', () => {
   test('reload, navegação direta para /dados e importar/exportar continuam funcionando sem rede, sem requestfailed nem console.error', async ({
     page,
     context,
@@ -528,7 +528,7 @@ testeDeArquivo.describe('precache cobre o build inteiro (critério 8)', () => {
 // Critério 9: nada de dado do usuário no cache do service worker (só Chromium).
 // ---------------------------------------------------------------------------
 
-test.describe('nada de dado do usuário no cache do service worker (critério 9, só Chromium)', () => {
+test.describe('nada de dado do usuário no cache do service worker (critério 9) @chromium', () => {
   test('depois de importar/exportar offline, todas as URLs em cache são da própria origem e existem em dist/', async ({
     page,
     context,

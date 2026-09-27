@@ -426,7 +426,7 @@ test.describe('estado é preservado ao recarregar (D3)', () => {
   });
 });
 
-test.describe('offline (critério 23, decisão D3/pendência 10: validado em Chromium)', () => {
+test.describe('offline (critério 23) @chromium', () => {
   test('fluxo de exportar/importar/apagar funciona sem rede depois do primeiro carregamento', async ({
     page,
     context,

@@ -313,7 +313,7 @@ test.describe('tema aplicado de verdade (critério 14)', () => {
   });
 });
 
-test.describe('sobrevive ao fechamento offline (critério 15, D3/pendência 10: só Chromium)', () => {
+test.describe('sobrevive ao fechamento offline (critério 15) @chromium', () => {
   test('alterar o foco offline sem sair do campo, simular ida para segundo plano, fechar e reabrir no mesmo contexto: o valor novo persiste', async ({
     page,
     context,

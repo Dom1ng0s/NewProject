@@ -4,8 +4,8 @@
 Webapp local-first para estudantes e jovens adultos organizarem estudos, finanças e treino. Registrar qualquer coisa leva segundos e o retorno visual é imediato. Uso individual, offline, sem conta, pt-BR. Especificação completa: `docs/ESPECIFICACAO.md`.
 
 ## Fases e funcionalidades
-Status: a fazer · especificando · aguardando usuário · em implementação · em teste · em revisão · pronto
-As fases seguem em sequência sem esperar aprovação (decisão D2). O usuário testa manualmente só o produto final.
+Status: **a fazer** · **em andamento** · **aguardando usuário** · **pronto**.
+As fases seguem em sequência sem esperar aprovação (D2). O usuário testa manualmente só o produto final.
 
 ### Fase 0: fundação
 | # | Item | Status |
@@ -17,26 +17,22 @@ As fases seguem em sequência sem esperar aprovação (decisão D2). O usuário 
 | 0.5 | Persistência, repositórios, schema versionado e migrações testadas | pronto |
 | 0.6 | Exportar/importar JSON, CSV por módulo, apagar tudo | pronto |
 | 0.7 | PWA instalável e offline (casca vazia) | pronto |
-| 0.9 | Deploy automático HTTPS a cada push na `main`. Requer ação do usuário: conectar o repositório à hospedagem (o orquestrador envia o passo a passo com comando de build e pasta de saída) | a fazer |
 | 0.10 | Tela de configurações: metas semanais de foco e treino, orçamento mensal, unidades (kg/lb), tema | pronto |
 | 0.11 | Tela Hoje básica: layout com espaços para os cartões de cada pilar e botão de registro rápido | pronto |
-| 0.12 | Registro de ações (histórico com data) que servirá de base para o XP (ver D5) | pronto |
-| 0.13 | Prints automáticos das telas principais em iPhone emulado, gerados pela suíte e2e (ver D6) | a fazer |
+| 0.12 | Registro de ações (histórico com data), base do XP (ver D5) | pronto |
+| 0.13 | Prints automáticos das telas principais em iPhone emulado (ver D6) | a fazer |
 | 0.8 | README, CHANGELOG, ADR 0001 (stack) | a fazer |
+| 0.9 | Deploy HTTPS automático a cada push na `main`. **Depende do usuário** conectar o repositório ao Cloudflare Pages; o passo a passo já pode ser enviado | aguardando usuário |
 
-### Fase 1: Treino
+### Fase 1: Finanças
 | # | Item | Status |
 |---|---|---|
-| 1.1 | Biblioteca de exercícios (grupos primário/secundários) | a fazer |
-| 1.2 | Fichas prontas e personalizadas, faixa de reps e incremento | a fazer |
-| 1.3 | Treino em andamento: séries, "última sessão", repetir com 1 toque, retomar após fechar | a fazer |
-| 1.4 | Timer de descanso automático (alerta ao voltar para o app; ver D1) | a fazer |
-| 1.5 | Regras 7.5 (sugestão de carga) e 7.6 (1RM) | a fazer |
-| 1.6 | Log de cardio manual + regra 7.9 (pace) | a fazer |
-| 1.7 | Importação GPX/FIT sem coordenadas por padrão | a fazer |
-| 1.8 | Mapa muscular: regras 7.7 e 7.8, acessível | a fazer |
-| 1.9 | Recordes pessoais e sequência semanal | a fazer |
-| 1.10 | Tela Hoje: cartão do treino previsto ou descanso, atalho de série | a fazer |
+| 1.1 | Gastos em 3 toques, categorias editáveis, entradas opcionais | a fazer |
+| 1.2 | Orçamento mensal + regra 7.3 (disponível hoje) | a fazer |
+| 1.3 | Assinaturas: totais, "usei hoje", custo por uso, cobrança automática | a fazer |
+| 1.4 | Aviso de renovação dentro do app: faixa na tela Hoje e selo no ícone quando suportado (ver D1) | a fazer |
+| 1.5 | Cofrinhos + regra 7.4 (projeção) | a fazer |
+| 1.6 | Tela Hoje: disponível para hoje, aviso de renovação, atalho de gasto | a fazer |
 
 ### Fase 2: Foco e Prazos
 | # | Item | Status |
@@ -48,25 +44,27 @@ As fases seguem em sequência sem esperar aprovação (decisão D2). O usuário 
 | 2.5 | Regra 7.2 (risco de prazo) | a fazer |
 | 2.6 | Tela Hoje: botão de iniciar foco, prazo mais urgente, atalho de sessão | a fazer |
 
-### Fase 3: Flashcards
+### Fase 3: Treino
 | # | Item | Status |
 |---|---|---|
-| 3.1 | Cards, tópicos e matérias | a fazer |
-| 3.2 | Revisão com FSRS (biblioteca aberta), 4 botões, fila do dia | a fazer |
-| 3.3 | Regra 7.1 (saúde do tópico) | a fazer |
-| 3.4 | Importação Anki por texto exportado | a fazer |
-| 3.5 | Importação `.apkg` (secundária, ver pendência 7) | a fazer |
-| 3.6 | Tela Hoje: contador de cards para revisar | a fazer |
+| 3.1 | Biblioteca de exercícios (grupos primário/secundários) | a fazer |
+| 3.2 | Fichas prontas e personalizadas, faixa de reps e incremento | a fazer |
+| 3.3 | Treino em andamento: séries, "última sessão", repetir com 1 toque, retomar após fechar | a fazer |
+| 3.4 | Timer de descanso automático (alerta ao voltar para o app; ver D1) | a fazer |
+| 3.5 | Regras 7.5 (sugestão de carga) e 7.6 (1RM) | a fazer |
+| 3.6 | Log de cardio manual + regra 7.9 (pace) | a fazer |
+| 3.7 | Mapa muscular: regras 7.7 e 7.8, acessível | a fazer |
+| 3.8 | Recordes pessoais e sequência semanal | a fazer |
+| 3.9 | Tela Hoje: cartão do treino previsto ou descanso, atalho de série | a fazer |
 
-### Fase 4: Finanças
+### Fase 4: Flashcards
 | # | Item | Status |
 |---|---|---|
-| 4.1 | Gastos em 3 toques, categorias editáveis, entradas opcionais | a fazer |
-| 4.2 | Orçamento mensal + regra 7.3 (disponível hoje) | a fazer |
-| 4.3 | Assinaturas: totais, "usei hoje", custo por uso, cobrança automática | a fazer |
-| 4.4 | Aviso de renovação dentro do app: faixa na tela Hoje e selo no ícone quando suportado (ver D1) | a fazer |
-| 4.5 | Cofrinhos + regra 7.4 (projeção) | a fazer |
-| 4.6 | Tela Hoje: disponível para hoje, aviso de renovação, atalho de gasto | a fazer |
+| 4.1 | Cards, tópicos e matérias | a fazer |
+| 4.2 | Revisão com FSRS (`ts-fsrs`), 4 botões, fila do dia | a fazer |
+| 4.3 | Regra 7.1 (saúde do tópico) | a fazer |
+| 4.4 | Importação Anki por texto exportado | a fazer |
+| 4.5 | Tela Hoje: contador de cards para revisar | a fazer |
 
 ### Fase 5: Núcleo e polimento
 | # | Item | Status |
@@ -74,103 +72,67 @@ As fases seguem em sequência sem esperar aprovação (decisão D2). O usuário 
 | 5.1 | Polimento da tela Hoje: sem rolagem excessiva, interativa em menos de 2 s | a fazer |
 | 5.2 | Gamificação leve: XP e níveis por pilar calculados do histórico (ver D5) | a fazer |
 | 5.3 | Onboarding guiado no primeiro uso, preenchendo as configurações de 0.10 | a fazer |
-| 5.4 | Backup automático local com últimas N cópias | a fazer |
-| 5.5 | Auditoria de acessibilidade e desempenho (Hoje < 2 s) | a fazer |
-| 5.6 | Política de privacidade | a fazer |
-| 5.7 | Tela ou aviso incentivando exportar backup periodicamente | a fazer |
-| 5.8 | Entrega final: link de produção, guia de instalação no iPhone e roteiro de teste manual | a fazer |
+| 5.4 | Auditoria de acessibilidade e desempenho (Hoje < 2 s) | a fazer |
+| 5.5 | Política de privacidade | a fazer |
+| 5.6 | Tela ou aviso incentivando exportar backup periodicamente | a fazer |
+| 5.7 | Entrega final: link de produção, guia de instalação no iPhone e roteiro de teste manual | a fazer |
+
+### Fase 6: opcional (só se houver vontade depois do 5.7)
+Adiados por decisão D14: custo alto e uso improvável num app de uma pessoa. Não bloqueiam a entrega.
+
+| # | Item | Status |
+|---|---|---|
+| 6.1 | Importação GPX/FIT sem coordenadas por padrão (era 1.7) | adiado |
+| 6.2 | Importação Anki `.apkg` via `sql.js` (era 3.5) | adiado |
+| 6.3 | Backup automático local com últimas N cópias (era 5.4) | adiado |
 
 ## Riscos técnicos
-Levantados na leitura da especificação. O arquiteto deve confirmar cada um na proposta de stack, porque o estado das APIs de navegador muda.
-
-1. **Notificação local sem servidor (6.2 Assinaturas).** Pelo que se sabe hoje, um PWA não consegue agendar uma notificação para disparar com o app fechado de forma confiável, principalmente no iPhone. Web Push exige servidor.
-2. **Timers com tela bloqueada (descanso e Pomodoro).** O cálculo pelo horário de início resolve o valor exibido, mas o alerta sonoro ou vibração no fim do descanso provavelmente não dispara com o PWA em segundo plano.
-3. **Dados apagados pelo sistema.** Navegadores podem limpar o armazenamento de sites (o Safari é agressivo com sites não instalados). Um backup automático guardado no mesmo armazenamento some junto. Afeta o princípio 3 e o requisito de resiliência.
-4. **Importação `.apkg`.** É um SQLite zipado; ler no dispositivo exige SQLite em WebAssembly, o que pesa no bundle.
-
 Tratamento decidido em D1: riscos 1 e 2 viram avisos dentro do app; risco 3 é mitigado com armazenamento persistente (`navigator.storage.persist()`), PWA instalado e incentivo a exportar backup.
 
-## Pendências e dúvidas
+1. **Notificação local sem servidor (6.2 Assinaturas).** Um PWA não agenda notificação com o app fechado de forma confiável, principalmente no iPhone. Web Push exige servidor.
+2. **Timers com tela bloqueada (descanso e Pomodoro).** O valor exibido é calculado pelo horário de início, mas o som/vibração no fim do descanso provavelmente não dispara em segundo plano.
+3. **Dados apagados pelo sistema.** O Safari é agressivo com sites não instalados; um backup automático guardado no mesmo armazenamento some junto. Afeta o princípio 3.
+4. **Importação `.apkg`.** SQLite zipado; ler no dispositivo exige SQLite em WebAssembly, que pesa no bundle.
 
-### Bloqueantes
-Nenhuma no momento. A aprovação da stack (item 0.1) chega na Fase 0.
+## Pendências abertas
+Números preservados de propósito: comentários no código e ADRs citam "pendência N". Entradas já resolvidas em código foram removidas (o histórico está no git e nos ADRs).
 
-### Não bloqueantes (suposições que serão seguidas se não houver resposta)
+### Ação do usuário
+13. Proteção de branch na `main` (status check obrigatório) não foi ativada — para não travar push direto (D8) enquanto não há fluxo de PR. Não bloqueante.
+
+### Regras e produto (decidem trabalho futuro)
 2. 7.3: uma assinatura cobrada vira gasto; `assinaturasAVencerNoMes` inclui só as cobranças ainda não geradas no mês, para não descontar duas vezes.
-3. 7.2: "menos de 7 dias de histórico" significa menos de 7 dias desde a primeira sessão de foco. Sessões `dispersa` contam na capacidade, porque o tempo foi gasto.
+3. 7.2: "menos de 7 dias de histórico" = menos de 7 dias desde a primeira sessão de foco. Sessões `dispersa` contam na capacidade, porque o tempo foi gasto.
 4. Assinaturas com várias cobranças atrasadas (app sem abrir por meses): gerar todos os lançamentos retroativos, cada um na sua data.
-5. "3 interações" no gasto: abrir o lançamento, digitar o valor, tocar na categoria (que salva). Digitar o valor conta como uma interação.
+5. "3 interações" no gasto: abrir o lançamento, digitar o valor, tocar na categoria (que salva).
 6. Sugestão de carga com redução de 10%: arredondar para baixo, para o múltiplo do incremento mais próximo.
-7. `.apkg` fica como último item da Fase 3, só se o custo no bundle for aceitável; texto exportado entra antes.
-8. Nome do app: continua `[NOME DO APP]` até você definir.
-9. Nome do app segue como placeholder `[NOME DO APP]`, centralizado no arquivo de tradução pt-BR, para trocar depois sem mexer em nenhuma tela.
-10. Teste de service worker/offline no Playwright: validado em Chromium (mais confiável para essa checagem); WebKit/iPhone fica para layout, interação, acessibilidade e os prints de D6.
-11. `e2e/placeholder.spec.ts` (criado no item 0.2 só para o critério de aceite 8) é escopo do `testador`: deve ser substituído/removido no item 0.4 junto com a suíte real.
-12. CI (ADR 0003, item 0.3): confirmado no primeiro push real (commit 2362df1, run 35678172127) — os dois jobs terminaram verdes (`verificar` 30s, `e2e` 1m23s). Critérios que exigem falha proposital (3, 4) e push só de documentação (7) ainda não foram testados; não bloqueante, testar quando a oportunidade surgir naturalmente.
-13. Proteção de branch na `main` (status check obrigatório) não foi ativada agora — decisão do arquiteto no ADR 0003, para não travar push direto (D8) enquanto não há fluxo de PR. Ação do usuário no GitHub, não bloqueante.
-14. Testes (ADR 0004, item 0.4): `@testing-library/react` e `@testing-library/user-event` **não** entram no 0.4 (nenhum componente com comportamento para testar ainda). Adiada no item 0.7 e de novo no item 0.10 (testes de componente usam `renderToStaticMarkup`; comportamento real coberto por e2e nos dois navegadores) — decisão passa para o item 0.11. Altera o que o ADR 0002 previa.
-15. Acessibilidade (ADR 0004): o portão do axe usa as cinco etiquetas WCAG (`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`), porque elas não são cumulativas e a seção 9 pede WCAG 2.2 AA. A etiqueta `best-practice` (landmark `main`, um `h1`, `region`) fica fora do portão até existir tela real; reavaliar no item 0.11, promovendo o que fizer sentido a requisito de tela.
-16. Item 0.4: o `testador` precisa apagar `e2e/placeholder.spec.ts`, e nem `git rm` nem `rm` estão no `allow` do `.claude/settings.json`. O orquestrador autoriza o comando na hora ou remove o arquivo por outro meio.
-17. Item 0.5 (persistência real): resolvido no ADR 0005. `globalThis.indexedDB = new IDBFactory()` não funciona (Dexie resolve a fábrica no construtor, a instância única já existe). Decisão final: nome do banco sempre fixo e real (`app-rotina-db`, D12); testes de schema/migração usam `criarBanco({ indexedDB: new IDBFactory() })`; testes de repositório limpam as tabelas da instância única no `beforeEach`. `ambiente.test.ts` (item 0.4) é adaptado a este padrão, não apagado.
-18. CI (item 0.3/0.4): confirmado verde no push do commit 3277d59 (run 35679550763).
-19. CI (ADR 0003, critério 7): confirmado — o push só de `docs/PLANO.md` (commit 3915554) não disparou nova execução (`paths-ignore` funcionando).
-20. Persistência (ADR 0005, item 0.5): registro excluído nunca é apagado de verdade (soft delete via `deletedAt`, permite desfazer, sai no backup marcado); sem purga automática por ora.
-21. `salvarConfiguracoes` grava uma ação no histórico (peso 0 no XP), para o item 0.12 ter um escritor real testado desde já.
+7. `.apkg` foi adiado para a Fase 6 (D14); a importação por texto exportado (4.4) cobre o caso.
+9. Nome do app segue como placeholder `[NOME DO APP]`, centralizado no i18n pt-BR. `short_name` separado só se o nome real passar de 12 caracteres (limite do iPhone).
 22. Orçamento mensal é valor único (alterá-lo muda o cálculo de meses passados); orçamento por mês fica para a Fase 4 se necessário.
-23. Grandezas com fração viram inteiro na menor unidade (peso em gramas, distância em metros); `unidadeDePeso` é só exibição.
-24. Índices compostos e índice em `referenciaId` do histórico ficam fora da v1, para a fase que precisar.
-25. `vitest.config.ts` passa a fixar `TZ=America/Sao_Paulo` nos testes, para data de calendário não depender da máquina.
-26. Item 0.5, `revisor-critico` (1ª rodada): reprovado por dois bloqueantes, ambos corrigidos e reaprovados na 2ª rodada. `dataDeCalendarioDe` (`src/compartilhado/datas.ts`) agora rejeita (lança) qualquer string sem componente de hora (`THH:MM`), porque `new Date('2026-09-21')` é aceito pelo JS como meia-noite UTC e produzia um dia errado silencioso em `America/Sao_Paulo` — risco real a partir da Fase 1/4, quando `ocorridaEm` retroativo vier de `<input type="date">`. `vitest.config.ts`: `coverage.include` voltou a `['src/**/dominio/**', 'src/persistencia/**']`, exatamente o previsto no ADR 0005 §8 (a versão reprovada incluía também `src/modulos/*/repositorio/**`, deixando `hooks.ts` em 0% sem teste de componente para cobri-lo).
-27. Dependência nova instalada no item 0.5: `@vitest/coverage-v8` (dev), exigida pelo `coverage.provider: 'v8'` já configurado no item 0.4 para gerar relatório de cobertura sem erro (critério de aceite 15 do ADR 0005). Só ferramenta de relatório em tempo de teste; nada entra no bundle de produção (`npm run build` não a referencia). Critério 14 do ADR 0005 ("nenhuma dependência nova") não se aplica a ela por esse motivo.
-28. Cobertura do Vitest (`vitest.config.ts`) cobre só `src/**/dominio/**` e `src/persistencia/**`, não `src/modulos/*/repositorio/**` nem `src/compartilhado/**`. Repositórios do núcleo e `hooks.ts` (único arquivo com React do item 0.5) ficam fora do relatório até existir teste de componente na stack; reavaliar com o arquiteto antes da Fase 1 se a cobertura por módulo importar.
-29. Item 0.6 (backup, ADR 0006): nome do arquivo exportado é `app-rotina-backup-AAAA-MM-DD.json`, mesmo identificador técnico do banco (`app-rotina-db`), não o nome do produto (placeholder, pendência 8/9); a importação nunca depende do nome do arquivo, só do conteúdo.
-30. Item 0.6: dois backups exportados no mesmo dia ficam com o mesmo nome; quem resolve é o navegador ou o app Arquivos do usuário (sufixo automático ou pedido de substituição). Sem hora no nome, para manter o nome legível.
-31. Item 0.6: CSV por módulo usa separador `;`, `CRLF` e BOM (abre direto no Excel em pt-BR), traz **só linhas ativas** (soft-deleted ficam de fora) e colunas declaradas explicitamente por tabela. O JSON continua sendo o único arquivo completo e o único caminho de restauração — a importação não lê CSV.
-32. Item 0.6: confirmação de "apagar tudo" exige digitar a palavra `APAGAR` (sem diferenciar maiúsculas, com `trim()`); importar backup não pede palavra digitada, só escolher o arquivo e confirmar com o resumo (contagens por módulo) à vista — dois passos em ambos os fluxos, sem `window.confirm`.
-33. Item 0.6: backup gerado por uma `versaoDoSchema` diferente da atual é **bloqueado** com mensagem específica, em vez de convertido. A entrega que criar a migração de schema `vN+1` decide e implementa a conversão do backup da versão `N` no mesmo commit — o `revisor-critico` passa a cobrar isso a partir da Fase 1.
-34. Item 0.6: nem `importarBackup`, nem `apagarTudo`, nem exportar registram ação no histórico (quebraria a idempotência de exportar → importar → exportar e o estado de "primeiro uso" depois de apagar tudo). A fonte de dado do aviso periódico de backup (item 5.7) é decidida naquele item.
-35. Item 0.6: `apagarTudo` faz `clear()` físico nas tabelas, mas não apaga o banco `app-rotina-db` nem o cache do service worker — o app continua instalado e offline, só os dados do usuário somem.
-36. Item 0.6: os stubs de `treino`, `estudos` e `financas` passam a **rejeitar** (lançar) quando a importação traz alguma chave de tabela para eles, em vez de ignorar em silêncio — evita anunciar "backup importado" tendo descartado dado de um pilar sem tabela ainda.
-37. Item 0.6: `tipo` de ação do histórico fora da união `TipoDeAcao` é **aceito** na importação se respeitar a invariante do prefixo (`${modulo}.`), para não impedir restaurar um backup gerado por um build mais novo do app. Consequência registrada para o item 5.2: o cálculo de XP precisa de um caso padrão com peso 0 para `tipo` desconhecido.
-38. Item 0.6, `revisor-critico` (1ª rodada): reprovado com 4 apontamentos bloqueantes, todos corrigidos e reaprovados na 2ª rodada. `validarLinhaDeConfiguracoes` (`repositorio/contrato-de-dados.ts`) passou a exigir as 6 chaves de `Configuracoes` e validar `onboardingConcluidoEm` (`null` ou instante ISO); `validarLinhaDeAcao` passou a exigir `tipo.startsWith(\`${modulo}.\`) && tipo.length > modulo.length + 1` (antes aceitava `tipo` sem sufixo ou com sufixo vazio). `VERSAO_DO_SCHEMA` deixou de ser reexportado direto de `@/persistencia` em `src/modulos/nucleo/index.ts` (violava a matriz do ADR 0002 §4) e passou a sair via `repositorio/backup.ts`. `Dados.tsx` passou a mover o foco para a mensagem de resultado ao concluir importação e preparo de CSV (sucesso, erro e "sem dados"), completando a regra do ADR 0006 §7.6 que já valia para "apagar tudo".
-39. Item 0.6: o `revisor-critico` (2ª rodada) registrou 3 sugestões não bloqueantes, não tratadas nesta entrega — ver "Sugestões fora do escopo": foco no erro de exportar JSON/CSV isolado (`BotaoDeArquivo`, `Dados.tsx`), alvo de toque do `<summary>` "Detalhes técnicos" e do botão "Salvar arquivo" (estado `precisaDeNovoToque`) não medidos no e2e.
-40. Item 0.6: sugestões não bloqueantes da 1ª rodada do `revisor-critico`, também não tratadas — ver "Sugestões fora do escopo": mensagem de erro de backup cita valor de campo (`id`/`tipo`) em vez de só nome do campo e índice; stubs dos pilares lançam de forma síncrona em função que deveria devolver `Promise` (`Promise.reject`); chaves extras desconhecidas num registro são gravadas em silêncio; `ehDiaDeCalendario` não valida calendário real (aceita `2026-13-45`).
-41. Item 0.6: teste de "preparar CSV com erro perde o foco" foi pulado no e2e (`testador`, 2ª rodada) — não há caminho determinístico via UI para simular falha de `exportarCsvPorModulo`/IndexedDB no meio da chamada. A correção de produção (mover foco também nesse caminho) foi feita; só a cobertura e2e desse caso específico ficou de fora.
-42. Item 0.6: `src/app/modulos.test.ts` (novo) é o primeiro teste a usar a lista real `contratosDeDados` de `src/app/modulos.ts` em vez de contratos fake — cobre os critérios 4/7/13/14 do ADR 0006 com a composição real dos módulos, não só o núcleo isolado.
-43. Item 0.6: nenhuma dependência nova; `npm run verificar` (lint, format, typecheck, 152 testes unitários, build) e a suíte e2e (`iphone-webkit` + `android-chromium`, dados.spec.ts + acessibilidade.spec.ts) confirmados verdes pelo `revisor-critico` na 2ª rodada, antes da aprovação.
-44. Item 0.7 (ADR 0007): ícone provisório — três barras brancas crescentes sobre `#0a5cb8`, sem letra, sem depender do nome do app (ainda placeholder). Gerado por script de desenvolvimento (`npm run icones`, Chromium do Playwright), rodado à mão, arquivos versionados; não roda no build nem no CI.
-45. Item 0.7: `orientation: 'portrait'` removido do manifesto — exigência WCAG 2.2, critério 1.3.4 (AA), que proíbe travar a orientação sem justificativa essencial. O app instalado gira com o aparelho.
-46. Item 0.7: sem aviso de "pronto para uso offline" e sem convite para instalar dentro do app (`beforeinstallprompt`/"Adicionar à Tela de Início") — só o aviso de versão nova. Convite de instalação vira sugestão fora do escopo.
-47. Item 0.7: aviso de versão nova aparece no topo da página, no fluxo normal (não fixo, não modal), sem mover foco; "Depois" esconde até a próxima abertura do app. Sem verificação periódica de versão nova — só a checagem nativa do navegador a cada abertura.
-48. Item 0.7: cor de fundo/tema do manifesto fixada em `#ffffff` (tema claro) — a tela de abertura instalada no Android fica branca mesmo com o aparelho no escuro. Revisitar no item 0.10 (tema manual).
-49. Item 0.7: `short_name` igual a `NOME_DO_APP` (placeholder) enquanto o nome real não chegar; nome curto separado só se o nome real passar de 12 caracteres (limite do iPhone na tela inicial).
-50. Item 0.7: `solicitarArmazenamentoPersistente()` é chamado uma vez por abertura do app, sem interface e sem mostrar o resultado ao usuário. No Firefox pode abrir um pedido de permissão do navegador; Firefox não é alvo do produto.
-51. Item 0.7: o Lighthouse não tem mais categoria PWA (removida na v12); a verificação de instalabilidade usa o protocolo do Chrome (`Page.getAppManifest`/`Page.getInstallabilityErrors`) via Playwright, só em Chromium. O fluxo real de atualização (versão nova → aviso → recarga) não é automatizável no e2e (Playwright não intercepta o script do service worker numa atualização) — fica coberto por tipos, teste de componente e o roteiro manual do item 5.8.
-52. Item 0.7, `revisor-critico`: aprovado sem bloqueante na 1ª rodada. Confirmado por leitura direta dos PNGs (não só pelo IHDR): cantos transparentes nos ícones `any` (192/512), fundo opaco de ponta a ponta no maskable e no apple-touch-icon, glifo dentro da zona segura (ponto mais distante do centro a 33,3%/33,0% do lado, dentro do limite de 40%).
-53. Item 0.10 (ADR 0008): configurações salvam sozinhas por campo (rádio no `change`; texto no `blur`/`Enter`/página oculta), sem botão "Salvar" — só grava se o texto mudou, para não encher o histórico. Uma ação `nucleo.configuracoesSalvas` por campo alterado (peso 0 no XP).
-54. Item 0.10: meta de foco digitada em horas, com no máximo uma casa decimal (`7,5` = 450 min, conversão exata). Valor importado que não é múltiplo de 6 minutos é exibido arredondado e só é regravado se o usuário editar o texto.
-55. Item 0.10: orçamento em texto livre em reais, lido de forma tolerante (`1500`, `1.500,00`, `R$ 1.500`, `12.50`), convertido para centavos sobre o texto (nunca `parseFloat × 100`, evita ponto flutuante); campo vazio grava `null`.
-56. Item 0.10: sem limite superior para metas nem orçamento. Meta de foco/treinos zero é aceita (significa "sem meta") — fica registrado para a Fase 2 tratar a divisão por zero da regra 7.2 (`metaSemanal / 7` como capacidade).
-57. Item 0.10: tema aplicado por atributo `data-tema` no `<html>`, resolvido em JavaScript (script inline no `index.html` antes da primeira pintura + hook `useAplicarTema` depois de ler a configuração); `@media (prefers-color-scheme)` sai do `tokens.css`. Tema manual diferente do sistema pode piscar por alguns milissegundos na abertura (não espelhado em `localStorage`, ADR 0005 já recusou storage fora do IndexedDB). Meta `theme-color` acompanha o tema escolhido dentro do app; o manifesto continua `#ffffff` (pendência 48 continua valendo para a tela de abertura do Android).
-58. Item 0.10: `@testing-library/react` segue fora (pendência 14 passa para o item 0.11) — testes de componente usam `renderToStaticMarkup`, comportamento real coberto por e2e nos dois navegadores.
-59. Item 0.10: tela de configurações ganha link para `/dados` (especificação trata "Configurações e dados" como um só lugar, seção 6.4); `problemasDeConfiguracoes` (nova) é a fonte única de regra, `validarConfiguracoes` passa a derivar dela sem mudar mensagens nem assinatura.
-60. Item 0.10, `revisor-critico` (1ª rodada): reprovado por 2 bloqueantes, ambos corrigidos e reaprovados na 2ª rodada. `lerCentavosDeReais` (`src/compartilhado/dinheiro.ts`) tinha um bug real: a regex aceitava ponto decimal seguido de vírgula (ex.: `'10.00,50'`) e truncava o valor em silêncio em vez de rejeitar — corrigido restringindo a vírgula decimal para só valer depois dos ramos de milhar/sem separador, nunca depois do ramo de ponto decimal. Também corrigido um erro do próprio orquestrador: a tentativa inicial de consertar `e2e/pwa.spec.ts` (teste do item 0.7 que comparava `package.json` contra `git show HEAD:...`, quebrado porque o commit do item 0.7 virou o próprio `HEAD`) usou um hash de commit fixo, que por sua vez quebraria no CI (clone raso, sem `fetch-depth`) — substituído por uma lista fixa de dependências aprovadas, sem depender de git.
-61. Item 0.10, `revisor-critico` (2ª rodada): 3 sugestões não bloqueantes, não tratadas nesta entrega — ver "Sugestões fora do escopo": campo de texto tocado antes da primeira leitura do banco pode ficar mostrando o valor padrão desatualizado até a próxima mudança; `blur` e `visibilitychange` disparando juntos antes da gravação terminar podem gerar duas ações de histórico para uma única edição; instabilidade ocasional no teste e2e do critério 13 (provavelmente relacionada a tempo de carregamento, não a um bug de gravação).
-62. Item 0.12 marcado pronto sem novo ciclo de implementação: `registrarAcao`, `listarAcoesDoPeriodo` e `excluirAcao` (`src/modulos/nucleo/repositorio/historico.ts`) já existem, testados e exportados publicamente, desde o item 0.5 (ADR 0005) — que já entregou o schema e o repositório completo de `historicoDeAcoes`. Em uso real desde os itens 0.6 (backup/importação) e 0.10 (`salvarConfiguracoes` registra ação a cada campo alterado, pendência 21). Nenhum trabalho adicional identificado para satisfazer a descrição do item.
-63. Item 0.11 (ADR 0009): registro rápido são três atalhos diretos (gasto, série, sessão), um por pilar, nunca um botão único com menu — um menu custaria um quarto toque no lançamento de gasto, estourando o princípio dos 3 toques. Nesta fase a área "Registrar agora" mostra só texto explicativo; o primeiro atalho real chega no item 1.10.
-64. Item 0.11: navegação com só dois destinos (Hoje e Configurações) num cabeçalho simples, sem barra inferior; "Dados" continua acessível só a partir de Configurações (a especificação trata "Configurações e dados" como um lugar só). As telas dos pilares (fases 1-4) serão abertas pelo cartão de cada pilar na Hoje, não pela navegação principal.
-65. Item 0.11: ordem dos cartões da Hoje: Finanças, Estudos, Treino, Seu progresso (segue a ordem da seção 6.4 da especificação). Ajuste fino fica para o item 5.1.
-66. Item 0.11: sem data nem saudação na Hoje por enquanto — exigiria um mecanismo de "dia de hoje" reativo (atualiza à meia-noite e ao voltar do segundo plano) sem nenhum cálculo real que dependa disso ainda. Nasce no item 1.10 (treino previsto), a primeira necessidade real.
-67. Item 0.11: `@testing-library/react` — **decisão final: não será instalada** (fecha as pendências 14/58, adiada três vezes). Regra fica em função pura (Vitest), marcação em `renderToStaticMarkup`, comportamento real no e2e (Playwright, dois navegadores). Uma fase futura só a traz de volta via ADR próprio, com justificativa concreta.
-68. Item 0.11: regras `best-practice` do axe entram no portão de acessibilidade para todas as telas (fecha a pendência 15, adiada desde o ADR 0004) — `landmark-one-main`, `page-has-heading-one`, `region`, `heading-order`, `landmark-unique`, `empty-heading`, entre outras. Exceção só desligada individualmente, com motivo registrado aqui, nunca a etiqueta inteira.
-69. Item 0.11: cada tela ganha título de página próprio (`Configurações · [NOME DO APP]`, `Dados · [NOME DO APP]`); a Hoje usa só o nome do app. Rota desconhecida redireciona para a Hoje em vez de mostrar tela em branco (importante offline, onde o service worker serve o app para qualquer caminho).
-70. Item 0.11: aviso de versão nova (item 0.7) migra de `App.tsx` para dentro do `<header>` da nova moldura comum — mesmo contrato e comportamento, só de lugar, porque fora de qualquer landmark ele reprovaria a regra `region` recém-promovida (pendência 68).
-71. Item 0.11: contrato `CartaoDeHoje` ganha o campo `titulo` — a Hoje passa a desenhar `<section>`+`<h2>` de cada cartão, e o módulo entrega só o conteúdo. Todas as fases futuras que substituírem seu cartão seguem as 8 regras da seção 3.3 do ADR 0009 (só conteúdo, sem estado de carregamento visível, consulta limitada, sem valor fixo, link para o pilar, atalho fora do cartão, textos no i18n do módulo, troca — não soma — o placeholder).
-72. Item 0.11: linha de base de desempenho registrada (ADR 0009, seção 8) — JS de entrada com **126,41 kB gzip** (`npm run build`), para o item 5.5 comparar contra a meta "Hoje interativa em menos de 2 s".
-73. Item 0.11, `testador`: encontrou 2 bugs reais de produção rodando a suíte e2e completa, ambos corrigidos pelo `interface` numa segunda rodada. (1) `TelaHoje` não chamava `useTituloDaPagina`, então `document.title` ficava preso no título da última tela visitada ao voltar para a Hoje via navegação SPA — corrigido chamando `useTituloDaPagina(textos.comum.nomeDoApp)`. (2) Os links da `<nav>` da moldura não eram alcançáveis por `Tab` a partir do topo no WebKit/Safari (que não inclui `<a href>` sem `tabindex` explícito na ordem de tabulação por padrão, diferente de Chromium) — corrigido com `tabIndex={0}` nos dois `NavLink`. Suíte completa reconfirmada depois: 124 passed, 7 skipped (esperado), 1 "flaky" (o mesmo ruído de timing do item 0.10, não relacionado).
-74. Item 0.11, `revisor`: aprovado sem bloqueante. Nenhuma regra `best-practice` do axe precisou ser desligada em nenhuma tela (Hoje, Configurações, Dados passaram limpas com o portão promovido, pendência 68).
-75. Item 0.13 (ADR 0010): 4 prints na Fase 0 (`hoje.png`, `hoje-escuro.png`, `configuracoes.png`, `dados.png`) — tema escuro só na Hoje (tela central, basta um print para provar o recurso), as outras três só no tema claro. Banco vazio na Fase 0 (nenhuma tela mostra dado de pilar ainda); a partir da Fase 1, prints usam um backup de exemplo importado pela tela Dados (nunca acesso direto ao banco), que precisa acompanhar cada migração de schema (pendência 33).
-76. Item 0.13: prints rodam só via `npm run test:e2e:prints` (spec dedicado `e2e/prints.spec.ts`, fora de `npm run test:e2e` — que passa a excluir por `--grep-invert @prints`), e só no projeto `iphone-webkit` (com `test.skip` condicional como reforço) — única exceção a D3 (e2e nos dois navegadores) neste item, justificada por D6 (prints são especificamente "iPhone emulado"). `.claude/commands/fase.md` e `.claude/agents/testador.md` atualizados para refletir o comando novo e a origem do dado (banco vazio/backup de exemplo em vez de "seed").
+56. Meta de foco/treinos zero significa "sem meta" — a Fase 2 precisa tratar a divisão por zero na regra 7.2 (`metaSemanal / 7` como capacidade).
+37. `tipo` de ação desconhecido é aceito na importação (backup de build mais novo). O XP do item 5.2 precisa de caso padrão com peso 0.
+34. Exportar, importar e apagar tudo não registram ação no histórico. A fonte de dado do aviso periódico de backup (item 5.6) é decidida naquele item.
+
+### Convenções que valem para toda entrega nova
+20. Exclusão é sempre soft delete (`deletedAt`), sai no backup marcada; sem purga automática.
+23. Grandeza com fração vira inteiro na menor unidade (peso em gramas, distância em metros); `unidadeDePeso` é só exibição.
+24. Índices compostos e índice em `referenciaId` do histórico ficam para a fase que precisar.
+33. Backup de `versaoDoSchema` diferente da atual é bloqueado, não convertido. **Quem criar a migração `vN+1` implementa a conversão do backup `vN` no mesmo commit** — o `revisor` cobra isso a partir da Fase 1. O backup de exemplo dos prints também acompanha cada migração.
+67. `@testing-library/react` não será instalada. Regra em função pura (Vitest), marcação em `renderToStaticMarkup`, comportamento real no e2e.
+68. Regras `best-practice` do axe estão no portão de acessibilidade de todas as telas. Exceção só individual, com motivo registrado aqui.
+69. Cada tela tem título de página próprio (`Tela · [NOME DO APP]`; a Hoje usa só o nome do app). Rota desconhecida redireciona para a Hoje.
+71. Contrato `CartaoDeHoje`: o módulo entrega só o conteúdo (a Hoje desenha `<section>`+`<h2>`). Cada fase segue as 8 regras da seção 3.3 do ADR 0009 e **troca** o placeholder do seu pilar, não soma.
+10. Offline, instalabilidade e cache do service worker só são verificáveis no Chromium. Esses blocos levam `@chromium` no título: o projeto `android-chromium` roda só eles (6 testes), o WebKit/iPhone roda o resto (D13).
+75. Prints da fase: `hoje.png`, `hoje-escuro.png` e uma por tela nova. Banco vazio na Fase 0; da Fase 1 em diante, backup de exemplo importado pela tela Dados (nunca acesso direto ao banco).
+76. Prints rodam só por `npm run test:e2e:prints` (`e2e/prints.spec.ts`, excluído de `npm run test:e2e` por `@prints`), só em `iphone-webkit`.
+
+### Tela Hoje (fases 1 a 5 dependem disto)
+63. Registro rápido são três atalhos diretos (gasto, série, sessão), um por pilar — nunca um botão único com menu, que custaria um quarto toque no gasto.
+64. Navegação com dois destinos (Hoje e Configurações) num cabeçalho simples. As telas dos pilares abrem pelo cartão do pilar na Hoje.
+65. Ordem dos cartões: Finanças, Estudos, Treino, Seu progresso. Ajuste fino no item 5.1.
+66. Sem data nem saudação na Hoje até o item 3.9 (treino previsto), que é a primeira necessidade real de um "hoje" reativo.
+48. Cor de fundo/tema do manifesto fixada em `#ffffff`: a tela de abertura instalada no Android fica branca mesmo no escuro. Revisitar no item 5.1.
+72. Linha de base de desempenho: JS de entrada com **126,41 kB gzip**, para o item 5.4 comparar contra "Hoje interativa em menos de 2 s".
 
 ## Decisões
 <!-- AAAA-MM-DD | decisão | motivo | ADR (se houver) -->
@@ -187,25 +149,13 @@ Nenhuma no momento. A aprovação da stack (item 0.1) chega na Fase 0.
 - **D9** | 2026-09-21 | **Stack (item 0.1): React 19 + TypeScript strict + Vite + Dexie 4 (IndexedDB)**, `dexie-react-hooks`, Zustand para estado efêmero, `vite-plugin-pwa`, Playwright (WebKit/iPhone + Chromium/Android) + `@axe-core/playwright`, Vitest, ESLint 9 + Prettier, `ts-fsrs`, GitHub Actions. `.apkg` (Fase 3) usa `sql.js` carregado sob demanda só na tela de importação. `dexie-cloud-addon` não será instalado. | Menor risco de plataforma no Safari/iPhone (IndexedDB funciona em qualquer contexto, inclusive aba privada) e menor número de peças para manter num app de um usuário só. Resposta do usuário à proposta do arquiteto. | ADR 0001
 - **D10** | 2026-09-21 | **Hospedagem (item 0.9): Cloudflare Pages**, repositório GitHub conectado, build Vite, saída `dist/`, preview automático por branch/PR. | Preview por branch atende aos relatórios de fase (D6); sem analytics injetado por padrão (princípio 4). Resposta do usuário. | ADR 0001
 - **D13** | 2026-09-26 | **Orquestração enxuta.** Seis subagentes viram dois: `dev` (regras + persistência + telas + testes numa chamada só) e `revisor` (só em item de risco: seção 7, schema/migrações, persistência, backup, privacidade, dependência nova). O orquestrador escreve o contrato de cada item em poucas linhas, no lugar do ciclo do `arquiteto`, e pode fazer ajustes pequenos direto. ADR só para decisão cara de desfazer. **Substitui D7** (revisor em dois níveis) e **restringe D3**: e2e roda só em WebKit/iPhone, sem duplicar em Chromium/Android. Nada de tratar concorrência, papéis, limites ou escala — é um app de uma pessoa em um aparelho. | Pedido do usuário: o ciclo de cinco passos por item estava custando tempo e token demais para um app monousuário.
+- **D14** | 2026-09-26 | **Ordem das fases: Finanças → Foco → Treino → Flashcards** (antes Treino primeiro), e três itens vão para uma Fase 6 opcional: GPX/FIT, `.apkg` e backup automático local. | Finanças é o pilar mais barato (6 itens) e de uso diário mais óbvio, então o app fica útil antes; Treino, o mais pesado, pega a base já madura. Os três adiados custam caro e resolvem pouco para um usuário só — `.apkg` é coberto pela importação por texto (4.4) e o backup automático mora no mesmo armazenamento que o risco 3 ameaça. Resposta do usuário.
 
 ## Sugestões fora do escopo
-<!-- Ideias que surgirem durante as fases, para avaliar depois -->
-- Item 0.5, `revisor-critico`: mensagem de erro de `validarInstante` (`src/compartilhado/datas.ts`) é a mesma para "parece data de calendário" e para qualquer outro texto não-ISO que o `Date` aceite (ex.: `'Sep 21 2026'`); uma segunda mensagem distinguindo os casos deixaria o diagnóstico mais preciso (o comportamento de lançar já está correto).
-- Item 0.5, `revisor-critico`: `validarInstante` não exige sufixo `Z`/offset, embora o ADR 0005 §2 diga que instantes são sempre UTC com `Z`. Não corrompe dado hoje (sem `Z` o dia local sai correto), mas o arquiteto pode decidir entre exigir `Z` ou documentar a tolerância explicitamente.
-- Item 0.5, `revisor-critico`: considerar teste de regressão no repositório de histórico garantindo que `registrarAcao` propaga a exceção de `dataDeCalendarioDe` quando `ocorridaEm` vier como data de calendário (contrato da fronteira, além do teste da função pura).
-- Item 0.6, `revisor-critico` (1ª rodada): `detalhe` de `ErroDeBackup` cita o valor de `id`/`tipo` do registro inválido, não só o nome do campo e o índice na lista — o ADR 0006 §2.2 pede para nunca citar valor de campo do usuário; hoje são identificadores técnicos e o React escapa o texto, mas o mais fiel ao ADR seria trocar por "nome do campo + índice" apenas.
-- Item 0.6, `revisor-critico` (1ª rodada): stubs de `importarJson` dos pilares (`treino`/`estudos`/`financas`) lançam de forma síncrona dentro de função que deveria devolver `Promise`; funciona porque o orquestrador é `async`, mas `return Promise.reject(new ErroDeBackup(...))` respeitaria o contrato à risca.
-- Item 0.6, `revisor-critico` (1ª rodada): chaves extras/desconhecidas dentro de um registro importado são gravadas em silêncio (só a chave de tabela desconhecida é rejeitada); vale decidir, em ADR ou no plano, se a importação deve rejeitar campo desconhecido dentro de um registro, antes da Fase 1 trazer tabelas novas.
-- Item 0.6, `revisor-critico` (1ª rodada): `ehDiaDeCalendario` (formato `dia` do histórico) aceita datas de calendário inválidas como `2026-13-45` (só checa o padrão `\d{4}-\d{2}-\d{2}`, não o calendário real); considerar validar o calendário de verdade, ou exigir `dia === dataDeCalendarioDe(ocorridaEm)` se essa invariante valer.
-- Item 0.6, `revisor-critico` (2ª rodada): `Aviso` de erro dentro de `BotaoDeArquivo` (falha ao gerar/salvar o backup JSON ou um CSV isolado) não recebe foco ao aparecer, diferente dos outros erros da tela (`Dados.tsx`) — vale alinhar por consistência de acessibilidade.
-- Item 0.6, `revisor-critico` (2ª rodada): o e2e de alvo de toque (44×44px) não mede o `<summary>` "Detalhes técnicos" (dentro do alerta de erro da importação) nem o botão "Salvar arquivo" do estado `precisaDeNovoToque` — este último usa o componente `Botao` e deve passar, mas não foi confirmado por teste.
-- Item 0.7, `arquiteto` (ADR 0007): convite para instalar dentro do app (`beforeinstallprompt` no Android; instrução "Compartilhar > Adicionar à Tela de Início" no iPhone) — não pedido pela especificação, mas melhora a taxa de instalação.
-- Item 0.7, `arquiteto` (ADR 0007): mostrar ao usuário se o armazenamento persistente foi concedido — candidato ao item 5.7 (aviso de backup), já que ambos tratam de resiliência dos dados no aparelho.
-- Item 0.7, `revisor-critico`: aviso do Vite (`configLoader: 'native'`) sobre `import "./src/i18n"` resolver diretório e imports sem extensão em `src/i18n/index.ts`; não quebra nada hoje, só importa se uma versão futura do Vite mudar o padrão. Decisão do arquiteto quando isso acontecer.
-- Item 0.7, `revisor-critico`: `src/app/App.tsx` não trata rejeição de `atualizar()` — se `updateServiceWorker` falhar, o botão "Atualizar agora" fica preso em "Atualizando..." até o app fechar. Sugestão: `.catch()` com `console.warn` e reset do estado local.
-- Item 0.7, `revisor-critico`: `vite.config.ts` inclui os ícones do manifesto duas vezes no precache (`globPatterns` + `includeManifestIcons`, padrão do plugin) — inofensivo (mesma revisão, o Workbox deduplica), mas `includeManifestIcons: false` deixaria a lista limpa.
-- Item 0.7, `revisor-critico`: o plugin `textosDoHtml` (`vite.config.ts`) insere `NOME_DO_APP`/`DESCRICAO_DO_APP` no HTML sem escapar `"`, `&` ou `<` — seguro hoje (placeholder sem esses caracteres), mas quebraria o `content="..."` se o nome real do app algum dia tiver aspas ou `&`. Escapar antes do `replaceAll` quando o nome definitivo for decidido.
-- Item 0.7, `revisor-critico`: incluir no roteiro de teste manual do item 5.8 (VoiceOver/iPhone) conferir se o aviso de atualização (`role="status"`) é anunciado pelo leitor de tela ao aparecer — regiões `aria-live` montadas já com conteúdo às vezes não disparam o anúncio; se não disparar, considerar manter a região sempre montada e só trocar o conteúdo.
-- Item 0.10, `revisor-critico`: em `Configuracoes.tsx`, campo de texto tocado (focado) antes da primeira leitura assíncrona do banco terminar pode ficar mostrando o valor padrão desatualizado até a próxima mudança externa — não perde dado, mas a tela fica visualmente atrasada. Correção possível: ao desfocar sem alteração, se o valor gravado mudou enquanto o campo tinha foco, reescrever o texto exibido a partir dele.
-- Item 0.10, `revisor-critico`: em `Configuracoes.tsx`, se `blur` e `visibilitychange` (fechar o app com o teclado aberto) dispararem quase juntos antes da primeira gravação terminar, as duas veem o texto como alterado e gravam duas vezes — o valor final fica certo, mas entram duas ações `nucleo.configuracoesSalvas` no histórico para uma única edição. Uma flag de "gravando em andamento" evitaria a duplicata.
-- Item 0.10, `revisor-critico`: instabilidade ocasional (1 "flaky", passa no retry) no teste e2e do critério 13 (`e2e/configuracoes.spec.ts`, "tocar um campo e sair sem alterar não grava") em WebKit sob paralelismo local — a lógica coberta está correta; suspeita é tempo de carregamento/exportação entre navegações, não um bug de gravação. Vale o `testador` investigar se voltar a aparecer.
+<!-- Só o que ainda vale a pena. Nitpick de revisão não entra. -->
+- `src/app/App.tsx` não trata rejeição de `atualizar()`: se `updateServiceWorker` falhar, o botão "Atualizar agora" fica preso em "Atualizando...". Um `.catch()` com reset do estado resolve.
+- `ehDiaDeCalendario` aceita data inexistente como `2026-13-45` (só checa o padrão, não o calendário). Vale validar de verdade antes da Fase 1 trazer datas retroativas vindas de `<input type="date">`.
+- `Configuracoes.tsx`: `blur` e `visibilitychange` disparando juntos podem gravar duas ações no histórico para uma única edição. Uma flag de "gravando em andamento" evitaria.
+- Item 5.6: mostrar se o armazenamento persistente foi concedido, junto com o aviso de backup.
+- Item 5.7 (roteiro manual): conferir no VoiceOver se o aviso de atualização (`role="status"`) é anunciado ao aparecer.
+- Convite para instalar dentro do app (`beforeinstallprompt` no Android, instrução de "Adicionar à Tela de Início" no iPhone). Fora da especificação.

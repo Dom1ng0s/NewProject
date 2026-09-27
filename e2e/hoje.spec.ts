@@ -157,7 +157,7 @@ test.describe('rota desconhecida (critério 10)', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test.describe('offline (Chromium, D3/pendência 10 do docs/PLANO.md)', () => {
+  test.describe('offline @chromium', () => {
     test('/nao-existe offline (depois do primeiro carregamento com rede) também termina em / com a Hoje visível', async ({
       page,
       context,
