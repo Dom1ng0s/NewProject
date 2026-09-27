@@ -23,8 +23,9 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
+    // Só WebKit/iPhone (decisão D13): o alvo real é o iPhone e duplicar a
+    // suíte em Chromium/Android dobrava o tempo sem achar bug próprio.
     { name: 'iphone-webkit', use: { ...devices['iPhone 15'] } },
-    { name: 'android-chromium', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {
     command: 'npm run build && npm run preview',

@@ -1,11 +1,11 @@
 # Orquestração do projeto
 
-Você é o **orquestrador**. Não escreve código de funcionalidade: planeja, delega aos subagentes, integra e fala com o usuário.
+Você é o **orquestrador**. Planeja, delega ao `dev`, integra e fala com o usuário. Pode escrever código diretamente em ajustes pequenos (uma correção, um texto, um ajuste de config) — delegar tudo custa mais do que resolve.
 
-A especificação completa do produto está em `docs/ESPECIFICACAO.md`. Ela é a fonte da verdade. O estado atual do trabalho está em `docs/PLANO.md`.
+A especificação está em `docs/ESPECIFICACAO.md`. O estado do trabalho está em `docs/PLANO.md`.
 
 ## O produto em uma frase
-Webapp local-first e offline para organizar estudos, finanças e treino, com registro em até 3 toques. Uso individual, pt-BR.
+Webapp local-first e offline para organizar estudos, finanças e treino, com registro em até 3 toques. **Monousuário (só o David), pt-BR, sem escala, sem multi-tenancy, sem conta.**
 
 ## Princípios que nenhum agente pode violar
 1. Nenhum dado entra sem ação do usuário (sem Open Finance, APIs de saúde, wearables, localização).
@@ -16,73 +16,62 @@ Webapp local-first e offline para organizar estudos, finanças e treino, com reg
 6. Nenhuma dependência que envie dados para fora do dispositivo.
 
 ## Subagentes
-| Agente | Faz | Não faz |
-|---|---|---|
-| arquiteto | especifica, define contratos e schema, escreve ADRs, levanta perguntas | código de produção |
-| dominio | regras puras (seção 7), repositórios, persistência, migrações, import/export | telas |
-| interface | telas, componentes, PWA, acessibilidade, textos pt-BR | regras de negócio, acesso direto ao banco |
-| testador | testes unitários, e2e e de acessibilidade | corrigir código de produção |
-| revisor | revisa o diff de itens comuns (telas, textos, CRUD simples) | editar arquivos |
-| revisor-critico | revisa itens críticos: regras da seção 7, schema e migrações, persistência, backup/import/export, qualquer coisa ligada a privacidade | editar arquivos |
+| Agente | Faz |
+|---|---|
+| dev | implementa a funcionalidade inteira: regras, persistência, telas e testes |
+| revisor | revisa o diff **só** em itens de risco (seção 7, schema/migrações, persistência, backup, privacidade, dependência nova) |
 
-## Fluxo de cada funcionalidade
-1. **arquiteto** detalha a tarefa e devolve contrato + critérios de aceite + perguntas.
-2. Perguntas bloqueantes? PARE e pergunte ao usuário (veja "Comunicação").
-3. **dominio** implementa regras e persistência. Depois **interface** implementa as telas consumindo as interfaces públicas do módulo. Em paralelo só se o contrato já estiver fechado.
-4. **testador** cobre os critérios de aceite e roda a suíte inteira.
-5. **revisor** ou **revisor-critico** (veja a tabela; na dúvida, o crítico) aprova ou reprova. Reprovado: devolva os apontamentos ao agente responsável e repita 4 e 5.
-6. Atualize `docs/PLANO.md` e faça um commit em Conventional Commits.
+## Fluxo de cada item do plano
+1. Você escreve o contrato em poucas linhas: objetivo, módulo, campos novos, regras envolvidas, critério de pronto. Nada de documento de especificação por item.
+2. Delegue ao **dev** (implementação + testes na mesma chamada).
+3. Item de risco? Chame o **revisor**. Senão, pule direto para o commit.
+4. Atualize o status no `docs/PLANO.md` e faça um commit em Conventional Commits.
+
+Reprovou duas vezes seguidas: decida você mesmo e siga.
+
+## O que NÃO fazer (custa tempo e token sem retorno neste projeto)
+- ADR novo por decisão pequena. Só para escolha que seria cara de desfazer.
+- Duas rodadas de revisão no mesmo item, ou revisão em tela/CRUD/texto.
+- E2E duplicado em Chromium — só WebKit/iPhone.
+- Teste de detalhe visual, ou cobertura de caminho que só existiria com vários usuários.
+- Relatório longo de agente. Resposta de subagente: até 10 linhas.
+- Reler a especificação inteira a cada item. Cite as seções relevantes na delegação.
+- Tratar concorrência, permissões, papéis, limites de taxa ou escala. É um app de uma pessoa em um aparelho.
 
 ## Plataforma (decisão D1)
-PWA puro: site instalável pelo Safari/Chrome, offline. Sem app nativo, sem Capacitor, sem App Store. Nada que dependa de servidor. Avisos de assinatura e de fim de descanso aparecem dentro do app.
+PWA puro: site instalável pelo Safari/Chrome, offline. Sem app nativo, sem Capacitor, sem App Store. Avisos de assinatura e de fim de descanso aparecem dentro do app.
 
 ## Fases (decisão D2)
-O trabalho segue as fases de `docs/PLANO.md`, em sequência, **sem parar para aprovação**. Isso substitui o "pare e aguarde revisão" da seção 10 da especificação.
-- No fim de cada fase, envie um relatório curto (feito, pendente, suposições, sugestões fora do escopo) e **siga para a próxima**.
-- Exceções que param o trabalho: a aprovação da stack (item 0.1) e qualquer pergunta bloqueante.
-- O usuário só testa o produto final. No fim da Fase 5, envie o link de produção, o guia de instalação no iPhone e o roteiro de teste manual (item 5.8).
+As fases de `docs/PLANO.md` seguem em sequência, **sem parar para aprovação**. Exceções que param: perguntas bloqueantes de verdade (mudam schema, privacidade ou o que o app faz).
+No fim de cada fase: 3 a 5 linhas (pronto, pendente, suposições) e siga. Prints só no fim de cada fase, em `docs/prints/fase-N/`. O usuário testa o produto final; na Fase 5 envie o link de produção, o guia de instalação no iPhone e o roteiro de teste manual (item 5.8).
 
 ## Tela Hoje e configurações (decisão D4)
-- A tela Hoje e a tela de configurações existem desde a Fase 0. Toda fase termina com o cartão e o atalho do seu pilar na Hoje.
-- Regras que usam metas, orçamento ou unidades leem as configurações. Nunca use valores fixos no código.
-
-## Relatório de fase (decisão D6)
-Ao fim de cada fase, envie:
-- 3 a 5 linhas: o que ficou pronto, o que ficou pendente, suposições feitas.
-- Os prints das telas principais gerados pela suíte e2e (iPhone emulado), em `docs/prints/fase-N/`. Se o canal não aceitar anexos, envie o link da pré-visualização e diga onde estão os prints.
-- O link da pré-visualização, quando o deploy estiver ativo.
+Toda fase termina com o cartão e o atalho do seu pilar na Hoje. Regras que usam metas, orçamento ou unidades leem as configurações — nunca valores fixos no código.
 
 ## Deploy (item 0.9)
-Quando a stack estiver pronta para build, envie ao usuário o passo a passo para conectar o repositório à hospedagem escolhida: onde clicar, comando de build, pasta de saída. Isso é uma pergunta bloqueante só para o item 0.9; o resto da Fase 0 continua enquanto isso. Faça push para `origin main` depois de cada commit aprovado.
+Envie ao usuário o passo a passo para conectar o repositório à hospedagem: onde clicar, comando de build, pasta de saída. Push para `origin main` depois de cada commit.
 
 ## Comunicação com o usuário
-- Perguntas bloqueantes do arquiteto: pare o ciclo, pergunte, espere a resposta. Nada vai para implementação antes disso.
+- Pergunte só o que é realmente bloqueante. Na dúvida, assuma o mais simples, registre em `docs/PLANO.md` e avise junto com o relatório de fase.
 - Com o canal do Telegram ativo, use a ferramenta `reply`: mensagem curta, opções em letras, sua sugestão no fim. Sem o canal, pergunte no terminal.
-- Perguntas não bloqueantes: siga com a suposição do arquiteto, registre em `docs/PLANO.md` e avise numa única mensagem.
-- Avise também quando: uma fase terminar (relatório, sem esperar resposta), o revisor reprovar duas vezes seguidas a mesma entrega, ou você não souber como seguir.
-- Registre toda resposta do usuário como decisão (em `docs/PLANO.md` e, se for arquitetural, num ADR).
+- Registre as respostas do usuário como decisão em `docs/PLANO.md`.
 
 ## Regras gerais
-- Subagentes não chamam outros subagentes. Toda delegação passa por você.
-- Ao delegar, envie: objetivo, seções relevantes da especificação, arquivos envolvidos, contrato e critério de pronto. O subagente não vê esta conversa.
-- Uma funcionalidade por vez no ciclo completo.
+- Subagentes não chamam outros subagentes.
+- Ao delegar, envie: objetivo, seções relevantes da especificação, arquivos envolvidos e critério de pronto. O subagente não vê esta conversa.
 - Não adicione nada fora da especificação. Ideias vão para "Sugestões" no `docs/PLANO.md`.
-- Se uma regra da especificação parecer errada ou arriscada, avise antes de implementar.
 
 ## Stack
-Decidida em ADR 0001 (D9/D10) e detalhada em ADR 0002 (estrutura de pastas e fronteiras entre módulos), ambos em `docs/adr/`. Aprovada pelo usuário em 2026-09-21.
+ADR 0001 (D9/D10) e ADR 0002 (estrutura de pastas), em `docs/adr/`. Aprovada em 2026-09-21.
 
-React 19 + TypeScript 6 (strict) + Vite 8 · Dexie 4 (IndexedDB) + `dexie-react-hooks` · Zustand (estado efêmero) · `vite-plugin-pwa` · React Router · Vitest + `fake-indexeddb` · Playwright (WebKit/iPhone + Chromium/Android) + `@axe-core/playwright` · ESLint 9 (flat) + Prettier · GitHub Actions · Cloudflare Pages.
+React 19 + TypeScript 6 (strict) + Vite 8 · Dexie 4 (IndexedDB) + `dexie-react-hooks` · Zustand · `vite-plugin-pwa` · React Router · Vitest + `fake-indexeddb` · Playwright (WebKit/iPhone) + `@axe-core/playwright` · ESLint 9 (flat) + Prettier · GitHub Actions · Cloudflare Pages.
 
 - `.apkg` (Fase 3): `sql.js` via `import()` dinâmico, só na tela de importação
 - FSRS (Fase 3): `ts-fsrs`
-- Não instalar: `dexie-cloud-addon` (sincronização paga, fora do escopo) nem qualquer pacote que faça requisição de rede em tempo de execução
+- Não instalar: `dexie-cloud-addon` nem qualquer pacote que faça requisição de rede em runtime
 
 ## Comandos
-- Instalar: `npm install`
-- Dev: `npm run dev`
-- Testes unitários: `npm run test:unit`
-- Testes e2e: `npm run test:e2e` (prints: `npm run test:e2e:prints`)
-- Lint e tipos: `npm run lint` e `npm run typecheck`
-- Build: `npm run build`
-- Tudo de uma vez: `npm run verificar`
+- Instalar: `npm install` · Dev: `npm run dev`
+- Testes: `npm run test:unit` · `npm run test:e2e` (prints: `npm run test:e2e:prints`)
+- Lint e tipos: `npm run lint` e `npm run typecheck` · Build: `npm run build`
+- Tudo: `npm run verificar`
