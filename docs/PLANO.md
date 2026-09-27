@@ -20,8 +20,8 @@ As fases seguem em sequência sem esperar aprovação (D2). O usuário testa man
 | 0.10 | Tela de configurações: metas semanais de foco e treino, orçamento mensal, unidades (kg/lb), tema | pronto |
 | 0.11 | Tela Hoje básica: layout com espaços para os cartões de cada pilar e botão de registro rápido | pronto |
 | 0.12 | Registro de ações (histórico com data), base do XP (ver D5) | pronto |
-| 0.13 | Prints automáticos das telas principais em iPhone emulado (ver D6) | a fazer |
-| 0.8 | README, CHANGELOG, ADR 0001 (stack) | a fazer |
+| 0.13 | Prints automáticos das telas principais em iPhone emulado (ver D6) | pronto |
+| 0.8 | README, CHANGELOG, ADR 0001 (stack) | pronto |
 | 0.9 | Deploy HTTPS automático a cada push na `main`. **Depende do usuário** conectar o repositório ao Cloudflare Pages; o passo a passo já pode ser enviado | aguardando usuário |
 
 ### Fase 1: Finanças

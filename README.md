@@ -1,36 +1,33 @@
-# Estrutura multiagentes: webapp de rotina pessoal
+# [NOME DO APP]
 
-Pasta pronta para o Claude Code construir o app descrito em `docs/ESPECIFICACAO.md` com seis subagentes (arquiteto, dominio, interface, testador, revisor e revisor-critico), te perguntando pelo Telegram quando precisar.
+Webapp local-first e offline para organizar estudos, finanças e treino, com registro em até 3 toques. Uso individual, pt-BR, sem conta. Os dados ficam só no aparelho (IndexedDB) e saem apenas por exportação feita pelo próprio usuário.
 
-## Começar
+Especificação: `docs/ESPECIFICACAO.md` · Plano e decisões: `docs/PLANO.md` · Arquitetura: `docs/adr/`.
+
+## Rodar
 ```
-node setup.mjs   # uma vez: dependências, git, Telegram, GitHub
-iniciar.cmd      # Windows: abre o Claude Code com o canal e sem hibernar
+npm install
+npm run dev          # desenvolvimento
+npm run build        # gera dist/
+npm run preview      # serve dist/ em http://localhost:4173
 ```
-Dentro do Claude Code:
-- `/configurar`: relê a especificação e ajusta plano e agentes (use ao trocar de projeto: `/configurar caminho/da/spec.md`).
-- `/construir`: constrói o app inteiro, da Fase 0 à 5. Só para para aprovar a stack e para perguntas bloqueantes. No fim, manda o link e um roteiro de teste no iPhone.
-- `/fase N`: executa uma fase só, se quiser ir por partes.
 
-## Arquivos
-| Caminho | Para quê |
+## Verificar
+| Comando | O que faz |
 |---|---|
-| `CLAUDE.md` | Regras do orquestrador (sessão principal) |
-| `.claude/agents/` | Os seis subagentes |
-| `docs/prints/` | Prints de cada fase, em iPhone emulado |
-| `.claude/commands/` | `/configurar`, `/construir` e `/fase` |
-| `.claude/settings.json` | Permissões e hook de aviso no Telegram |
-| `docs/ESPECIFICACAO.md` | Especificação do produto (fonte da verdade) |
-| `docs/PLANO.md` | Fases, status, riscos, perguntas e decisões |
-| `docs/adr/` | Decisões de arquitetura |
-| `scripts/notificar-telegram.mjs` | Aviso "estou te esperando" pelo seu bot atual |
+| `npm run verificar` | lint, formatação, tipos, unitários e build |
+| `npm run test:unit` | Vitest + fake-indexeddb |
+| `npm run test:e2e` | Playwright em WebKit/iPhone (Chromium só para testes `@chromium`) |
+| `npm run test:e2e:prints` | prints das telas em `docs/prints/fase-N/` |
 
-## Antes de começar
-- Conta no GitHub (o `setup.mjs` ajuda a criar o repositório privado).
-- Conta gratuita numa hospedagem estática (Cloudflare Pages, Netlify ou Vercel). A conexão é feita na Fase 0, com passo a passo enviado pelo Claude.
+## Stack
+React 19, TypeScript strict, Vite, Dexie 4 (IndexedDB), Zustand, React Router, `vite-plugin-pwa`, Vitest, Playwright + axe. Detalhes e motivos no ADR 0001; pastas por módulo no ADR 0002.
 
-## Telegram, dois bots
-- **Seu bot atual**: só recebe avisos (o hook usa `sendMessage`, não conflita com o que ele já faz). Credenciais em `~/.config/claude-multiagentes/telegram.env`.
-- **Bot dedicado**: conversa nos dois sentidos pelo canal oficial do Claude Code. Precisa ser outro bot, porque só um programa pode ler as mensagens de cada bot.
+## Deploy
+Cloudflare Pages conectado ao GitHub: comando de build `npm run build`, pasta de saída `dist`. Cada push na `main` publica.
 
-Os tokens ficam fora da pasta do projeto e nunca entram no git.
+## Privacidade
+Sem analytics, sem anúncios, sem requisição de rede em runtime além do próprio site. Exportar (JSON/CSV) e "apagar tudo" ficam na tela Dados, dentro de Configurações.
+
+## Desenvolvimento com Claude Code
+`CLAUDE.md` guia o orquestrador; `.claude/agents/` tem os subagentes `dev` e `revisor`; `/construir` e `/fase N` executam o plano.

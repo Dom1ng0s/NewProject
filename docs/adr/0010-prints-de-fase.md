@@ -1,7 +1,7 @@
 # 0010. Prints de fase gerados pela suíte e2e (iPhone emulado)
 
 - Data: 2026-09-23
-- Status: proposta
+- Status: aceita
 
 ## Contexto
 

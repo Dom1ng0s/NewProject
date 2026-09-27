@@ -17,7 +17,7 @@
     "format:check": "prettier --check .",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --grep-invert @prints",
     "test:e2e:prints": "playwright test prints --project=iphone-webkit",
     "icones": "node scripts/gerar-icones.mjs",
     "verificar": "npm run lint && npm run format:check && npm run typecheck && npm run test:unit && npm run build"
