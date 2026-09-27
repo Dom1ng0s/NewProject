@@ -62,6 +62,52 @@ export function hojeEmDataDeCalendario(): string {
 
 const PADRAO_DE_DATA_DE_CALENDARIO = /^(\d{4})-(\d{2})-(\d{2})$/;
 
+function partesDeDataDeCalendario(data: string): { ano: number; mes: number; dia: number } {
+  const [anoTexto, mesTexto, diaTexto] = data.split('-');
+  return { ano: Number(anoTexto), mes: Number(mesTexto), dia: Number(diaTexto) };
+}
+
+/** Último dia do mês (1-31); `mesIndiceZero` vai de 0 (janeiro) a 11 (dezembro). */
+export function ultimoDiaDoMes(ano: number, mesIndiceZero: number): number {
+  return new Date(ano, mesIndiceZero + 1, 0).getDate();
+}
+
+/**
+ * `data` (`AAAA-MM-DD`) + `meses` (pode ser negativo), usando `diaAncora`
+ * (1-31) como o dia desejado no mês de destino — cai no último dia do mês
+ * quando ele é mais curto que o dia âncora (ex.: 31/01 + 1 mês, âncora 31 →
+ * 28/02 ou 29/02), sem perder o dia âncora na chamada seguinte: quem chama de
+ * novo com o mesmo `diaAncora` (nunca com o dia já clampado) volta para 31 em
+ * março. Usada pela cobrança automática de assinaturas (item 1.3 do plano).
+ */
+export function adicionarMeses(data: string, meses: number, diaAncora: number): string {
+  const { ano, mes } = partesDeDataDeCalendario(data);
+  const totalDeMeses = ano * 12 + (mes - 1) + meses;
+  const novoAno = Math.floor(totalDeMeses / 12);
+  const novoMesIndiceZero = ((totalDeMeses % 12) + 12) % 12;
+  const dia = Math.min(diaAncora, ultimoDiaDoMes(novoAno, novoMesIndiceZero));
+  return `${String(novoAno).padStart(4, '0')}-${comDoisDigitos(novoMesIndiceZero + 1)}-${comDoisDigitos(dia)}`;
+}
+
+/**
+ * Diferença em dias de calendário, `ate − de` (pode ser negativo). Calculada
+ * ao meio-dia local (evita erro de 1 dia por causa do horário de verão).
+ */
+export function diasEntreDatas(de: string, ate: string): number {
+  const { ano: anoDe, mes: mesDe, dia: diaDe } = partesDeDataDeCalendario(de);
+  const { ano: anoAte, mes: mesAte, dia: diaAte } = partesDeDataDeCalendario(ate);
+  const inicioMs = new Date(anoDe, mesDe - 1, diaDe, 12, 0, 0, 0).getTime();
+  const fimMs = new Date(anoAte, mesAte - 1, diaAte, 12, 0, 0, 0).getTime();
+  return Math.round((fimMs - inicioMs) / 86_400_000);
+}
+
+/** `data` (`AAAA-MM-DD`) + `dias` (pode ser negativo). */
+export function somarDias(data: string, dias: number): string {
+  const { ano, mes, dia } = partesDeDataDeCalendario(data);
+  const instante = new Date(ano, mes - 1, dia + dias, 12, 0, 0, 0);
+  return `${String(instante.getFullYear()).padStart(4, '0')}-${comDoisDigitos(instante.getMonth() + 1)}-${comDoisDigitos(instante.getDate())}`;
+}
+
 /**
  * `true` só para uma `AAAA-MM-DD` que corresponde a um dia real do
  * calendário: rejeita mês/dia fora do intervalo (`2026-13-01`) e dia

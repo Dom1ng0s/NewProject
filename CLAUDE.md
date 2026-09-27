@@ -29,14 +29,19 @@ Webapp local-first e offline para organizar estudos, finanças e treino, com reg
 
 Reprovou duas vezes seguidas: decida você mesmo e siga.
 
-## O que NÃO fazer (custa tempo e token sem retorno neste projeto)
-- ADR novo por decisão pequena. Só para escolha que seria cara de desfazer.
-- Duas rodadas de revisão no mesmo item, ou revisão em tela/CRUD/texto.
-- E2E duplicado em Chromium — só WebKit/iPhone.
-- Teste de detalhe visual, ou cobertura de caminho que só existiria com vários usuários.
-- Relatório longo de agente. Resposta de subagente: até 10 linhas.
-- Reler a especificação inteira a cada item. Cite as seções relevantes na delegação.
-- Tratar concorrência, permissões, papéis, limites de taxa ou escala. É um app de uma pessoa em um aparelho.
+## Limites duros (D15)
+O projeto tem 4.251 linhas de ADR e 6.596 de teste para pouca funcionalidade. Isso para aqui.
+
+- **Nenhum ADR novo.** Decisão relevante vira uma linha em "Decisões" no `docs/PLANO.md`. Os 10 ADRs existentes ficam como referência, ninguém escreve o 11º.
+- **Nenhum documento de especificação por item.** O contrato cabe em 5 linhas na delegação.
+- **Teste onde erra caro, não em tudo**: regra de cálculo da seção 7, migração, e um e2e por fluxo de registro. Sem teste de tela, de texto, de marcação ou de caso que exige vários usuários.
+- **Sem validação de backup escrita à mão por módulo.** Boilerplate repetido vira função genérica no núcleo.
+- **Revisão só em cálculo, migração ou privacidade.** Uma rodada. Reprovou de novo, eu decido e sigo.
+- **Sem relatório longo.** Subagente responde em até 10 linhas; eu respondo em até 5.
+- Nada de concorrência, papéis, limites de taxa ou escala. É um app de uma pessoa em um aparelho.
+
+## Ritmo
+Agrupe: um item pequeno nunca vai sozinho para o `dev`. Feche a fase inteira em poucas chamadas grandes, não uma por item. Meta: cada resposta minha ao usuário vem com funcionalidade que ele consegue abrir na tela.
 
 ## Plataforma (decisão D1)
 PWA puro: site instalável pelo Safari/Chrome, offline. Sem app nativo, sem Capacitor, sem App Store. Avisos de assinatura e de fim de descanso aparecem dentro do app.

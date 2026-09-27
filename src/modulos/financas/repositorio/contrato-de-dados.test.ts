@@ -141,26 +141,56 @@ describe('contratoDeDadosDoFinancas.importarJson — validação de negócio', (
     expect(await snapshotDasTabelas()).toEqual(antes);
   });
 
+  function assinaturaValida(overrides: RegistroCru = {}): RegistroCru {
+    return {
+      id: 'assinatura-1',
+      createdAt: '2026-04-01T00:00:00.000Z',
+      updatedAt: '2026-04-01T00:00:00.000Z',
+      deletedAt: null,
+      nome: 'Streaming',
+      valorCentavos: 2990,
+      periodicidade: 'mensal',
+      proximaCobranca: '2026-05-01',
+      diasDeAviso: 3,
+      categoriaId: 'categoria-1',
+      diaDeCobranca: 1,
+      ...overrides,
+    };
+  }
+
   it('assinatura com periodicidade fora de "mensal"/"anual" → registroInvalido, banco intacto', async () => {
     const antes = await snapshotDasTabelas();
     await expect(
       contratoDeDadosDoFinancas.importarJson({
-        assinaturas: [
-          {
-            id: 'assinatura-1',
-            createdAt: '2026-04-01T00:00:00.000Z',
-            updatedAt: '2026-04-01T00:00:00.000Z',
-            deletedAt: null,
-            nome: 'Streaming',
-            valorCentavos: 2990,
-            periodicidade: 'semanal',
-            proximaCobranca: '2026-05-01',
-            diasDeAviso: 3,
-          },
-        ],
+        assinaturas: [assinaturaValida({ periodicidade: 'semanal' })],
       }),
     ).rejects.toMatchObject({ codigo: 'registroInvalido' });
     expect(await snapshotDasTabelas()).toEqual(antes);
+  });
+
+  it('assinatura sem categoriaId → registroInvalido, banco intacto', async () => {
+    const antes = await snapshotDasTabelas();
+    await expect(
+      contratoDeDadosDoFinancas.importarJson({
+        assinaturas: [assinaturaValida({ categoriaId: '' })],
+      }),
+    ).rejects.toMatchObject({ codigo: 'registroInvalido' });
+    expect(await snapshotDasTabelas()).toEqual(antes);
+  });
+
+  it('assinatura com diaDeCobranca fora de 1-31 → registroInvalido, banco intacto', async () => {
+    const antes = await snapshotDasTabelas();
+    await expect(
+      contratoDeDadosDoFinancas.importarJson({
+        assinaturas: [assinaturaValida({ diaDeCobranca: 32 })],
+      }),
+    ).rejects.toMatchObject({ codigo: 'registroInvalido' });
+    expect(await snapshotDasTabelas()).toEqual(antes);
+  });
+
+  it('assinatura válida é gravada como veio', async () => {
+    await contratoDeDadosDoFinancas.importarJson({ assinaturas: [assinaturaValida()] });
+    expect(await tabelaCrua('assinaturas').count()).toBe(1);
   });
 
   it('movimento de cofrinho com valorCentavos 0 → registroInvalido, banco intacto', async () => {
@@ -225,11 +255,15 @@ describe('contratoDeDadosDoFinancas.importarJson — conversão de backup antigo
 });
 
 describe('contratoDeDadosDoFinancas.exportarCsv', () => {
-  it('nomes exatos: financas-categorias.csv e financas-lancamentos.csv ("lançamentos no mínimo")', async () => {
+  it('nomes exatos: as seis tabelas do pilar (itens 1.1/1.3/1.5)', async () => {
     const arquivos = await contratoDeDadosDoFinancas.exportarCsv();
     expect(arquivos.map((a) => a.nome)).toEqual([
       'financas-categorias.csv',
       'financas-lancamentos.csv',
+      'financas-assinaturas.csv',
+      'financas-usos-de-assinatura.csv',
+      'financas-cofrinhos.csv',
+      'financas-movimentos-de-cofrinho.csv',
     ]);
   });
 

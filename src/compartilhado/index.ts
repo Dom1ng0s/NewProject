@@ -5,6 +5,10 @@ export {
   dataDeCalendarioDe,
   hojeEmDataDeCalendario,
   ehDataDeCalendarioValida,
+  ultimoDiaDoMes,
+  adicionarMeses,
+  diasEntreDatas,
+  somarDias,
 } from './datas';
 export { lerHorasEmMinutos, formatarMinutosEmHoras } from './duracao';
 export { lerInteiro } from './numeros';

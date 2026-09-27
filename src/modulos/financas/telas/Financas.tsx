@@ -56,6 +56,10 @@ export function Financas() {
           </Link>
         </div>
         <Link to="/financas/categorias">{t.linkCategorias}</Link>
+        {' · '}
+        <Link to="/financas/assinaturas">{t.linkAssinaturas}</Link>
+        {' · '}
+        <Link to="/financas/cofrinhos">{t.linkCofrinhos}</Link>
       </section>
 
       <section className={estilos['secao']}>

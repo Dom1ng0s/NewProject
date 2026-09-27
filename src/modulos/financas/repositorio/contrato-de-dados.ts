@@ -17,12 +17,8 @@ import type { DadosDeCofrinho, DadosDeMovimentoDeCofrinho } from '../dominio/cof
  * O financas como módulo do backup (mesmo padrão de
  * `src/modulos/nucleo/repositorio/contrato-de-dados.ts`, ADR 0006, seção
  * 4.3): as seis tabelas do pilar entram inteiras no JSON (inclusive
- * soft-deleted); só `categorias` e `lancamentos` — as duas com tela nesta
- * entrega (item 1.1) — saem em CSV (contrato da tarefa: "lançamentos no
- * mínimo"). `assinaturas`/`usosDeAssinatura`/`cofrinhos`/`movimentosDeCofrinho`
- * só ganham tela nos itens 1.3 e 1.5; aqui elas só participam do
- * backup/apagar-tudo para o schema não ficar invisível para quem restaura um
- * arquivo com essas tabelas preenchidas por uma versão futura do app.
+ * soft-deleted) e em CSV (item 1.3/1.5: assinaturas, usos, cofrinhos e
+ * movimentos ganharam tela e entram no CSV junto de categorias/lançamentos).
  */
 
 interface DadosDeCategoria {
@@ -193,6 +189,27 @@ function validarLinhaDeAssinatura(item: unknown, indice: number): RegistroDeAssi
     throw new ErroDeBackup(
       'registroInvalido',
       `assinaturas[${String(indice)}].diasDeAviso invalido.`,
+    );
+  }
+
+  const categoriaId = item['categoriaId'];
+  const diaDeCobranca = item['diaDeCobranca'];
+
+  if (typeof categoriaId !== 'string' || categoriaId === '') {
+    throw new ErroDeBackup(
+      'registroInvalido',
+      `assinaturas[${String(indice)}].categoriaId invalido.`,
+    );
+  }
+  if (
+    typeof diaDeCobranca !== 'number' ||
+    !Number.isInteger(diaDeCobranca) ||
+    diaDeCobranca < 1 ||
+    diaDeCobranca > 31
+  ) {
+    throw new ErroDeBackup(
+      'registroInvalido',
+      `assinaturas[${String(indice)}].diaDeCobranca invalido.`,
     );
   }
 
@@ -412,14 +429,84 @@ const COLUNAS_DE_LANCAMENTOS: readonly ColunaCsv<RegistroDeLancamento>[] = [
   { titulo: 'assinaturaId', valor: (r) => r.assinaturaId },
 ];
 
-/** Só linhas ativas (ADR 0006, seção 3.3), ordenadas por `id`. "Lançamentos no mínimo" (contrato da tarefa). */
+const COLUNAS_DE_ASSINATURAS: readonly ColunaCsv<RegistroDeAssinatura>[] = [
+  { titulo: 'id', valor: (r) => r.id },
+  { titulo: 'createdAt', valor: (r) => r.createdAt },
+  { titulo: 'updatedAt', valor: (r) => r.updatedAt },
+  { titulo: 'nome', valor: (r) => r.nome },
+  { titulo: 'valorCentavos', valor: (r) => r.valorCentavos },
+  { titulo: 'periodicidade', valor: (r) => r.periodicidade },
+  { titulo: 'proximaCobranca', valor: (r) => r.proximaCobranca },
+  { titulo: 'diasDeAviso', valor: (r) => r.diasDeAviso },
+  { titulo: 'categoriaId', valor: (r) => r.categoriaId },
+  { titulo: 'diaDeCobranca', valor: (r) => r.diaDeCobranca },
+];
+
+const COLUNAS_DE_USOS_DE_ASSINATURA: readonly ColunaCsv<RegistroDeUsoDeAssinatura>[] = [
+  { titulo: 'id', valor: (r) => r.id },
+  { titulo: 'createdAt', valor: (r) => r.createdAt },
+  { titulo: 'updatedAt', valor: (r) => r.updatedAt },
+  { titulo: 'assinaturaId', valor: (r) => r.assinaturaId },
+  { titulo: 'data', valor: (r) => r.data },
+];
+
+const COLUNAS_DE_COFRINHOS: readonly ColunaCsv<RegistroDeCofrinho>[] = [
+  { titulo: 'id', valor: (r) => r.id },
+  { titulo: 'createdAt', valor: (r) => r.createdAt },
+  { titulo: 'updatedAt', valor: (r) => r.updatedAt },
+  { titulo: 'nome', valor: (r) => r.nome },
+  { titulo: 'alvoCentavos', valor: (r) => r.alvoCentavos },
+  { titulo: 'prazo', valor: (r) => r.prazo },
+  { titulo: 'criadoEm', valor: (r) => r.criadoEm },
+];
+
+const COLUNAS_DE_MOVIMENTOS_DE_COFRINHO: readonly ColunaCsv<RegistroDeMovimentoDeCofrinho>[] = [
+  { titulo: 'id', valor: (r) => r.id },
+  { titulo: 'createdAt', valor: (r) => r.createdAt },
+  { titulo: 'updatedAt', valor: (r) => r.updatedAt },
+  { titulo: 'cofrinhoId', valor: (r) => r.cofrinhoId },
+  { titulo: 'valorCentavos', valor: (r) => r.valorCentavos },
+  { titulo: 'data', valor: (r) => r.data },
+];
+
+/** Só linhas ativas (ADR 0006, seção 3.3), ordenadas por `id`. As seis tabelas do pilar (itens 1.1/1.3/1.5). */
 async function exportarCsv(): Promise<readonly ArquivoCsv[]> {
-  const categorias = ordenarPorId(apenasAtivos(await tabelaDeCategorias().toArray()));
-  const lancamentos = ordenarPorId(apenasAtivos(await tabelaDeLancamentos().toArray()));
+  const [
+    categoriasCruas,
+    lancamentosCrus,
+    assinaturasCruas,
+    usosDeAssinaturaCrus,
+    cofrinhosCrus,
+    movimentosDeCofrinhoCrus,
+  ] = await Promise.all([
+    tabelaDeCategorias().toArray(),
+    tabelaDeLancamentos().toArray(),
+    tabelaDeAssinaturas().toArray(),
+    tabelaDeUsosDeAssinatura().toArray(),
+    tabelaDeCofrinhos().toArray(),
+    tabelaDeMovimentosDeCofrinho().toArray(),
+  ]);
+
+  const categorias = ordenarPorId(apenasAtivos(categoriasCruas));
+  const lancamentos = ordenarPorId(apenasAtivos(lancamentosCrus));
+  const assinaturas = ordenarPorId(apenasAtivos(assinaturasCruas));
+  const usosDeAssinatura = ordenarPorId(apenasAtivos(usosDeAssinaturaCrus));
+  const cofrinhos = ordenarPorId(apenasAtivos(cofrinhosCrus));
+  const movimentosDeCofrinho = ordenarPorId(apenasAtivos(movimentosDeCofrinhoCrus));
 
   return [
     { nome: 'financas-categorias.csv', conteudo: montarCsv(COLUNAS_DE_CATEGORIAS, categorias) },
     { nome: 'financas-lancamentos.csv', conteudo: montarCsv(COLUNAS_DE_LANCAMENTOS, lancamentos) },
+    { nome: 'financas-assinaturas.csv', conteudo: montarCsv(COLUNAS_DE_ASSINATURAS, assinaturas) },
+    {
+      nome: 'financas-usos-de-assinatura.csv',
+      conteudo: montarCsv(COLUNAS_DE_USOS_DE_ASSINATURA, usosDeAssinatura),
+    },
+    { nome: 'financas-cofrinhos.csv', conteudo: montarCsv(COLUNAS_DE_COFRINHOS, cofrinhos) },
+    {
+      nome: 'financas-movimentos-de-cofrinho.csv',
+      conteudo: montarCsv(COLUNAS_DE_MOVIMENTOS_DE_COFRINHO, movimentosDeCofrinho),
+    },
   ];
 }
 

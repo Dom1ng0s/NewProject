@@ -40,8 +40,14 @@ function compararDoMaisRecente(a: Lancamento, b: Lancamento): number {
   return a.id < b.id ? 1 : -1;
 }
 
-/** Instante ISO ao meio-dia local do dia informado — evita que a conversão de volta (`dataDeCalendarioDe`) caia no dia errado perto da virada de fuso. */
-function instanteAoMeioDiaLocal(dataAaaaMmDd: string): string {
+/**
+ * Instante ISO ao meio-dia local do dia informado — evita que a conversão de
+ * volta (`dataDeCalendarioDe`) caia no dia errado perto da virada de fuso.
+ * Exportada para a cobrança automática de assinaturas (item 1.3), que também
+ * registra `financas.lancamentoRegistrado` com `ocorridaEm` na data exata da
+ * cobrança vencida, não em "agora".
+ */
+export function instanteAoMeioDiaLocal(dataAaaaMmDd: string): string {
   const [anoTexto, mesTexto, diaTexto] = dataAaaaMmDd.split('-');
   const data = new Date(Number(anoTexto), Number(mesTexto) - 1, Number(diaTexto), 12, 0, 0, 0);
   return data.toISOString();

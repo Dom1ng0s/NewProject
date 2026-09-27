@@ -9,10 +9,14 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  adicionarMeses,
   agoraEmIso,
   dataDeCalendarioDe,
+  diasEntreDatas,
   ehDataDeCalendarioValida,
   hojeEmDataDeCalendario,
+  somarDias,
+  ultimoDiaDoMes,
 } from './datas';
 
 describe('dataDeCalendarioDe', () => {
@@ -110,5 +114,67 @@ describe('ehDataDeCalendarioValida', () => {
     expect(ehDataDeCalendarioValida('21/09/2026')).toBe(false);
     expect(ehDataDeCalendarioValida('2026-09-21T00:00:00.000Z')).toBe(false);
     expect(ehDataDeCalendarioValida('2026-9-1')).toBe(false);
+  });
+});
+
+describe('ultimoDiaDoMes', () => {
+  it('mês de 31, 30, 28 e 29 (bissexto) dias', () => {
+    expect(ultimoDiaDoMes(2026, 0)).toBe(31); // janeiro
+    expect(ultimoDiaDoMes(2026, 3)).toBe(30); // abril
+    expect(ultimoDiaDoMes(2026, 1)).toBe(28); // fevereiro, ano comum
+    expect(ultimoDiaDoMes(2028, 1)).toBe(29); // fevereiro, ano bissexto
+  });
+});
+
+describe('adicionarMeses — cobrança automática de assinaturas (item 1.3)', () => {
+  it('mês comum: soma o mês mantendo o dia âncora', () => {
+    expect(adicionarMeses('2026-04-10', 1, 10)).toBe('2026-05-10');
+  });
+
+  it('dia âncora 31 cai no último dia de um mês mais curto, sem perder a âncora no mês seguinte', () => {
+    expect(adicionarMeses('2026-01-31', 1, 31)).toBe('2026-02-28'); // fevereiro comum
+    expect(adicionarMeses('2026-02-28', 1, 31)).toBe('2026-03-31'); // volta para 31, não fica em 28
+  });
+
+  it('dia âncora 31 em fevereiro bissexto cai em 29', () => {
+    expect(adicionarMeses('2028-01-31', 1, 31)).toBe('2028-02-29');
+  });
+
+  it('anual (12 meses) preserva o mês e o dia âncora', () => {
+    expect(adicionarMeses('2026-03-15', 12, 15)).toBe('2027-03-15');
+  });
+
+  it('vira o ano quando soma meses que ultrapassam dezembro', () => {
+    expect(adicionarMeses('2026-11-20', 2, 20)).toBe('2027-01-20');
+  });
+});
+
+describe('diasEntreDatas', () => {
+  it('mesma data: zero', () => {
+    expect(diasEntreDatas('2026-04-10', '2026-04-10')).toBe(0);
+  });
+
+  it('positivo quando "ate" é depois de "de"; negativo quando é antes', () => {
+    expect(diasEntreDatas('2026-04-10', '2026-04-15')).toBe(5);
+    expect(diasEntreDatas('2026-04-15', '2026-04-10')).toBe(-5);
+  });
+
+  it('atravessa a virada de mês corretamente', () => {
+    expect(diasEntreDatas('2026-04-28', '2026-05-02')).toBe(4);
+  });
+});
+
+describe('somarDias', () => {
+  it('soma dias dentro do mesmo mês', () => {
+    expect(somarDias('2026-04-10', 5)).toBe('2026-04-15');
+  });
+
+  it('atravessa a virada de mês e de ano', () => {
+    expect(somarDias('2026-04-29', 3)).toBe('2026-05-02');
+    expect(somarDias('2026-12-30', 3)).toBe('2027-01-02');
+  });
+
+  it('dias negativos voltam no calendário', () => {
+    expect(somarDias('2026-04-02', -3)).toBe('2026-03-30');
   });
 });
