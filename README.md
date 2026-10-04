@@ -346,6 +346,14 @@ reaproveitar um CSS ou JS antigo depois de uma edição. Os templates usam
 lugar de `{% static %}`: a tag acrescenta `?v=<data de modificação>` à URL, o
 que troca o endereço a cada alteração e dispensa recarregar com Ctrl+Shift+R.
 
+Isso resolvia metade do problema. Quem carrega a URL versionada é o **HTML**, e
+ele não tinha versão nenhuma: uma página guardada pelo navegador continuava
+pedindo o `?v=` antigo, e o CSS velho voltava junto — com cara de bug, não de
+cache (um gráfico sem as regras da faixa vira uma fileira de rótulos colados).
+Por isso o `estudos.middleware.html_sem_cache` manda `Cache-Control: no-store`
+em toda página: o app é local e de uma pessoa, renderizar de novo custa
+milissegundos. Os estáticos continuam cacheáveis, que é o que o `?v=` permite.
+
 `estilo.css` só faz `@import` dos outros arquivos, e a data dele nunca muda —
 por isso a versão usada é a **mais recente entre o arquivo e tudo que ele
 importa**, recursivamente. Sem isso, editar `telas.css` não invalidava nada e o

@@ -14,6 +14,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
+    # A pagina nunca fica em cache: era ela que carregava o ?v= antigo dos
+    # estaticos e devolvia um CSS velho com cara de bug.
+    "estudos.middleware.html_sem_cache",
 ]
 
 ROOT_URLCONF = "config.urls"
