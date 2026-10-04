@@ -42,6 +42,7 @@ urlpatterns = [
     path("api/revisoes/desfazer/", views.api_revisao_desfazer),
     path("api/cartoes/", views.api_cartoes),
     path("api/cartoes/criar/", views.api_cartao_criar),
+    path("api/topicos/<int:pk>/cartoes-da-nota/", views.api_cartoes_da_nota),
     path("api/cartoes/<int:pk>/editar/", views.api_cartao_editar),
     path("api/cartoes/<int:pk>/excluir/", views.api_cartao_excluir),
     path("api/historico/", views.api_historico),

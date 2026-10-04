@@ -638,3 +638,16 @@ kbd {
 }
 
 .atalho-teclas { display: flex; gap: var(--e1); flex: 0 0 76px; }
+
+/* Prévia dos cartões que a nota geraria; o "Conferir" não grava nada. */
+.previa-cartoes:not(:empty) {
+  margin: var(--e3) 0;
+  padding: var(--e3);
+  border: 1px dashed var(--borda);
+  border-radius: var(--raio-m);
+  background: var(--superficie-afundada);
+  max-height: 34vh;
+  overflow-y: auto;
+}
+
+.previa-cartoes .ajuda { margin: var(--e2) 0 0; }

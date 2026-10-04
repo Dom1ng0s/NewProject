@@ -21,6 +21,7 @@ from .models import (
     Topico,
 )
 from . import backup
+from .cartoes import cartoes_da_nota
 from .ical import eventos_de_ics
 from .services import (
     NadaParaDesfazer,
@@ -237,6 +238,51 @@ def api_cartao_editar(request, pk):
 def api_cartao_excluir(request, pk):
     get_object_or_404(Cartao, pk=pk).delete()
     return JsonResponse({"ok": True})
+
+
+@require_POST
+def api_cartoes_da_nota(request, pk):
+    """Transforma a nota do topico em cartoes. Com `preview`, so mostra.
+
+    O que ja existe com a mesma pergunta nao entra de novo: rodar duas vezes
+    depois de acrescentar um paragrafo cria so o que o paragrafo trouxe.
+    """
+    topico = get_object_or_404(Topico, pk=pk)
+    achados = cartoes_da_nota(topico.notas)
+
+    existentes = set(topico.cartoes.values_list("frente", flat=True))
+    novos = [c for c in achados if c["frente"] not in existentes]
+
+    if corpo(request).get("preview"):
+        return JsonResponse(
+            {
+                "ok": True,
+                "achados": achados,
+                "novos": len(novos),
+                "existentes": len(achados) - len(novos),
+            }
+        )
+
+    ultimo = topico.cartoes.order_by("-ordem").first()
+    ordem = (ultimo.ordem + 1) if ultimo else 0
+    criados = []
+    for i, cartao in enumerate(novos):
+        criados.append(
+            Cartao.objects.create(
+                topico=topico,
+                frente=cartao["frente"],
+                verso=cartao["verso"],
+                ordem=ordem + i,
+            )
+        )
+    return JsonResponse(
+        {
+            "ok": True,
+            "criados": len(criados),
+            "existentes": len(achados) - len(novos),
+            "cartoes": [c.json() for c in criados],
+        }
+    )
 
 
 # ---------------------------------------------------------------- materias

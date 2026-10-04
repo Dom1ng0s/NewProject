@@ -160,9 +160,11 @@ async function abrirNotas(topico) {
   const campoNotas = el('textarea', {
     rows: 6,
     value: topico.notas || '',
-    placeholder: 'Resumo, fórmulas, o que ficou confuso…',
+    placeholder: 'Resumo, fórmulas, o que ficou confuso… e as perguntas que o viram',
   });
   const lista = el('div', {});
+
+  const previa = el('div', { className: 'previa-cartoes' });
 
   const campoTitulo = el('input', { type: 'text', placeholder: 'Título do material' });
   const campoUrl = el('input', { type: 'url', placeholder: 'https://…' });
@@ -207,6 +209,53 @@ async function abrirNotas(topico) {
           )
         : [vazio('Nenhum link ou arquivo neste tópico.', true)])
     );
+  }
+
+  /* O resumo já é escrito; o cartão, não. Esta é a ponte: a linha com "::" ou
+     com lacuna vira cartão sem abrir outra tela. "Conferir" não grava nada,
+     como o import de .ics e o do backup. */
+  async function gerarCartoes(conferindo) {
+    try {
+      // A nota do banco é a que o servidor lê; salvar antes evita gerar sobre
+      // um texto que só existe na tela.
+      await enviar(`/api/topicos/${topico.id}/editar/`, { notas: campoNotas.value });
+      topico.notas = campoNotas.value;
+
+      const d = await enviar(`/api/topicos/${topico.id}/cartoes-da-nota/`, {
+        preview: conferindo ? 1 : 0,
+      });
+
+      if (conferindo) {
+        previa.replaceChildren(
+          d.achados.length
+            ? el('div', {}, d.achados.map((c) =>
+                el('div', { className: 'cartao-linha' }, [
+                  el('strong', { textContent: c.frente }),
+                  el('span', { className: 'verso', textContent: c.verso }),
+                ])
+              ))
+            : vazio('Nenhuma linha da nota vira cartão ainda.', true),
+          el('p', {
+            className: 'ajuda',
+            textContent: `${plural(d.novos, 'cartão novo', 'cartões novos')} · ${
+              d.existentes
+            } já existem.`,
+          })
+        );
+        return;
+      }
+
+      previa.replaceChildren();
+      avisar(
+        d.criados
+          ? `${plural(d.criados, 'cartão criado', 'cartões criados')} a partir da nota.`
+          : 'Nenhum cartão novo: a nota não tem linha que vire cartão.',
+        d.criados ? 'ok' : 'info'
+      );
+      await recarregar();
+    } catch (erro) {
+      reclamar(erro);
+    }
   }
 
   async function adicionarMaterial() {
@@ -256,6 +305,27 @@ async function abrirNotas(topico) {
   }, [
     el('h2', { textContent: `Notas de "${topico.nome}"` }),
     campoNotas,
+    el('p', {
+      className: 'ajuda',
+      textContent:
+        'Escrevendo "pergunta :: resposta" ou "{{c1::lacuna}}" no resumo, a linha ' +
+        'vira cartão sem sair daqui. Salve as notas antes de gerar.',
+    }),
+    el('div', { className: 'dialogo-acoes dialogo-acoes-partidas' }, [
+      el('button', {
+        type: 'button',
+        className: 'botao botao-discreto',
+        textContent: 'Gerar cartões da nota',
+        onclick: () => gerarCartoes(false),
+      }),
+      el('button', {
+        type: 'button',
+        className: 'botao botao-fantasma',
+        textContent: 'Conferir',
+        onclick: () => gerarCartoes(true),
+      }),
+    ]),
+    previa,
 
     el('h3', { className: 'busca-grupo', textContent: 'Material' }),
     lista,

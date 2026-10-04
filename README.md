@@ -171,6 +171,28 @@ O dashboard lista o que vence nos próximos `DIAS_PROXIMAS_AVALIACOES` dias. Uma
 avaliação cuja data já passou continua aparecendo enquanto não for marcada como
 "já aconteceu" — esquecer de fechar não pode sumir com ela da tela.
 
+## Cartões escritos dentro da nota
+
+Cadastrar cartão era uma tela à parte; resumir o assunto já é o que se faz
+naturalmente — e um resumo tem perguntas dentro dele. No diálogo de notas, duas
+sintaxes transformam a linha em cartão sem sair do texto:
+
+```
+Derivada de x² :: 2x
+O Brasil foi colônia até {{c1::1822}}
+{{c1::Tiradentes}} morreu em {{c2::1792}}
+```
+
+A primeira vira um cartão direto. A linha com lacuna vira **um cartão por
+número**: a terceira gera dois, cada um escondendo a sua parte. A lacuna aceita
+uma dica (`{{c1::Brasília::cidade}}`), que aparece no lugar do vazio.
+
+O botão **Conferir** mostra o que seria criado sem gravar nada; só o **Gerar
+cartões da nota** grava. Pergunta que já existe no tópico não entra de novo, então
+rodar de novo depois de acrescentar um parágrafo cria só o que o parágrafo
+trouxe. Linha com `::` e um dos lados vazio não vira meio cartão: não vira
+cartão. O teto é de 100 cartões por nota.
+
 ## Notas, material e busca
 
 Cada tópico guarda um **resumo livre** e o **material** de onde o assunto foi
