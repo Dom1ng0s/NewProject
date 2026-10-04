@@ -406,3 +406,32 @@ select.status { padding: 3px 6px; font-size: var(--t-xs); flex: 0 0 auto; max-wi
   justify-content: flex-end;
   margin-top: var(--e3);
 }
+
+/* =======================  continuar  =======================
+   O atalho do dashboard: tópico, motivo e o botão, numa linha só. */
+
+.continuar .continuar-corpo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3);
+  align-items: center;
+}
+
+.continuar .rotulo {
+  display: block;
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--rastro-largo);
+  color: var(--texto-suave);
+}
+
+.continuar-topico {
+  display: flex;
+  gap: var(--e2);
+  align-items: center;
+  font-size: var(--t-md);
+  margin: 2px 0;
+}
+
+.continuar .ajuda { margin: 0; }
+.continuar a.botao { text-decoration: none; }

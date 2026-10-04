@@ -55,6 +55,13 @@ No planner, o botão **Estudar agora** de um bloco abre a sessão já com o tóp
 escolhido e o foco do tamanho do bloco. Bloco sem tópico não tem de onde partir,
 e o botão fica desligado.
 
+O dashboard tem o mesmo atalho em cima de tudo: **Continuar** escolhe o tópico
+por conta própria — o bloco do planner que cobre a hora atual, com o foco do
+tamanho do que resta dele, ou, sem bloco, o tópico da última sessão — e o
+cronômetro já começa a contar quando a tela abre. Abrir o app e estar estudando
+é um clique. Sem bloco e sem nenhuma sessão, não há o que continuar e o cartão
+não aparece.
+
 ## Revisão: cartões e repetição espaçada
 
 Cada tópico pode ter **cartões** — pergunta de um lado, resposta do outro,

@@ -105,6 +105,32 @@ function desenharParadas(paradas) {
   });
 }
 
+/* "Continuar": a rotina mais repetida do dia em um clique.
+   O backend escolhe o tópico (bloco do planner de agora, ou o último estudado)
+   e o link já leva o foco pronto, com `iniciar=1` para o cronômetro começar. */
+function desenharContinuar(c) {
+  const secao = document.getElementById('continuar');
+  secao.hidden = !c;
+  if (!c) return;
+
+  const alvo = document.getElementById('continuar-corpo');
+  alvo.replaceChildren(
+    el('div', { className: 'cresce' }, [
+      el('span', { className: 'rotulo', textContent: 'Continuar' }),
+      el('strong', { className: 'continuar-topico' }, [
+        ponto(c.cor),
+        el('span', { textContent: c.materia ? `${c.materia} · ${c.topico}` : c.topico }),
+      ]),
+      el('p', { className: 'ajuda', textContent: `${c.motivo} · foco de ${c.minutos} min` }),
+    ]),
+    el('a', {
+      className: 'botao',
+      href: `/sessao/?topico_id=${c.topico_id}&minutos=${c.minutos}&iniciar=1`,
+      textContent: 'Estudar agora',
+    })
+  );
+}
+
 async function carregar() {
   const d = await pegar('/api/dashboard/');
 
@@ -125,6 +151,7 @@ async function carregar() {
     'Nenhuma atrasada.'
   );
 
+  desenharContinuar(d.continuar);
   desenharAvaliacoes(d.avaliacoes);
   desenharDominio(d.materias);
   desenharParadas(d.materias_paradas);

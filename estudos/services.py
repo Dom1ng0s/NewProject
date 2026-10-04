@@ -162,6 +162,7 @@ def dados_dashboard():
         ),
         "materias": por_materia,
         "materias_paradas": paradas,
+        "continuar": continuar_de_onde_parou(),
     }
 
 
@@ -362,4 +363,64 @@ def dados_historico(dias=DIAS_DO_MAPA):
         "media_por_dia_ativo": round(total_minutos / dias_ativos / 60, 1) if dias_ativos else 0,
         "semanas": semanas,
         "topicos": topicos,
+    }
+
+
+# ---------------------------------------------------------------- continuar
+
+
+# Piso do foco sugerido. Um bloco que esta acabando ainda rende um pomodoro
+# curto; sugerir "1 minuto" seria o mesmo que nao sugerir nada.
+MINIMO_DE_FOCO_MIN = 5
+
+
+def bloco_de_agora(agora=None):
+    """O bloco do planner que cobre este instante, ou None.
+
+    Olha so os blocos com topico: um compromisso sem topico (academia, aula
+    sem conteudo marcado) ocupa a grade mas nao diz o que estudar.
+    """
+    agora = agora or timezone.localtime()
+    minuto = agora.hour * 60 + agora.minute
+    for item in blocos_da_semana(segunda_da_semana(agora.date())):
+        if item["pulado"] or not item["topico_id"]:
+            continue
+        if item["dia_semana"] != agora.weekday():
+            continue
+        if item["inicio_min"] <= minuto < item["inicio_min"] + item["duracao_min"]:
+            return item, item["inicio_min"] + item["duracao_min"] - minuto
+    return None, 0
+
+
+def continuar_de_onde_parou(agora=None):
+    """O topico que o dashboard oferece em um clique, com o motivo da escolha.
+
+    Primeiro o bloco do planner que cobre a hora atual -- se a agenda diz o que
+    e agora, ela ganha. Sem bloco, o topico da ultima sessao: na pratica, e o
+    que voce estava estudando. Sem nenhuma sessao, nao ha o que continuar.
+    """
+    config = Configuracao.atual()
+    bloco, restante = bloco_de_agora(agora)
+    if bloco:
+        return {
+            "topico_id": bloco["topico_id"],
+            "topico": bloco["topico"],
+            "materia": bloco["materia"] or "",
+            "cor": bloco["cor"],
+            "minutos": max(restante, MINIMO_DE_FOCO_MIN),
+            "motivo": f"agora no planner, até {bloco['hora_fim']}",
+        }
+
+    ultima = (
+        SessaoEstudo.objects.select_related("topico__materia").order_by("-inicio").first()
+    )
+    if not ultima:
+        return None
+    return {
+        "topico_id": ultima.topico_id,
+        "topico": ultima.topico.nome,
+        "materia": ultima.topico.materia.nome,
+        "cor": ultima.topico.materia.cor,
+        "minutos": config.pomodoro_foco_min,
+        "motivo": "o que você estudou por último",
     }

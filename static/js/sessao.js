@@ -368,12 +368,15 @@ document.getElementById('modo').value = estado ? estado.modo : 'livre';
 document.getElementById('min-foco').value = estado ? estado.foco : painel.dataset.foco;
 document.getElementById('min-pausa').value = estado ? estado.pausa : painel.dataset.pausa;
 
-/* Vindo do planner (/sessao/?topico_id=&minutos=): já deixa o tópico escolhido
-   e o foco do tamanho do bloco, para o estudo começar em um clique. */
+/* Vindo do planner ou do "Continuar" do dashboard
+   (/sessao/?topico_id=&minutos=&iniciar=1): já deixa o tópico escolhido e o
+   foco do tamanho do bloco, e com `iniciar` o cronômetro já começa — é o que
+   torna "abrir o app e estar estudando" um clique só. */
 function aplicarAtalhoDoPlanner() {
   const parametros = new URLSearchParams(location.search);
   const topico = parametros.get('topico_id');
   const minutos = Number(parametros.get('minutos'));
+  const comecar = parametros.get('iniciar') === '1';
 
   if (topico && !estado) {
     const sel = document.getElementById('topico');
@@ -387,6 +390,10 @@ function aplicarAtalhoDoPlanner() {
     // A URL já cumpriu o papel; some com ela para um F5 não repetir o atalho.
     history.replaceState(null, '', location.pathname);
   }
+
+  // Só começa sozinho quando há tópico e nada rodando: nunca por cima de um
+  // cronômetro em andamento, e nunca sem saber o que está sendo estudado.
+  if (comecar && topico && !estado) document.getElementById('iniciar').click();
 }
 
 preencherSeletores()

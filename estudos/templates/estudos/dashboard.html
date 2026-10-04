@@ -5,6 +5,11 @@
 {% block legenda %}<p class="legenda">O que precisa de atenção hoje e como foi a semana.</p>{% endblock %}
 
 {% block corpo %}
+{# Um clique entre abrir o app e estar estudando; o JS esconde se nao houver o que continuar. #}
+<section class="painel-foco continuar" id="continuar" hidden>
+  <div class="continuar-corpo" id="continuar-corpo"></div>
+</section>
+
 <div class="metricas">
   <section class="metrica metrica-principal">
     <span class="rotulo">Revisões de hoje</span>
