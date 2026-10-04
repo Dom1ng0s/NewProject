@@ -147,11 +147,13 @@ não o derruba de volta para o começo.
 ## Carga futura
 
 O dashboard mostra, numa barra por dia, as **próximas 4 semanas** de revisões já
-marcadas — o que o SM-2 criou e ainda não venceu. Olhar só para trás (o
+marcadas — o que o SM-2 criou e ainda não venceu. Dia sem revisão é um traço na
+linha de base, não uma caixa vazia (um mês tranquilo não pode parecer defeito),
+a linha tracejada é o teto diário e as datas aparecem de semana em semana. Olhar só para trás (o
 histórico) diz o que foi feito; isto diz o que vem, que é sobre o que ainda dá
 para decidir. O que já venceu e não foi feito pesa no dia de hoje: atrasada não
-some do planejamento. A altura é relativa ao pico do período, dia no teto fica
-vermelho e dia com prova ganha a moldura do acento.
+some do planejamento. A altura cabe o pico e o teto, dia no teto fica vermelho e dia com prova ganha
+um pé mais escuro.
 
 Abaixo vêm os **alertas de colisão**: quando a semana anterior a uma prova tem
 mais revisões do que o teto diário permitiria naqueles sete dias, o aviso diz o

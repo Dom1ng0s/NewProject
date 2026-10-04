@@ -133,41 +133,64 @@ function desenharContinuar(c) {
 
 /* Carga futura: o que o SM-2 já marcou para os próximos dias.
    O histórico olha para trás; sem isto, a dívida das revisões só aparece no dia
-   em que ela vence — e aí não há mais o que decidir. */
+   em que ela vence — e aí não há mais o que decidir.
+
+   Duas faixas alinhadas: as barras em cima, as datas embaixo. O dia vazio é um
+   traço na linha de base, não uma caixa vazia: 26 caixas vazias em 28 dias
+   parecem defeito, não um mês tranquilo. */
 function desenharCarga(d) {
   document.getElementById('n-carga').textContent = d.total;
   document.getElementById('carga-resumo').textContent = d.teto
     ? `pico de ${plural(d.pico, 'revisão', 'revisões')} num dia · teto de ${d.teto}/dia`
     : `pico de ${plural(d.pico, 'revisão', 'revisões')} num dia · sem teto`;
 
-  const alvo = document.getElementById('carga');
-  alvo.replaceChildren();
+  // A escala cabe o pico e o teto: a linha do teto tem de aparecer na faixa.
+  const escala = Math.max(d.pico, d.teto || 0, 1);
 
-  // A altura é relativa ao pico do período: uma semana fraca continua legível.
-  const teto = Math.max(d.pico, d.teto || 0, 1);
+  const barras = el('div', { className: 'carga-barras' });
+  const rotulos = el('div', { className: 'carga-rotulos' });
 
-  d.dias.forEach((dia) => {
-    const altura = Math.round((dia.revisoes * 100) / teto);
+  // A linha do teto é a leitura toda: barra que a encosta é dia cheio.
+  if (d.teto) {
+    barras.append(
+      el('div', {
+        className: 'carga-teto',
+        style: { bottom: (d.teto * 100) / escala + '%' },
+        title: `teto de ${d.teto} por dia`,
+      })
+    );
+  }
+
+  d.dias.forEach((dia, i) => {
     const rotulo =
-      `${dataBr(dia.data)}: ${plural(dia.revisoes, 'revisão', 'revisões')}` +
+      `${dataBr(dia.data)} (${DIAS_CURTOS[dia.dia_semana]}): ` +
+      plural(dia.revisoes, 'revisão', 'revisões') +
       (dia.provas.length ? ` · ${dia.provas.join(', ')}` : '');
 
-    alvo.append(
+    barras.append(
       el('div', {
         className:
           'carga-dia' +
+          (dia.revisoes ? '' : ' carga-vazio') +
           (dia.cheio ? ' carga-cheio' : '') +
           (dia.provas.length ? ' carga-prova' : ''),
+        style: { '--altura': (dia.revisoes * 100) / escala + '%' },
         title: rotulo,
         'aria-label': rotulo,
-      }, [
-        el('div', { className: 'carga-barra' }, [
-          el('div', { className: 'carga-preenchida', style: { height: altura + '%' } }),
-        ]),
-        el('span', { className: 'carga-dia-rotulo', textContent: DIAS_CURTOS[dia.dia_semana][0] }),
-      ])
+      })
+    );
+
+    // Uma data por semana; 28 letras seguidas não são régua, são ruído.
+    const [, mes, numero] = dia.data.split('-');
+    rotulos.append(
+      el('span', {
+        className: 'carga-rotulo',
+        textContent: i % 7 === 0 ? `${numero}/${mes}` : '',
+      })
     );
   });
+
+  document.getElementById('carga').replaceChildren(barras, rotulos);
 }
 
 /* Colisão: a semana antes da prova não cabe na agenda. Dizer o excedente é o que

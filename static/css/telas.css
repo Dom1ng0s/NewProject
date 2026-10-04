@@ -417,6 +417,14 @@ select.status { padding: 3px 6px; font-size: var(--t-xs); flex: 0 0 auto; max-wi
   align-items: center;
 }
 
+/* Rótulo, tópico e motivo são três linhas: o grid garante o respiro mesmo que
+   algum `display` de fora tente deixá-los na mesma linha. */
+.continuar .continuar-corpo > .cresce {
+  display: grid;
+  gap: var(--e2);
+  justify-items: start;
+}
+
 .continuar .rotulo {
   display: block;
   font-size: var(--t-xs);
@@ -430,7 +438,8 @@ select.status { padding: 3px 6px; font-size: var(--t-xs); flex: 0 0 auto; max-wi
   gap: var(--e2);
   align-items: center;
   font-size: var(--t-md);
-  margin: 2px 0;
+  line-height: 1.3;
+  margin: 0;
 }
 
 .continuar .ajuda { margin: 0; }
@@ -486,51 +495,66 @@ select.status { padding: 3px 6px; font-size: var(--t-xs); flex: 0 0 auto; max-wi
 }
 
 /* =======================  carga futura  =======================
-   Uma barra por dia, altura relativa ao pico do período. O dia no teto fica
-   vermelho e o dia com prova ganha um traço embaixo. */
+   Duas faixas alinhadas: as barras e, embaixo, uma data por semana. O dia sem
+   revisão é um traço na linha de base -- um mês tranquilo não pode parecer
+   defeito. A linha tracejada é o teto diário. */
 
-.carga {
+.carga { margin-bottom: var(--e4); }
+
+.carga-barras,
+.carga-rotulos {
   display: flex;
   gap: 3px;
   align-items: flex-end;
-  margin-bottom: var(--e4);
-  overflow-x: auto;
+}
+
+.carga-barras {
+  position: relative;
+  height: 80px;
+  padding-bottom: 1px;
+  border-bottom: 1px solid var(--borda);
 }
 
 .carga-dia {
-  display: grid;
-  gap: 2px;
-  justify-items: center;
   flex: 1 1 0;
-  min-width: 9px;
-}
-
-.carga-barra {
-  display: flex;
-  align-items: flex-end;
-  width: 100%;
-  height: 72px;
-  border-radius: var(--raio-p);
-  background: var(--superficie-afundada);
-  border: 1px solid var(--borda-suave);
-  overflow: hidden;
-}
-
-.carga-preenchida {
-  width: 100%;
-  min-height: 0;
-  background: var(--acento);
+  min-width: 6px;
+  height: var(--altura, 0%);
+  min-height: 2px;
   border-radius: var(--raio-p) var(--raio-p) 0 0;
+  background: var(--acento);
 }
 
-.carga-cheio .carga-preenchida { background: var(--alerta); }
+/* Dia sem nada: fica o traço da linha de base, e não uma caixa vazia. */
+.carga-vazio { background: var(--borda); }
+.carga-cheio { background: var(--alerta); }
 
-.carga-dia-rotulo {
+/* Dia de prova: a coluna inteira ganha um pé, mesmo sem revisão marcada. */
+.carga-prova {
+  box-shadow: 0 2px 0 0 var(--acento);
+  background: var(--acento-forte);
+}
+
+/* O teto do dia, por cima das barras: barra que encosta é dia cheio. */
+.carga-teto {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed var(--borda-forte);
+  pointer-events: none;
+}
+
+.carga-rotulos {
+  margin-top: var(--e1);
+  font-family: var(--fonte-mono);
   font-size: 9px;
   color: var(--texto-tenue);
-  font-family: var(--fonte-mono);
 }
 
-/* Dia de prova: a barra ganha a moldura do acento, e o rótulo o sublinha. */
-.carga-prova .carga-barra { border-color: var(--acento); border-width: 1px 1px 2px; }
-.carga-prova .carga-dia-rotulo { color: var(--acento); font-weight: 700; }
+.carga-rotulo {
+  flex: 1 1 0;
+  min-width: 6px;
+  /* A data é mais larga que a coluna: fica livre para transbordar à direita. */
+  overflow: visible;
+  white-space: nowrap;
+}
+
