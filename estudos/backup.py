@@ -22,17 +22,19 @@ from .models import (
     Material,
     Materia,
     OcorrenciaPulada,
+    RespostaRevisao,
     Revisao,
     SessaoEstudo,
     Topico,
 )
 
-VERSAO = 6
+VERSAO = 7
 
 # Versoes antigas que ainda sabemos ler. Cada uma e de antes de uma secao nova
-# (1: avaliacoes, 2: cartoes, 3: notas e material, 4: interrupcoes, 5: ajustes):
-# o arquivo simplesmente nao tem a secao ou o campo, e importar continua indo.
-VERSOES_ACEITAS = (1, 2, 3, 4, 5, 6)
+# (1: avaliacoes, 2: cartoes, 3: notas e material, 4: interrupcoes, 5: ajustes,
+# 6: log de respostas): o arquivo simplesmente nao tem a secao ou o campo, e
+# importar continua indo.
+VERSOES_ACEITAS = (1, 2, 3, 4, 5, 6, 7)
 
 # Quanto o arquivo pode ter de texto. Um backup real tem alguns KB; o limite
 # existe para o navegador nao mandar um arquivo trocado de 500 MB. Fica abaixo
@@ -141,6 +143,27 @@ def exportar():
                 "concluida": a.concluida,
             }
             for a in Avaliacao.objects.prefetch_related("topicos")
+        ],
+        # O log das respostas: a unica parte do banco que nao se recalcula. A
+        # facilidade de hoje da para ver no topico; "errei isto tres vezes em
+        # maio" existe so aqui.
+        "respostas": [
+            {
+                "topico_id": r.topico_id,
+                "qualidade": r.qualidade,
+                "respondida_em": timezone.localtime(r.respondida_em).isoformat(
+                    timespec="seconds"
+                ),
+                "data_prevista": r.data_prevista.isoformat(),
+                "atraso_dias": r.atraso_dias,
+                "status_antes": r.status_antes,
+                "facilidade_antes": r.facilidade_antes,
+                "intervalo_antes": r.intervalo_antes,
+                "acertos_antes": r.acertos_antes,
+                "facilidade_depois": r.facilidade_depois,
+                "intervalo_depois": r.intervalo_depois,
+            }
+            for r in RespostaRevisao.objects.all()
         ],
         "revisoes": [
             {
@@ -313,6 +336,7 @@ def importar(dados, substituir=False):
     blocos = _lista(dados, "blocos")
     avaliacoes = _lista(dados, "avaliacoes")
     revisoes = _lista(dados, "revisoes")
+    respostas = _lista(dados, "respostas")
 
     if substituir:
         # Materia em cascata leva topico, sessao e revisao; bloco solto (sem
@@ -332,6 +356,7 @@ def importar(dados, substituir=False):
             "blocos",
             "avaliacoes",
             "revisoes",
+            "respostas",
         )
     }
     repetidos = dict(resumo)
@@ -553,6 +578,39 @@ def importar(dados, substituir=False):
         )
         resumo["revisoes"] += 1
 
+    for i, item in enumerate(respostas, 1):
+        onde = f"resposta {i}"
+        topico = _referencia(item, "topico_id", onde, mapa_topicos)
+        respondida_em = _momento(item, "respondida_em", onde)
+        # Duas respostas do mesmo topico no mesmo segundo seriam a mesma
+        # resposta importada duas vezes.
+        if RespostaRevisao.objects.filter(
+            topico=topico,
+            respondida_em__gte=respondida_em.replace(microsecond=0),
+            respondida_em__lt=respondida_em.replace(microsecond=0) + timedelta(seconds=1),
+        ).exists():
+            repetidos["respostas"] += 1
+            continue
+        RespostaRevisao.objects.create(
+            topico=topico,
+            revisao=None,
+            qualidade=_inteiro(item, "qualidade", onde, minimo=0, maximo=5),
+            respondida_em=respondida_em,
+            data_prevista=_data(item, "data_prevista", onde),
+            atraso_dias=_inteiro(item, "atraso_dias", onde, minimo=0, maximo=36500)
+            if "atraso_dias" in item
+            else 0,
+            status_antes=_escolha(
+                item, "status_antes", onde, dict(Topico.STATUS), Topico.NAO_INICIADO
+            ),
+            facilidade_antes=_decimal(item, "facilidade_antes", onde),
+            intervalo_antes=_inteiro(item, "intervalo_antes", onde, minimo=0, maximo=36500),
+            acertos_antes=_inteiro(item, "acertos_antes", onde, minimo=0, maximo=10000),
+            facilidade_depois=_decimal(item, "facilidade_depois", onde),
+            intervalo_depois=_inteiro(item, "intervalo_depois", onde, minimo=0, maximo=36500),
+        )
+        resumo["respostas"] += 1
+
     if ajustes:
         config = Configuracao.atual()
         for nome in [c.name for c in Configuracao._meta.fields if c.name != "id"]:
@@ -581,4 +639,5 @@ def resumir(dados):
         "blocos": len(_lista(dados, "blocos")),
         "avaliacoes": len(_lista(dados, "avaliacoes")),
         "revisoes": len(_lista(dados, "revisoes")),
+        "respostas": len(_lista(dados, "respostas")),
     }

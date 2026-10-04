@@ -96,6 +96,12 @@ que decide quando o tópico volta, pelo SM-2:
 - Errou: a escada volta ao primeiro degrau e a facilidade cai, mas nunca abaixo
   de `FACILIDADE_MINIMA`.
 
+**Log das respostas.** Cada nota dada vira uma linha em `RespostaRevisao`, com o
+estado do tópico antes e depois: a nota, o atraso em dias, a facilidade e o
+intervalo nos dois lados. O tópico guarda só a facilidade de agora; "errei este
+assunto três vezes em maio" existe apenas no log. É dele que saem os tópicos
+frágeis e é ele que permite desfazer uma nota dada por engano.
+
 **A revisão nunca acaba**: fechar uma sempre agenda a próxima, e existe no
 máximo uma pendente por tópico.
 
@@ -169,14 +175,14 @@ leitura de `.ics` e ida e volta do backup.
 ## Backup
 
 A tela `/dados/` baixa um JSON com matérias, tópicos, sessões, blocos do planner,
-cartões, notas, links de material, avaliações, revisões e os ajustes — é a única cópia dos dados, já que o banco é um SQLite local.
+cartões, notas, links de material, avaliações, revisões, o log de respostas e os ajustes — é a única cópia dos dados, já que o banco é um SQLite local.
 
 Na importação, **somar** reaproveita o que já existe (matéria pelo nome, tópico
 pelo nome dentro do mesmo pai, sessão pelo instante de início, bloco pelo título
 mais dia e horário), então reimportar o mesmo arquivo não duplica nada.
 **Substituir** apaga o banco antes de gravar. Backups das versões anteriores continuam
 sendo lidos (1: antes das avaliações, 2: antes dos cartões, 3: antes das notas,
-4: antes das interrupções, 5: antes dos ajustes).
+4: antes das interrupções, 5: antes dos ajustes, 6: antes do log de respostas).
 
 Arquivo anexado não cabe num JSON: o backup leva só os links, e a cópia dos
 anexos é copiar a pasta `arquivos/`. Um arquivo com qualquer campo

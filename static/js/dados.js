@@ -12,6 +12,7 @@ const SECOES = [
   ['blocos', 'bloco', 'blocos'],
   ['avaliacoes', 'avaliação', 'avaliações'],
   ['revisoes', 'revisão', 'revisões'],
+  ['respostas', 'resposta de revisão', 'respostas de revisão'],
 ];
 
 const campoArquivo = document.getElementById('b-arquivo');

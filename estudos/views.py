@@ -24,6 +24,7 @@ from . import backup
 from .ical import eventos_de_ics
 from .services import (
     avaliacoes_proximas,
+    registrar_resposta,
     dados_dashboard,
     dados_historico,
     dados_planner,
@@ -136,24 +137,10 @@ def api_revisao_responder(request, pk):
     if resposta not in QUALIDADES:
         return JsonResponse({"erro": "Resposta invalida."}, status=400)
 
-    qualidade = QUALIDADES[resposta]
-    revisao.feita = True
-    revisao.dificil = qualidade < 4
-    revisao.qualidade = qualidade
-    revisao.feita_em = timezone.now()
-    revisao.save()
-
+    # Fechar a revisao mexe em quatro lugares de uma vez; a conta inteira mora
+    # em services.registrar_resposta, que tambem grava o log.
+    log, nova = registrar_resposta(revisao, QUALIDADES[resposta])
     topico = revisao.topico
-    # Acertar promove o topico; errar devolve para "estudando".
-    if qualidade < 3:
-        if topico.status in (Topico.REVISADO, Topico.DOMINADO):
-            topico.status = Topico.ESTUDANDO
-            topico.save(update_fields=["status"])
-    elif topico.status in (Topico.NAO_INICIADO, Topico.ESTUDANDO):
-        topico.status = Topico.REVISADO
-        topico.save(update_fields=["status"])
-
-    nova = topico.responder(qualidade)
     return JsonResponse(
         {
             "ok": True,
@@ -161,6 +148,7 @@ def api_revisao_responder(request, pk):
             "proxima": nova.json() if nova else None,
             "intervalo_dias": topico.intervalo_dias,
             "facilidade": topico.facilidade,
+            "resposta_id": log.id,
         }
     )
 

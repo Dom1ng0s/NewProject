@@ -13,11 +13,12 @@ from estudos.models import (
     Material,
     Materia,
     OcorrenciaPulada,
+    RespostaRevisao,
     Revisao,
     SessaoEstudo,
     Topico,
 )
-from estudos.services import segunda_da_semana
+from estudos.services import registrar_resposta, segunda_da_semana
 
 from .base import CasoBase
 
@@ -683,3 +684,84 @@ class InterrupcoesNoBackup(CasoBase):
         with self.assertRaises(ValueError) as contexto:
             backup.importar(arquivo)
         self.assertIn("faixa", str(contexto.exception))
+
+
+class RespostasNoBackup(CasoBase):
+    """O log de respostas é a única parte do banco que não se recalcula."""
+
+    def responder(self, qualidade=4):
+        revisao = Revisao.objects.create(topico=self.topico, data_prevista=self.hoje)
+        registrar_resposta(revisao, qualidade)
+
+    def test_vao_e_voltam(self):
+        self.responder(5)
+        arquivo = backup.exportar()
+        Materia.objects.all().delete()
+        backup.importar(arquivo)
+
+        log = RespostaRevisao.objects.get()
+        self.assertEqual(log.qualidade, 5)
+        self.assertEqual(log.facilidade_antes, 2.5)
+        self.assertEqual(log.data_prevista, self.hoje)
+
+    def test_reimportar_o_mesmo_arquivo_nao_duplica(self):
+        self.responder()
+        arquivo = backup.exportar()
+        backup.importar(arquivo)
+        self.assertEqual(RespostaRevisao.objects.count(), 1)
+        self.assertEqual(backup.importar(arquivo)["existentes"]["respostas"], 1)
+
+    def test_duas_respostas_do_mesmo_topico_sobrevivem(self):
+        self.responder(2)
+        Revisao.objects.filter(feita=False).delete()
+        self.responder(5)
+        # O reconhecimento de repetida e pelo segundo da resposta; no teste as
+        # duas caem no mesmo segundo, o que na pratica nao acontece (ninguem le
+        # um cartao em menos de um segundo).
+        primeira = RespostaRevisao.objects.earliest("id")
+        primeira.respondida_em -= timedelta(minutes=5)
+        primeira.save(update_fields=["respondida_em"])
+
+        arquivo = backup.exportar()
+        Materia.objects.all().delete()
+        backup.importar(arquivo)
+        self.assertEqual(RespostaRevisao.objects.count(), 2)
+
+    def test_backup_da_versao_6_importa_sem_o_log(self):
+        arquivo = {
+            "app": "estudos",
+            "versao": 6,
+            "materias": [{"id": 1, "nome": "Física"}],
+            "topicos": [{"id": 1, "materia_id": 1, "nome": "Ondas"}],
+        }
+        resumo = backup.importar(arquivo)
+        self.assertEqual(RespostaRevisao.objects.count(), 0)
+        self.assertEqual(resumo["criados"]["respostas"], 0)
+
+    def test_nota_fora_da_escala_e_recusada(self):
+        arquivo = {
+            "app": "estudos",
+            "versao": backup.VERSAO,
+            "materias": [{"id": 1, "nome": "M"}],
+            "topicos": [{"id": 1, "materia_id": 1, "nome": "T"}],
+            "respostas": [
+                {
+                    "topico_id": 1,
+                    "qualidade": 9,
+                    "respondida_em": "2026-03-02T08:00:00",
+                    "data_prevista": "2026-03-02",
+                    "status_antes": "estudando",
+                    "facilidade_antes": 2.5,
+                    "intervalo_antes": 1,
+                    "acertos_antes": 0,
+                    "facilidade_depois": 2.6,
+                    "intervalo_depois": 6,
+                }
+            ],
+        }
+        with self.assertRaises(ValueError):
+            backup.importar(arquivo)
+
+    def test_o_resumo_conta_as_respostas(self):
+        self.responder()
+        self.assertEqual(backup.resumir(backup.exportar())["respostas"], 1)

@@ -488,3 +488,73 @@ class Revisao(models.Model):
             "qualidade": self.qualidade,
             "cartoes": self.topico.cartoes.count() if cartoes is None else cartoes,
         }
+
+
+class RespostaRevisao(models.Model):
+    """Uma resposta dada numa revisao, guardada para sempre.
+
+    `Revisao` guarda o estado atual e o topico guarda a facilidade de agora --
+    os dois sao uma fotografia do presente. Sem este log nao existe "os topicos
+    que eu acho que sei e nao sei", porque ninguem lembra que errou o mesmo
+    assunto tres vezes em maio.
+
+    Guarda tambem o estado do topico imediatamente antes da resposta, que e o
+    que permite desfazer uma nota dada por engano.
+    """
+
+    topico = models.ForeignKey(
+        Topico, on_delete=models.CASCADE, related_name="respostas"
+    )
+    # A revisao pode ser apagada depois (substituir no backup, por exemplo); o
+    # log sobrevive, porque o que interessa e a resposta, nao a linha da fila.
+    revisao = models.ForeignKey(
+        Revisao, null=True, blank=True, on_delete=models.SET_NULL, related_name="respostas"
+    )
+    qualidade = models.PositiveSmallIntegerField(help_text="0 a 5, a nota do SM-2")
+    respondida_em = models.DateTimeField(default=timezone.now)
+    data_prevista = models.DateField(help_text="o dia para que a revisao estava marcada")
+    atraso_dias = models.PositiveSmallIntegerField(
+        default=0, help_text="dias entre o previsto e o respondido"
+    )
+
+    # estado do topico antes da resposta -- o que desfazer devolve
+    status_antes = models.CharField(max_length=20)
+    facilidade_antes = models.FloatField()
+    intervalo_antes = models.PositiveIntegerField()
+    acertos_antes = models.PositiveIntegerField()
+
+    # e depois, para a escada ser legivel sem recalcular o SM-2 de tras para frente
+    facilidade_depois = models.FloatField()
+    intervalo_depois = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ["-respondida_em", "-id"]
+        verbose_name = "resposta de revisão"
+        verbose_name_plural = "respostas de revisão"
+
+    def __str__(self):
+        return f"{self.topico.nome}: {self.qualidade}"
+
+    @property
+    def acertou(self):
+        return self.qualidade >= 3
+
+    def json(self):
+        return {
+            "id": self.id,
+            "topico_id": self.topico_id,
+            "topico": self.topico.nome,
+            "materia": self.topico.materia.nome,
+            "cor": self.topico.materia.cor,
+            "qualidade": self.qualidade,
+            "acertou": self.acertou,
+            "respondida_em": timezone.localtime(self.respondida_em).isoformat(
+                timespec="minutes"
+            ),
+            "data_prevista": self.data_prevista.isoformat(),
+            "atraso_dias": self.atraso_dias,
+            "facilidade_antes": self.facilidade_antes,
+            "facilidade_depois": self.facilidade_depois,
+            "intervalo_antes": self.intervalo_antes,
+            "intervalo_depois": self.intervalo_depois,
+        }

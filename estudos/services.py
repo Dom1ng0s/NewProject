@@ -2,6 +2,7 @@
 
 from datetime import date, datetime, time, timedelta
 
+from django.db import transaction
 from django.db.models import Max, Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
@@ -12,6 +13,7 @@ from .models import (
     BlocoPlanejado,
     Materia,
     OcorrenciaPulada,
+    RespostaRevisao,
     Revisao,
     SessaoEstudo,
     Topico,
@@ -424,3 +426,57 @@ def continuar_de_onde_parou(agora=None):
         "minutos": config.pomodoro_foco_min,
         "motivo": "o que você estudou por último",
     }
+
+
+# ---------------------------------------------------------------- respostas
+
+
+@transaction.atomic
+def registrar_resposta(revisao, qualidade):
+    """Fecha a revisao, aplica o SM-2 e guarda a resposta no log.
+
+    Tudo o que uma resposta muda passa por aqui, numa transacao: a revisao, o
+    status do topico, o estado do SM-2 e a linha do log. Isso e o que permite
+    desfazer -- a linha do log sabe de onde o topico veio.
+    """
+    topico = revisao.topico
+    antes = {
+        "status": topico.status,
+        "facilidade": topico.facilidade,
+        "intervalo_dias": topico.intervalo_dias,
+        "acertos_seguidos": topico.acertos_seguidos,
+    }
+
+    agora = timezone.now()
+    revisao.feita = True
+    revisao.dificil = qualidade < 4
+    revisao.qualidade = qualidade
+    revisao.feita_em = agora
+    revisao.save()
+
+    # Acertar promove o topico; errar devolve para "estudando".
+    if qualidade < 3:
+        if topico.status in (Topico.REVISADO, Topico.DOMINADO):
+            topico.status = Topico.ESTUDANDO
+            topico.save(update_fields=["status"])
+    elif topico.status in (Topico.NAO_INICIADO, Topico.ESTUDANDO):
+        topico.status = Topico.REVISADO
+        topico.save(update_fields=["status"])
+
+    nova = topico.responder(qualidade)
+
+    resposta = RespostaRevisao.objects.create(
+        topico=topico,
+        revisao=revisao,
+        qualidade=qualidade,
+        respondida_em=agora,
+        data_prevista=revisao.data_prevista,
+        atraso_dias=max((timezone.localdate(agora) - revisao.data_prevista).days, 0),
+        status_antes=antes["status"],
+        facilidade_antes=antes["facilidade"],
+        intervalo_antes=antes["intervalo_dias"],
+        acertos_antes=antes["acertos_seguidos"],
+        facilidade_depois=topico.facilidade,
+        intervalo_depois=topico.intervalo_dias,
+    )
+    return resposta, nova
