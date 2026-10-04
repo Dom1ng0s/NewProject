@@ -88,7 +88,8 @@ async function revisar(r) {
     try {
       const saida = await enviar(`/api/revisoes/${r.id}/responder/`, { resposta });
       dialogo.close();
-      avisar(`${r.topico}: volta ${quando(saida.intervalo_dias)}.`, 'ok');
+      // A nota errada é fácil de dar e caro de manter: o aviso já diz a saída.
+      avisar(`${r.topico}: volta ${quando(saida.intervalo_dias)}. Errou a nota? "u" desfaz.`, 'ok');
       carregar();
     } catch (erro) {
       reclamar(erro);
@@ -193,10 +194,51 @@ function resumo(d) {
   return partes.join(' · ');
 }
 
+// ---------------------------------------------------------------- desfazer
+
+/* Um "1" no lugar de um "3" derruba a facilidade e o intervalo do tópico, e já
+   agenda a próxima revisão no dia errado. Sem desfazer, a única saída seria
+   mexer no banco. */
+async function desfazer() {
+  try {
+    const d = await enviar('/api/revisoes/desfazer/');
+    avisar(`Nota desfeita: ${d.topico} voltou para a fila.`, 'ok');
+    carregar();
+  } catch (erro) {
+    reclamar(erro);
+  }
+}
+
+const NOTA_DO_SM2 = { 0: 'errei', 3: 'difícil', 4: 'bom', 5: 'fácil' };
+
+function desenharDesfazer(ultima) {
+  const alvo = document.getElementById('desfazer');
+  alvo.replaceChildren();
+  if (!ultima) return;
+
+  alvo.append(
+    el('span', {
+      className: 'ajuda cresce',
+      textContent: `Última nota: ${ultima.materia} · ${ultima.topico} — ${
+        NOTA_DO_SM2[ultima.qualidade] || ultima.qualidade
+      }`,
+    }),
+    el('button', {
+      type: 'button',
+      className: 'botao botao-discreto botao-mini',
+      textContent: 'Desfazer (u)',
+      onclick: () => desfazer(),
+    })
+  );
+}
+
 async function carregar() {
   const d = await pegar('/api/revisoes/hoje/');
   desenhar(d.fila);
   document.getElementById('resumo-fila').textContent = resumo(d);
+  desenharDesfazer(d.ultima_resposta);
 }
+
+registrarAtalhos({ u: { rotulo: 'Desfazer a última nota', acao: desfazer } });
 
 carregar().catch(reclamar);

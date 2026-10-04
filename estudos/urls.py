@@ -38,6 +38,7 @@ urlpatterns = [
     path("api/revisoes/hoje/", views.api_revisoes_hoje),
     path("api/revisoes/<int:pk>/cartoes/", views.api_revisao_cartoes),
     path("api/revisoes/<int:pk>/responder/", views.api_revisao_responder),
+    path("api/revisoes/desfazer/", views.api_revisao_desfazer),
     path("api/cartoes/", views.api_cartoes),
     path("api/cartoes/criar/", views.api_cartao_criar),
     path("api/cartoes/<int:pk>/editar/", views.api_cartao_editar),

@@ -113,6 +113,13 @@ o SM-2 calculou. A fila de hoje também é cortada no teto, incluindo as
 atrasadas, e vem ordenada pela prova mais próxima — o corte deixa passar o que
 mais urge.
 
+**Desfazer.** Apertar `1` no lugar de `3` derrubava a facilidade, voltava o
+intervalo ao primeiro degrau e já marcava a próxima revisão no dia errado — sem
+volta a não ser pelo banco. O botão **Desfazer** no pé da fila (ou a tecla `u`)
+devolve o tópico ao estado que o log guardou, recoloca a revisão na fila no dia
+em que estava e apaga a que a resposta havia agendado. Só a resposta mais
+recente é desfeita, e desfazer de novo desfaz a anterior.
+
 **Teclado.** No diálogo de revisão, espaço revela a resposta ou vai para o
 próximo cartão, e `1` a `4` dão a nota (errei, difícil, bom, fácil). Numa fila
 de vinte, é a diferença entre revisar e não revisar. Estudar um tópico que já está no meio da escada

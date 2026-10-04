@@ -435,3 +435,13 @@ select.status { padding: 3px 6px; font-size: var(--t-xs); flex: 0 0 auto; max-wi
 
 .continuar .ajuda { margin: 0; }
 .continuar a.botao { text-decoration: none; }
+
+/* A saída para a nota dada por engano, no pé da fila de revisão. */
+.linha-desfazer {
+  display: flex;
+  gap: var(--e2);
+  align-items: center;
+  margin-top: var(--e4);
+}
+
+.linha-desfazer:empty { display: none; }

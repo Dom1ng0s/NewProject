@@ -480,3 +480,69 @@ def registrar_resposta(revisao, qualidade):
         intervalo_depois=topico.intervalo_dias,
     )
     return resposta, nova
+
+
+class NadaParaDesfazer(Exception):
+    """Nao existe resposta recente para devolver."""
+
+
+@transaction.atomic
+def desfazer_ultima_resposta():
+    """Devolve o topico ao estado de antes da ultima nota dada.
+
+    Apertar 1 em vez de 3 derrubava a escada do topico sem volta: a facilidade
+    caia, o intervalo voltava ao primeiro degrau e a proxima revisao ja estava
+    marcada. O log sabe de onde o topico veio, entao desfazer e so recolocar.
+
+    So a resposta mais recente pode ser desfeita, e desfazer de novo desfaz a
+    anterior -- a pilha tem a profundidade do log.
+    """
+    log = RespostaRevisao.objects.select_related("topico", "revisao").first()
+    if log is None:
+        raise NadaParaDesfazer("Nenhuma resposta para desfazer.")
+
+    topico = log.topico
+    topico.status = log.status_antes
+    topico.facilidade = log.facilidade_antes
+    topico.intervalo_dias = log.intervalo_antes
+    topico.acertos_seguidos = log.acertos_antes
+    topico.save(
+        update_fields=["status", "facilidade", "intervalo_dias", "acertos_seguidos"]
+    )
+
+    # A resposta agendou a proxima revisao; ela nao deveria existir.
+    pendentes = Revisao.objects.filter(topico=topico, feita=False)
+    if log.revisao_id:
+        pendentes = pendentes.exclude(pk=log.revisao_id)
+    pendentes.delete()
+
+    # E a revisao que foi fechada volta para a fila, no dia em que estava.
+    revisao = log.revisao
+    if revisao:
+        revisao.feita = False
+        revisao.dificil = False
+        revisao.qualidade = None
+        revisao.feita_em = None
+        revisao.save()
+    else:
+        # Revisao apagada depois da resposta: a fila recebe uma no lugar dela,
+        # senao o topico sai da escada sem ninguem pedir.
+        revisao = Revisao.objects.create(
+            topico=topico, data_prevista=log.data_prevista, feita=False
+        )
+
+    dados = {
+        "topico_id": topico.id,
+        "topico": topico.nome,
+        "materia": topico.materia.nome,
+        "qualidade": log.qualidade,
+        "revisao_id": revisao.id,
+    }
+    log.delete()
+    return dados
+
+
+def ultima_resposta():
+    """A resposta que o botao "Desfazer" devolveria, ou None."""
+    log = RespostaRevisao.objects.select_related("topico__materia").first()
+    return log.json() if log else None

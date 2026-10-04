@@ -23,8 +23,11 @@ from .models import (
 from . import backup
 from .ical import eventos_de_ics
 from .services import (
+    NadaParaDesfazer,
     avaliacoes_proximas,
+    desfazer_ultima_resposta,
     registrar_resposta,
+    ultima_resposta,
     dados_dashboard,
     dados_historico,
     dados_planner,
@@ -112,6 +115,8 @@ def api_revisoes_hoje(request):
             "maximo_por_dia": dados["maximo_por_dia"],
             "hoje": len(dados["revisoes_hoje"]),
             "atrasadas": len(dados["revisoes_atrasadas"]),
+            # O que o botao "Desfazer" devolveria; None esconde o botao.
+            "ultima_resposta": ultima_resposta(),
         }
     )
 
@@ -151,6 +156,20 @@ def api_revisao_responder(request, pk):
             "resposta_id": log.id,
         }
     )
+
+
+@require_POST
+def api_revisao_desfazer(request):
+    """Devolve o topico ao estado de antes da ultima nota dada.
+
+    Errar o 1 em vez do 3 nao pode ser definitivo: a nota errada derruba a
+    facilidade e o intervalo, e so o log sabe de onde o topico veio.
+    """
+    try:
+        dados = desfazer_ultima_resposta()
+    except NadaParaDesfazer as erro:
+        return JsonResponse({"erro": str(erro)}, status=400)
+    return JsonResponse({"ok": True, **dados})
 
 
 # ---------------------------------------------------------------- cartoes
