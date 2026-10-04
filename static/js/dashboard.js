@@ -131,8 +131,73 @@ function desenharContinuar(c) {
   );
 }
 
+/* Carga futura: o que o SM-2 já marcou para os próximos dias.
+   O histórico olha para trás; sem isto, a dívida das revisões só aparece no dia
+   em que ela vence — e aí não há mais o que decidir. */
+function desenharCarga(d) {
+  document.getElementById('n-carga').textContent = d.total;
+  document.getElementById('carga-resumo').textContent = d.teto
+    ? `pico de ${plural(d.pico, 'revisão', 'revisões')} num dia · teto de ${d.teto}/dia`
+    : `pico de ${plural(d.pico, 'revisão', 'revisões')} num dia · sem teto`;
+
+  const alvo = document.getElementById('carga');
+  alvo.replaceChildren();
+
+  // A altura é relativa ao pico do período: uma semana fraca continua legível.
+  const teto = Math.max(d.pico, d.teto || 0, 1);
+
+  d.dias.forEach((dia) => {
+    const altura = Math.round((dia.revisoes * 100) / teto);
+    const rotulo =
+      `${dataBr(dia.data)}: ${plural(dia.revisoes, 'revisão', 'revisões')}` +
+      (dia.provas.length ? ` · ${dia.provas.join(', ')}` : '');
+
+    alvo.append(
+      el('div', {
+        className:
+          'carga-dia' +
+          (dia.cheio ? ' carga-cheio' : '') +
+          (dia.provas.length ? ' carga-prova' : ''),
+        title: rotulo,
+        'aria-label': rotulo,
+      }, [
+        el('div', { className: 'carga-barra' }, [
+          el('div', { className: 'carga-preenchida', style: { height: altura + '%' } }),
+        ]),
+        el('span', { className: 'carga-dia-rotulo', textContent: DIAS_CURTOS[dia.dia_semana][0] }),
+      ])
+    );
+  });
+}
+
+/* Colisão: a semana antes da prova não cabe na agenda. Dizer o excedente é o que
+   transforma o aviso em decisão — antecipar doze, ou aumentar o teto. */
+function desenharColisoes(alertas) {
+  const alvo = document.getElementById('colisoes');
+  alvo.replaceChildren();
+  if (!alertas.length) return;
+
+  alertas.forEach((a) => {
+    alvo.append(
+      el('div', { className: 'item' }, [
+        ponto(a.cor),
+        el('div', { className: 'cresce' }, [
+          el('strong', { textContent: `${a.titulo} · ${a.materia}` }),
+          el('p', {
+            className: 'ajuda',
+            textContent:
+              `${plural(a.revisoes_na_semana, 'revisão', 'revisões')} na semana da prova, ` +
+              `capacidade de ${a.capacidade}. Antecipe ${a.excedente} ou aumente o teto.`,
+          }),
+        ]),
+        el('span', { className: 'etiqueta etiqueta-alerta', textContent: contagem(a) }),
+      ])
+    );
+  });
+}
+
 async function carregar() {
-  const d = await pegar('/api/dashboard/');
+  const [d, carga] = await Promise.all([pegar('/api/dashboard/'), pegar('/api/carga/')]);
 
   document.getElementById('n-hoje').textContent = d.revisoes_hoje.length;
   document.getElementById('n-atrasadas').textContent = d.revisoes_atrasadas.length;
@@ -152,6 +217,8 @@ async function carregar() {
   );
 
   desenharContinuar(d.continuar);
+  desenharCarga(carga);
+  desenharColisoes(carga.alertas);
   desenharAvaliacoes(d.avaliacoes);
   desenharDominio(d.materias);
   desenharParadas(d.materias_paradas);

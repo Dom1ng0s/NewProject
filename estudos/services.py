@@ -3,7 +3,7 @@
 from datetime import date, datetime, time, timedelta
 
 from django.db import transaction
-from django.db.models import Max, Sum
+from django.db.models import Count, Max, Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
@@ -546,3 +546,109 @@ def ultima_resposta():
     """A resposta que o botao "Desfazer" devolveria, ou None."""
     log = RespostaRevisao.objects.select_related("topico__materia").first()
     return log.json() if log else None
+
+
+# ---------------------------------------------------------------- carga futura
+
+# Horizonte do grafico de carga. Quatro semanas e o que cabe na tela sem virar
+# uma regua ilegivel, e e tambem o horizonte em que uma prova ja importa.
+DIAS_DA_CARGA = 28
+
+# Janela que o alerta de colisao olha antes de uma prova. Uma semana e o tempo
+# que sobra para revisar de verdade o que cai nela.
+DIAS_ANTES_DA_PROVA = 7
+
+
+def revisoes_por_dia_previstas(de, ate):
+    """data -> quantas revisoes pendentes estao marcadas para aquele dia.
+
+    O que venceu e nao foi feito conta no primeiro dia da faixa: atrasada nao
+    desaparece do planejamento, ela pesa hoje.
+    """
+    linhas = (
+        Revisao.objects.filter(feita=False, data_prevista__lte=ate)
+        .values("data_prevista")
+        .annotate(total=Count("id"))
+    )
+    por_dia = {}
+    for linha in linhas:
+        dia = max(linha["data_prevista"], de)
+        por_dia[dia] = por_dia.get(dia, 0) + linha["total"]
+    return por_dia
+
+
+def carga_futura(dias=DIAS_DA_CARGA):
+    """O que está marcado para os próximos dias, com as provas por cima.
+
+    O SM-2 cria divida invisivel: cada "bom" de hoje e uma revisao marcada para
+    um dia que ainda nao existe na tela. Olhar so para tras (o historico) mostra
+    o que foi feito; isto mostra o que vem, e e o que da para decidir.
+    """
+    config = Configuracao.atual()
+    hoje = timezone.localdate()
+    fim = hoje + timedelta(days=dias - 1)
+    teto = config.maximo_revisoes_por_dia
+
+    por_dia = revisoes_por_dia_previstas(hoje, fim)
+
+    provas = {}
+    for avaliacao in avaliacoes_proximas(dias=dias):
+        if avaliacao["passou"]:
+            continue
+        provas.setdefault(date.fromisoformat(avaliacao["data"]), []).append(avaliacao)
+
+    grade = []
+    for i in range(dias):
+        dia = hoje + timedelta(days=i)
+        quantas = por_dia.get(dia, 0)
+        grade.append(
+            {
+                "data": dia.isoformat(),
+                "dia_semana": dia.weekday(),
+                "revisoes": quantas,
+                "cheio": bool(teto) and quantas >= teto,
+                "provas": [a["titulo"] for a in provas.get(dia, [])],
+            }
+        )
+
+    pico = max((d["revisoes"] for d in grade), default=0)
+    return {
+        "hoje": hoje.isoformat(),
+        "dias": grade,
+        "teto": teto,
+        "total": sum(d["revisoes"] for d in grade),
+        "pico": pico,
+        "alertas": alertas_de_colisao(por_dia, provas, teto),
+    }
+
+
+def alertas_de_colisao(por_dia, provas, teto):
+    """Provas cuja semana anterior nao caberia na agenda de revisoes.
+
+    Dezenas de revisoes na semana da prova de Fisica nao e um detalhe: ou se
+    antecipa parte agora, ou o dia da prova chega com a fila estourada e a
+    escada de todos os topicos cai junto.
+    """
+    alertas = []
+    for data, lista in sorted(provas.items()):
+        inicio = data - timedelta(days=DIAS_ANTES_DA_PROVA - 1)
+        total = sum(
+            quantas for dia, quantas in por_dia.items() if inicio <= dia <= data
+        )
+        capacidade = teto * DIAS_ANTES_DA_PROVA if teto else 0
+        if not capacidade or total <= capacidade:
+            continue
+        for avaliacao in lista:
+            alertas.append(
+                {
+                    "titulo": avaliacao["titulo"],
+                    "materia": avaliacao["materia"],
+                    "cor": avaliacao["cor"],
+                    "data": avaliacao["data"],
+                    "dias": avaliacao["dias"],
+                    "revisoes_na_semana": total,
+                    "capacidade": capacidade,
+                    "excedente": total - capacidade,
+                }
+            )
+    return alertas

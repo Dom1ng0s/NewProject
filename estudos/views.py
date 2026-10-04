@@ -25,6 +25,7 @@ from .ical import eventos_de_ics
 from .services import (
     NadaParaDesfazer,
     avaliacoes_proximas,
+    carga_futura,
     desfazer_ultima_resposta,
     registrar_resposta,
     ultima_resposta,
@@ -102,6 +103,12 @@ def pagina_revisar(request):
 @require_GET
 def api_dashboard(request):
     return JsonResponse(dados_dashboard())
+
+
+@require_GET
+def api_carga(request):
+    """O que esta marcado para as proximas semanas, com as provas por cima."""
+    return JsonResponse(carga_futura())
 
 
 @require_GET

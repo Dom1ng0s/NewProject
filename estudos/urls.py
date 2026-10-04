@@ -36,6 +36,7 @@ urlpatterns = [
     path("api/blocos/<int:pk>/pular/", views.api_bloco_pular),
     path("api/planner/importar-ical/", views.api_importar_ical),
     path("api/revisoes/hoje/", views.api_revisoes_hoje),
+    path("api/carga/", views.api_carga),
     path("api/revisoes/<int:pk>/cartoes/", views.api_revisao_cartoes),
     path("api/revisoes/<int:pk>/responder/", views.api_revisao_responder),
     path("api/revisoes/desfazer/", views.api_revisao_desfazer),

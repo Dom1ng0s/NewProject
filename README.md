@@ -144,6 +144,21 @@ próximo cartão, e `1` a `4` dão a nota (errei, difícil, bom, fácil). Numa f
 de vinte, é a diferença entre revisar e não revisar. Estudar um tópico que já está no meio da escada
 não o derruba de volta para o começo.
 
+## Carga futura
+
+O dashboard mostra, numa barra por dia, as **próximas 4 semanas** de revisões já
+marcadas — o que o SM-2 criou e ainda não venceu. Olhar só para trás (o
+histórico) diz o que foi feito; isto diz o que vem, que é sobre o que ainda dá
+para decidir. O que já venceu e não foi feito pesa no dia de hoje: atrasada não
+some do planejamento. A altura é relativa ao pico do período, dia no teto fica
+vermelho e dia com prova ganha a moldura do acento.
+
+Abaixo vêm os **alertas de colisão**: quando a semana anterior a uma prova tem
+mais revisões do que o teto diário permitiria naqueles sete dias, o aviso diz o
+excedente — "52 revisões na semana da prova, capacidade de 70, antecipe 12 ou
+aumente o teto". Sem teto configurado não há capacidade para estourar, e o
+alerta não aparece.
+
 ## Provas e prazos
 
 Uma avaliação é uma prova, trabalho ou entrega com matéria, data (hora, peso e
