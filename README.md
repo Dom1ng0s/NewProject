@@ -35,6 +35,20 @@ para instalar: é o mesmo app, no navegador do celular.
 
 `popular_dados --limpar` apaga tudo antes de popular.
 
+O que ele monta é um semestre de Ciência da Computação inteiro — seis matérias
+(AED, SO, Banco de Dados, Redes, Matemática Discreta, Engenharia de Software),
+a grade de aulas e o estágio no planner, quatro meses de sessões com uma semana
+de sumiço e uma véspera de prova, a escada do SM-2 andando tópico a tópico com
+o log de cada resposta, provas que já passaram com nota e uma P2 chegando.
+Dado de exemplo só serve se parecer uso de verdade: um banco com três sessões
+perfeitas não mostra fila cheia, nem matéria parada, nem tópico frágil — e são
+essas telas que precisam ser olhadas antes de confiar nelas.
+
+A semente é fixa, então rodar duas vezes dá o mesmo semestre. Duas coisas são
+fabricadas de propósito e estão ditas no próprio arquivo: os tópicos que erram
+recebem sessões mais picadas (para o painel de interrupções ter o que comparar)
+e a lista de "teimosos" é escrita à mão.
+
 ## Telas
 
 | Rota         | Tela                |

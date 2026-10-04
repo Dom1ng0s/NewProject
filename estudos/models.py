@@ -93,6 +93,36 @@ def dia_com_vaga(data, limite, topico=None, tentativas=365):
     return data
 
 
+def passo_do_sm2(facilidade, intervalo_dias, acertos_seguidos, qualidade, config):
+    """A conta do SM-2, sem banco: devolve (facilidade, intervalo, acertos).
+
+    Mora fora do modelo porque nao e so o topico que precisa dela: simular um
+    semestre de respostas (o `popular_dados`) tem de andar pela mesma escada,
+    e duas copias da formula viram duas verdades no primeiro ajuste.
+    """
+    qualidade = max(0, min(int(qualidade), 5))
+
+    if qualidade < 3:
+        acertos_seguidos = 0
+        intervalo_dias = config.primeiro_intervalo_dias
+    else:
+        acertos_seguidos += 1
+        if acertos_seguidos == 1:
+            intervalo_dias = config.primeiro_intervalo_dias
+        elif acertos_seguidos == 2:
+            intervalo_dias = config.segundo_intervalo_dias
+        else:
+            intervalo_dias = max(
+                round(intervalo_dias * facilidade), intervalo_dias + 1
+            )
+
+    # Formula do SM-2: so o acerto folgado (5) aumenta a facilidade.
+    ajuste = 0.1 - (5 - qualidade) * (0.08 + (5 - qualidade) * 0.02)
+    facilidade = max(round(facilidade + ajuste, 3), config.facilidade_minima)
+    intervalo_dias = min(intervalo_dias, config.intervalo_maximo_dias)
+    return facilidade, intervalo_dias, acertos_seguidos
+
+
 class Topico(models.Model):
     """Topic: arvore de ate 3 niveis via `pai` (materia > assunto > subtopico)."""
 
@@ -187,27 +217,17 @@ class Topico(models.Model):
         de 3 a escada recomeca; de 3 para cima o intervalo cresce multiplicado
         pela facilidade, que por sua vez sobe ou desce conforme a resposta.
         """
+        # A nota tambem viaja para a revisao agendada; clampar aqui mantem o
+        # que foi guardado igual ao que foi calculado.
         qualidade = max(0, min(int(qualidade), 5))
         config = Configuracao.atual()
-
-        if qualidade < 3:
-            self.acertos_seguidos = 0
-            self.intervalo_dias = config.primeiro_intervalo_dias
-        else:
-            self.acertos_seguidos += 1
-            if self.acertos_seguidos == 1:
-                self.intervalo_dias = config.primeiro_intervalo_dias
-            elif self.acertos_seguidos == 2:
-                self.intervalo_dias = config.segundo_intervalo_dias
-            else:
-                self.intervalo_dias = max(
-                    round(self.intervalo_dias * self.facilidade), self.intervalo_dias + 1
-                )
-
-        # Formula do SM-2: so o acerto folgado (5) aumenta a facilidade.
-        ajuste = 0.1 - (5 - qualidade) * (0.08 + (5 - qualidade) * 0.02)
-        self.facilidade = max(round(self.facilidade + ajuste, 3), config.facilidade_minima)
-        self.intervalo_dias = min(self.intervalo_dias, config.intervalo_maximo_dias)
+        self.facilidade, self.intervalo_dias, self.acertos_seguidos = passo_do_sm2(
+            self.facilidade,
+            self.intervalo_dias,
+            self.acertos_seguidos,
+            qualidade,
+            config,
+        )
         self.save(update_fields=["facilidade", "intervalo_dias", "acertos_seguidos"])
 
         return self.agendar(self.intervalo_dias, qualidade=qualidade)
