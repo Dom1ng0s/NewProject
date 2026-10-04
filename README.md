@@ -62,6 +62,21 @@ cronômetro já começa a contar quando a tela abre. Abrir o app e estar estudan
 é um clique. Sem bloco e sem nenhuma sessão, não há o que continuar e o cartão
 não aparece.
 
+## Atalhos de teclado
+
+A busca abre com `/` e a lista de atalhos com `?`. Navegar é um acorde: `g` e
+depois a letra da tela (`g d` dashboard, `g s` sessão, `g r` revisar, `g m`
+matérias, `g p` planner, `g a` provas, `g q` quadro, `g h` histórico, `g c`
+configurações, `g b` dados). `n` abre uma sessão nova. O `g` solto é esquecido
+em um segundo e meio.
+
+Na tela de matérias, as teclas agem sobre o **tópico em foco** (o foco chega na
+linha pelo Tab): `c` abre os cartões, `e` as notas, `t` cria um subtópico. Sem
+linha em foco o app avisa, em vez de escolher um tópico qualquer.
+
+Atalho de uma letra nunca rouba a tecla de quem está escrevendo num campo, e
+nunca dispara com um diálogo aberto — o de revisão tem as teclas dele.
+
 ## Revisão: cartões e repetição espaçada
 
 Cada tópico pode ter **cartões** — pergunta de um lado, resposta do outro,

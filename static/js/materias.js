@@ -290,6 +290,35 @@ async function abrirNotas(topico) {
   const dialogo = abrirDialogo([formulario], () => campoNotas.focus());
 }
 
+/* Tópico por id, para os atalhos de teclado: a tecla age sobre a linha em foco,
+   e o que o DOM guarda é só o id. Refeito a cada desenho da árvore. */
+const porId = new Map();
+
+/* `c` e `t` agem sobre o tópico da linha em foco (o foco chega nela pelo Tab).
+   Sem linha em foco não há sobre o que agir, e o aviso diz isso em vez de
+   escolher um tópico qualquer. */
+function topicoEmFoco() {
+  const linha = document.activeElement?.closest?.('[data-topico-id]');
+  if (!linha) {
+    avisar('Dê foco a um tópico primeiro (Tab até ele).', 'info');
+    return null;
+  }
+  return porId.get(linha.dataset.topicoId) || null;
+}
+
+async function novoSubtopico(topico) {
+  const nome = await perguntar('Novo subtópico', {
+    detalhe: `Dentro de "${topico.nome}".`,
+    dica: 'Nome do subtópico',
+  });
+  if (!nome) return;
+  await enviar('/api/topicos/criar/', { nome, pai_id: topico.id });
+  abertos.add(`ramo-${topico.id}`);
+  guardarAbertos();
+  avisar(`"${nome}" adicionado.`, 'ok');
+  carregar();
+}
+
 function montarRamo(topico, nivel) {
   const no = MOLDE_RAMO.content.firstElementChild.cloneNode(true);
   const gatilho = no.querySelector('.gatilho');
@@ -300,6 +329,9 @@ function montarRamo(topico, nivel) {
 
   const temFilhos = topico.filhos.length > 0;
   const id = `ramo-${topico.id}`;
+  // O atalho de teclado precisa saber de qual tópico é a linha em foco.
+  linha.dataset.topicoId = topico.id;
+  porId.set(String(topico.id), topico);
   gatilho.id = id;
   rotulo.htmlFor = id;
   no.querySelector('.nome').textContent = topico.nome;
@@ -325,22 +357,7 @@ function montarRamo(topico, nivel) {
 
   if (nivel < 3) {
     acoes.append(
-      botaoIcone('Novo subtópico', 'mais', async () => {
-        const nome = await perguntar('Novo subtópico', {
-          detalhe: `Dentro de "${topico.nome}".`,
-          dica: 'Nome do subtópico',
-        });
-        if (!nome) return;
-        try {
-          await enviar('/api/topicos/criar/', { nome, pai_id: topico.id });
-          abertos.add(id);
-          guardarAbertos();
-          avisar(`"${nome}" adicionado.`, 'ok');
-          carregar();
-        } catch (erro) {
-          reclamar(erro);
-        }
-      })
+      botaoIcone('Novo subtópico', 'mais', () => novoSubtopico(topico).catch(reclamar))
     );
   }
 
@@ -442,6 +459,7 @@ async function carregar() {
   const { materias } = await pegar('/api/arvore/');
   const alvo = document.getElementById('assuntos');
   alvo.replaceChildren();
+  porId.clear();
 
   if (!materias.length) {
     alvo.append(vazio('Comece adicionando uma matéria acima.'));
@@ -469,3 +487,27 @@ document.getElementById('form-materia').onsubmit = async (e) => {
 };
 
 carregar().catch(reclamar);
+
+registrarAtalhos({
+  c: {
+    rotulo: 'Cartões do tópico em foco',
+    acao: () => {
+      const topico = topicoEmFoco();
+      if (topico) abrirCartoes(topico).catch(reclamar);
+    },
+  },
+  e: {
+    rotulo: 'Notas do tópico em foco',
+    acao: () => {
+      const topico = topicoEmFoco();
+      if (topico) abrirNotas(topico).catch(reclamar);
+    },
+  },
+  t: {
+    rotulo: 'Novo subtópico dentro do tópico em foco',
+    acao: () => {
+      const topico = topicoEmFoco();
+      if (topico) novoSubtopico(topico).catch(reclamar);
+    },
+  },
+});

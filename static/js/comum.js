@@ -313,6 +313,138 @@ function abrirBusca(termoInicial) {
   return dialogo;
 }
 
+// ----------------------------------------------------------------- atalhos
+
+/* Um teclado, um handler. O diálogo de revisão já provou que a tecla vale mais
+   que o clique numa fila de vinte; aqui o resto do app ganha o mesmo.
+
+   `g` abre um acorde: `g` depois `r` vai para "Revisar hoje". Cada tela
+   registra o que é só dela com `registrarAtalhos`, e todos aparecem no `?`. */
+
+const IR_PARA = [
+  ['d', '/', 'Dashboard'],
+  ['s', '/sessao/', 'Sessão de estudo'],
+  ['r', '/revisar/', 'Revisar hoje'],
+  ['m', '/materias/', 'Matérias e tópicos'],
+  ['p', '/planner/', 'Planner semanal'],
+  ['a', '/avaliacoes/', 'Provas e prazos'],
+  ['q', '/quadro/', 'Quadro'],
+  ['h', '/historico/', 'Histórico'],
+  ['c', '/configuracoes/', 'Configurações'],
+  ['b', '/dados/', 'Dados e backup'],
+];
+
+// Quanto tempo o `g` espera a segunda tecla. Passou disso, foi um `g` perdido.
+const ESPERA_DO_ACORDE = 1500;
+
+// Atalhos da tela aberta: { tecla: { rotulo, acao } }.
+const atalhosDaTela = new Map();
+
+/* Registra atalhos da tela atual. Chamar de novo troca o que havia: uma tela
+   que redesenha não acumula handlers do que já saiu do DOM. */
+function registrarAtalhos(mapa) {
+  atalhosDaTela.clear();
+  for (const [tecla, def] of Object.entries(mapa || {})) atalhosDaTela.set(tecla, def);
+}
+
+function digitando() {
+  const ativo = document.activeElement;
+  if (!ativo) return false;
+  return ['INPUT', 'TEXTAREA', 'SELECT'].includes(ativo.tagName) || ativo.isContentEditable;
+}
+
+function mostrarAtalhos() {
+  const linha = (teclas, texto) =>
+    el('div', { className: 'atalho-linha' }, [
+      el('span', { className: 'atalho-teclas' }, teclas.map((t) => el('kbd', { textContent: t }))),
+      el('span', { className: 'cresce', textContent: texto }),
+    ]);
+
+  const corpo = [
+    el('h2', { textContent: 'Atalhos' }),
+    el('h3', { className: 'busca-grupo', textContent: 'Em qualquer tela' }),
+    linha(['/'], 'Buscar em tudo'),
+    linha(['n'], 'Nova sessão de estudo'),
+    linha(['?'], 'Esta lista'),
+    el('h3', { className: 'busca-grupo', textContent: 'Ir para (g e a letra)' }),
+    ...IR_PARA.map(([tecla, , nome]) => linha(['g', tecla], nome)),
+  ];
+
+  if (atalhosDaTela.size) {
+    corpo.push(el('h3', { className: 'busca-grupo', textContent: 'Nesta tela' }));
+    for (const [tecla, def] of atalhosDaTela) corpo.push(linha([tecla], def.rotulo));
+  }
+
+  const fechar = el('button', {
+    type: 'button',
+    className: 'botao botao-discreto',
+    textContent: 'Fechar',
+    onclick: () => dialogo.close(),
+  });
+  corpo.push(el('div', { className: 'dialogo-acoes' }, [fechar]));
+
+  const dialogo = abrirDialogo(corpo, () => fechar.focus());
+  dialogo.classList.add('dialogo-atalhos');
+  return dialogo;
+}
+
+function ligarAtalhos() {
+  let esperandoDestino = false;
+  let relogio = null;
+
+  const esquecerAcorde = () => {
+    esperandoDestino = false;
+    clearTimeout(relogio);
+  };
+
+  document.addEventListener('keydown', (evento) => {
+    // Atalho de uma letra não pode roubar a tecla de quem está escrevendo, nem
+    // atropelar um diálogo aberto (a revisão tem as teclas dela).
+    if (evento.ctrlKey || evento.altKey || evento.metaKey) return;
+    if (digitando() || document.querySelector('dialog[open]')) return;
+
+    if (esperandoDestino) {
+      const destino = IR_PARA.find(([tecla]) => tecla === evento.key);
+      esquecerAcorde();
+      if (destino) {
+        evento.preventDefault();
+        location.href = destino[1];
+      }
+      return;
+    }
+
+    if (evento.key === 'g') {
+      esperandoDestino = true;
+      relogio = setTimeout(esquecerAcorde, ESPERA_DO_ACORDE);
+      return;
+    }
+
+    if (evento.key === '/') {
+      evento.preventDefault();
+      abrirBusca('');
+      return;
+    }
+
+    if (evento.key === '?') {
+      evento.preventDefault();
+      mostrarAtalhos();
+      return;
+    }
+
+    if (evento.key === 'n') {
+      evento.preventDefault();
+      location.href = '/sessao/';
+      return;
+    }
+
+    const daTela = atalhosDaTela.get(evento.key);
+    if (daTela) {
+      evento.preventDefault();
+      daTela.acao();
+    }
+  });
+}
+
 // ----------------------------------------------------------------- shell
 
 // O tema ja foi aplicado no <head> para nao piscar; aqui so fica a troca.
@@ -349,14 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
     busca.onclick = abrir;
   }
 
-  // "/" abre a busca de qualquer tela, como na maioria dos apps de texto.
-  document.addEventListener('keydown', (e) => {
-    const digitando = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
-    if (e.key === '/' && !digitando && !document.querySelector('dialog[open]')) {
-      e.preventDefault();
-      abrirBusca('');
-    }
-  });
+  ligarAtalhos();
 
   const menuBotao = document.getElementById('menu-botao');
   const lateral = document.getElementById('lateral');

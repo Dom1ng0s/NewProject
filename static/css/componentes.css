@@ -607,3 +607,34 @@ dialog.dialogo:has(.painel-bloco) {
   .busca { flex-basis: 34px; padding: 0; justify-content: center; }
   .busca input { display: none; }
 }
+
+/* =======================  atalhos  =======================
+   A lista que o "?" abre, e a tecla desenhada como tecla. */
+
+kbd {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 5px;
+  border: 1px solid var(--borda);
+  border-bottom-width: 2px;
+  border-radius: var(--raio-p);
+  background: var(--superficie-afundada);
+  color: var(--texto-suave);
+  font-family: var(--fonte-mono);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.dialogo-atalhos { width: min(460px, calc(100vw - 2 * var(--e4))); }
+
+.atalho-linha {
+  display: flex;
+  gap: var(--e3);
+  align-items: baseline;
+  padding: var(--e1) 0;
+  font-size: var(--t-sm);
+}
+
+.atalho-teclas { display: flex; gap: var(--e1); flex: 0 0 76px; }
