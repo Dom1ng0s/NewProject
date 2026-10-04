@@ -1,0 +1,48 @@
+{% extends "estudos/base.html" %}
+{% load estaticos %}
+{% block titulo %}Dashboard{% endblock %}
+{% block cabecalho %}Dashboard{% endblock %}
+{% block legenda %}<p class="legenda">O que precisa de atenção hoje e como foi a semana.</p>{% endblock %}
+
+{% block corpo %}
+<div class="metricas">
+  <section class="metrica metrica-principal">
+    <span class="rotulo">Revisões de hoje</span>
+    <p class="numero" id="n-hoje">—</p>
+    <ul class="lista" id="lista-hoje"></ul>
+  </section>
+
+  <section class="metrica">
+    <span class="rotulo">Atrasadas</span>
+    <p class="numero alerta" id="n-atrasadas">—</p>
+    <ul class="lista" id="lista-atrasadas"></ul>
+  </section>
+
+  <section class="metrica">
+    <span class="rotulo">Horas na semana</span>
+    <p class="numero">
+      <span id="horas-semana">—</span><span class="unidade"> / <span id="meta-semana">—</span> h</span>
+    </p>
+    <div class="medidor" style="margin-top: var(--e3)">
+      <div class="medidor-preenchido" id="medidor-meta"></div>
+    </div>
+  </section>
+</div>
+
+<section class="painel">
+  <h2 class="painel-titulo">Provas e prazos <span class="etiqueta" id="n-avaliacoes">0</span></h2>
+  <div id="avaliacoes"></div>
+</section>
+
+<section class="painel">
+  <h2 class="painel-titulo">Tópicos dominados por matéria</h2>
+  <div id="dominio"></div>
+</section>
+
+<section class="painel">
+  <h2 class="painel-titulo">Paradas há mais de 7 dias</h2>
+  <div id="paradas"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{% estatico 'js/dashboard.js' %}"></script>{% endblock %}

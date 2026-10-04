@@ -1,0 +1,193 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--texto);
+  background-color: var(--fundo);
+  font: var(--t-base)/1.55 var(--fonte-corpo);
+  font-feature-settings: "cv05", "ss03";
+}
+
+/* Malha isometrica: a textura da marca. Fica atras de tudo, em opacidade
+   baixa, para dar materia ao fundo sem competir com o conteudo. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--malha-forca);
+  background:
+    repeating-conic-gradient(from 30deg, #0000 0 120deg, var(--malha-3) 0 180deg)
+      calc(0.5 * var(--malha)) calc(0.5 * var(--malha) * 0.577),
+    repeating-conic-gradient(
+      from 30deg,
+      var(--malha-1) 0 60deg,
+      var(--malha-2) 0 120deg,
+      var(--malha-3) 0 180deg
+    );
+  background-size: var(--malha) calc(var(--malha) * 0.577);
+  mask-image: linear-gradient(to bottom, #000 0, #0006 40vh, #0000 85vh);
+}
+
+:where(a) { color: var(--acento); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
+}
+
+/* =======================  shell  ======================= */
+
+.topo {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  height: 56px;
+  padding: 0 var(--e4);
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borda);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  flex: 0 0 auto;
+  min-width: 0;
+  font-family: var(--fonte-titulo);
+  font-size: var(--t-md);
+  font-weight: 700;
+  letter-spacing: var(--rastro-apertado);
+  color: var(--texto);
+  text-decoration: none;
+}
+
+/* O cubo isometrico do fundo, isolado, serve de logo. */
+.marca-cubo { width: 20px; height: 20px; flex: 0 0 auto; color: var(--acento); }
+.marca-cubo .face-a { fill: currentColor; }
+.marca-cubo .face-b { fill: currentColor; opacity: 0.66; }
+.marca-cubo .face-c { fill: currentColor; opacity: 0.38; }
+
+.moldura {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  align-items: start;
+  max-width: 1480px;
+  margin: 0 auto;
+}
+
+.conteudo {
+  padding: var(--e5) var(--e6) var(--e8);
+  min-width: 0;
+}
+
+.pagina-topo { margin-bottom: var(--e5); }
+
+h1 {
+  font-family: var(--fonte-titulo);
+  font-size: var(--t-xl);
+  font-weight: 700;
+  letter-spacing: var(--rastro-apertado);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.pagina-topo .legenda {
+  margin: var(--e1) 0 0;
+  color: var(--texto-suave);
+  font-size: var(--t-sm);
+}
+
+/* =======================  navegacao  ======================= */
+
+.lateral {
+  position: sticky;
+  top: 56px;
+  padding: var(--e4) var(--e3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lateral-grupo {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--rastro-largo);
+  color: var(--texto-tenue);
+  padding: var(--e3) var(--e3) var(--e2);
+}
+
+.lateral a {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: 9px var(--e3);
+  border-radius: var(--raio-m);
+  color: var(--texto-suave);
+  font-size: var(--t-base);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background var(--rapido), color var(--rapido);
+}
+
+.lateral a svg { width: 18px; height: 18px; flex: 0 0 auto; opacity: 0.7; }
+
+.lateral a:hover { background: var(--superficie); color: var(--texto); }
+.lateral a:hover svg { opacity: 1; }
+
+.lateral a.ativo {
+  background: var(--superficie);
+  color: var(--texto);
+  font-weight: 600;
+  box-shadow: var(--sombra-p);
+}
+.lateral a.ativo svg { opacity: 1; color: var(--acento); }
+
+/* marca a pagina atual sem depender so da cor */
+.lateral a.ativo::after {
+  content: "";
+  width: 3px;
+  height: 16px;
+  margin-left: auto;
+  border-radius: var(--raio-total);
+  background: var(--acento);
+}
+
+/* botoes de icone do cabecalho */
+.topo-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--borda-suave);
+  border-radius: var(--raio-p);
+  color: var(--texto-suave);
+  cursor: pointer;
+  transition: background var(--rapido), color var(--rapido), border-color var(--rapido);
+}
+
+.topo-icone:hover { background: var(--superficie-afundada); color: var(--texto); border-color: var(--borda); }
+.topo-icone svg { width: 17px; height: 17px; }
+
+/* o sol e a lua trocam conforme o tema ativo */
+.icone-sol { display: none; }
+:root[data-tema="escuro"] .icone-sol { display: block; }
+:root[data-tema="escuro"] .icone-lua { display: none; }
+
+.menu-botao { display: none; }

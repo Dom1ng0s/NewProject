@@ -1,0 +1,408 @@
+/* =======================  materias: card de assunto  =======================
+   Cada materia e um cartao com titulo grande e rastro apertado; a arvore
+   de topicos mora dentro dele. */
+
+.assuntos { display: grid; gap: var(--e4); }
+
+.assunto {
+  background: var(--superficie);
+  border: 1px solid var(--borda-suave);
+  border-radius: var(--raio-g);
+  overflow: hidden;
+  transition: border-color var(--rapido), box-shadow var(--rapido);
+}
+
+.assunto:hover { border-color: var(--borda); box-shadow: var(--sombra-p); }
+
+.assunto-topo {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  flex-wrap: wrap;
+  padding: var(--e4) var(--e5);
+  border-bottom: 1px solid var(--borda-suave);
+  background: var(--superficie-afundada);
+}
+
+/* a cor da materia entra como filete vertical, nao como bolinha solta */
+.assunto-topo::before {
+  content: "";
+  align-self: stretch;
+  width: 3px;
+  min-height: 28px;
+  flex: 0 0 auto;
+  border-radius: var(--raio-total);
+  background: var(--assunto-cor, var(--borda-forte));
+}
+
+.assunto-nome {
+  flex: 1;
+  min-width: 140px;
+  margin: 0;
+  font-family: var(--fonte-titulo);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  letter-spacing: var(--rastro-apertado);
+  line-height: 1.25;
+  color: var(--texto);
+}
+
+.assunto-meta {
+  font-family: var(--fonte-mono);
+  font-size: var(--t-xs);
+  color: var(--texto-tenue);
+  font-variant-numeric: tabular-nums;
+}
+
+.assunto-acoes { display: flex; align-items: center; gap: var(--e1); flex: 0 0 auto; }
+.assunto-corpo { padding: var(--e3) var(--e4) var(--e4); }
+
+/* =======================  arvore de topicos  ======================= */
+
+.arvore ul { list-style: none; margin: 0; padding: 0; }
+
+/* cada nivel recua e ganha a guia vertical */
+.arvore ul ul {
+  margin-left: 11px;
+  padding-left: 11px;
+  border-left: 1px solid var(--borda);
+}
+
+.ramo { position: relative; margin-top: var(--e1); }
+
+/* o tracinho horizontal que liga o item a guia do nivel */
+.arvore ul ul .ramo::before {
+  content: "";
+  position: absolute;
+  left: -11px;
+  top: 15px;
+  width: 11px;
+  height: 1px;
+  background: var(--borda);
+}
+
+/* A linha inteira do no. Os controles ficam FORA do <label>, senao
+   qualquer clique num select recolheria o ramo. */
+.ramo-linha {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  min-height: 30px;
+  padding-right: var(--e2);
+  border-radius: var(--raio-p);
+  transition: background var(--rapido);
+}
+
+.ramo-linha:hover { background: var(--superficie-afundada); }
+
+/* so o icone e o nome alternam o ramo */
+.ramo-rotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  flex: 1;
+  min-width: 0;
+  padding: var(--e1) var(--e2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ramo-linha .icone { width: 15px; height: 15px; flex: 0 0 auto; color: var(--texto-tenue); }
+.ramo-linha .nome { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: var(--t-base); }
+.ramo-folha .nome { color: var(--texto-suave); }
+
+/* o checkbox guarda o estado aberto/fechado; o CSS faz o resto */
+.gatilho { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+.icone-aberta { display: none; }
+.gatilho:checked ~ .ramo-linha .icone-aberta { display: block; color: var(--acento); }
+.gatilho:checked ~ .ramo-linha .icone-fechada { display: none; }
+.gatilho:focus-visible ~ .ramo-linha { outline: 2px solid var(--foco); outline-offset: 1px; }
+
+/* altura animada sem precisar medir nada em JS */
+.ramo-filhos-caixa {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--medio);
+}
+.ramo-filhos { overflow: hidden; }
+.gatilho:checked ~ .ramo-filhos-caixa { grid-template-rows: 1fr; }
+
+/* as acoes so aparecem na linha sob o cursor, para a arvore nao virar sopa de botoes */
+.ramo-acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity var(--rapido);
+}
+.ramo-linha:hover .ramo-acoes, .ramo-linha:focus-within .ramo-acoes { opacity: 1; }
+
+@media (hover: none) {
+  .ramo-acoes { opacity: 1; }
+}
+
+/* seletor de status compacto dentro da arvore */
+select.status { padding: 3px 6px; font-size: var(--t-xs); flex: 0 0 auto; max-width: 128px; }
+
+/* =======================  cronometro  ======================= */
+
+.cronometro {
+  font-family: var(--fonte-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(44px, 11vw, 68px);
+  font-weight: 600;
+  letter-spacing: var(--rastro-apertado);
+  line-height: 1;
+  margin: var(--e5) 0 var(--e2);
+}
+
+.cronometro-fase {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--rastro-largo);
+  color: var(--texto-tenue);
+  margin: 0 0 var(--e5);
+  min-height: 18px;
+}
+
+.cronometro-fase::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--borda-forte);
+}
+
+.fase-contando { color: var(--acento); }
+.fase-contando::before { background: var(--acento); animation: pulso 1.6s ease-in-out infinite; }
+.fase-pausa { color: var(--ok); }
+.fase-pausa::before { background: var(--ok); }
+
+@keyframes pulso {
+  50% { opacity: 0.25; }
+}
+
+/* =======================  quadro kanban  ======================= */
+
+.quadro { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--e3); align-items: start; }
+
+.coluna {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  padding: var(--e3);
+  min-height: 170px;
+  background: color-mix(in srgb, var(--superficie) 60%, transparent);
+  border: 1px solid var(--borda-suave);
+  border-radius: var(--raio-g);
+  transition: background var(--rapido), border-color var(--rapido);
+}
+
+.coluna.alvo { border-color: var(--acento); border-style: dashed; background: var(--acento-lavado); }
+
+.coluna-topo {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0 0 var(--e1);
+  font-family: var(--fonte-titulo);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--texto-suave);
+}
+
+.coluna-topo .conta { margin-left: auto; }
+.coluna-corpo { display: flex; flex-direction: column; gap: var(--e2); min-height: 80px; }
+
+.ficha {
+  padding: var(--e2) var(--e3);
+  background: var(--superficie);
+  border: 1px solid var(--borda-suave);
+  border-left: 3px solid var(--ficha-cor, var(--borda-forte));
+  border-radius: var(--raio-p);
+  cursor: grab;
+  transition: box-shadow var(--rapido), border-color var(--rapido);
+}
+
+.ficha:hover { box-shadow: var(--sombra-m); }
+.ficha:active { cursor: grabbing; }
+.ficha.arrastando { opacity: 0.35; }
+
+.ficha-topo { display: flex; gap: var(--e2); align-items: flex-start; }
+.ficha-nome { flex: 1; min-width: 0; font-size: var(--t-base); font-weight: 500; overflow-wrap: anywhere; }
+.ficha-caminho { display: block; margin-top: 2px; color: var(--texto-tenue); font-size: var(--t-xs); overflow-wrap: anywhere; }
+
+.setas { display: flex; gap: 1px; flex: 0 0 auto; }
+.setas .botao { padding: 1px 6px; font-size: var(--t-sm); line-height: 1.3; }
+
+@media (max-width: 1180px) { .quadro { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .quadro { grid-template-columns: 1fr; } }
+
+/* =======================  planner: grade semanal  ======================= */
+
+.grade {
+  display: grid;
+  grid-template-columns: 56px repeat(7, minmax(0, 1fr));
+  border: 1px solid var(--borda-suave);
+  border-radius: var(--raio-m);
+  overflow: auto;
+  background: var(--superficie);
+}
+
+.regua { border-right: 1px solid var(--borda-suave); background: var(--superficie-afundada); }
+.regua-topo { height: 32px; border-bottom: 1px solid var(--borda-suave); }
+
+.regua-hora {
+  height: 44px;
+  padding-right: var(--e2);
+  font-family: var(--fonte-mono);
+  font-size: var(--t-xs);
+  color: var(--texto-tenue);
+  text-align: right;
+  transform: translateY(-6px);
+}
+
+.dia { border-right: 1px solid var(--borda-suave); min-width: 0; }
+.dia:last-child { border-right: none; }
+
+.dia-topo {
+  height: 32px;
+  padding-top: 7px;
+  border-bottom: 1px solid var(--borda-suave);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--rastro-largo);
+  color: var(--texto-tenue);
+  text-align: center;
+  background: var(--superficie-afundada);
+}
+
+.dia-hoje .dia-topo { color: var(--acento); background: var(--acento-lavado); }
+.dia-hoje .pista { background: color-mix(in srgb, var(--acento) 4%, transparent); }
+
+.pista { position: relative; }
+.risco { position: absolute; left: 0; right: 0; border-top: 1px solid var(--borda-suave); }
+
+.bloco {
+  position: absolute;
+  overflow: hidden;
+  padding: 3px 5px;
+  background: var(--superficie);
+  border: 1px solid var(--borda-suave);
+  border-left: 3px solid var(--bloco-cor, var(--borda-forte));
+  border-radius: var(--raio-p);
+  font-size: var(--t-xs);
+  line-height: 1.3;
+}
+
+.bloco .titulo, .bloco .hora {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bloco .titulo { font-weight: 600; }
+.bloco .hora { font-family: var(--fonte-mono); color: var(--texto-tenue); }
+
+.bloco-aula { background: color-mix(in srgb, var(--acento) 9%, var(--superficie)); }
+.bloco-outro { border-style: dashed; }
+.bloco-pulado { opacity: 0.4; }
+.bloco-pulado .titulo { text-decoration: line-through; }
+
+.bloco-acoes { float: right; display: flex; gap: 1px; }
+.bloco-acoes .botao { padding: 0 3px; font-size: var(--t-xs); line-height: 1.2; }
+
+@media (max-width: 860px) {
+  .grade { grid-template-columns: 46px repeat(7, 126px); }
+}
+
+/* =======================  responsivo do shell  ======================= */
+
+@media (max-width: 860px) {
+  .menu-botao { display: inline-flex; }
+  .moldura { grid-template-columns: minmax(0, 1fr); }
+
+  .lateral {
+    display: none;
+    position: static;
+    padding: var(--e2) var(--e3) var(--e3);
+    background: var(--superficie);
+    border-bottom: 1px solid var(--borda);
+  }
+  .lateral.aberta { display: flex; }
+  .lateral-grupo { display: none; }
+
+  /* A arvore nao cabe numa linha so: o nome fica em cima, os controles embaixo. */
+  .ramo-linha { flex-wrap: wrap; }
+  .ramo-rotulo { flex: 1 0 100%; }
+
+  .conteudo { padding: var(--e4) var(--e4) var(--e7); }
+  .painel { padding: var(--e3) var(--e4) var(--e4); border-radius: var(--raio-m); }
+  .assunto-topo { padding: var(--e3) var(--e4); }
+  .pilha-avisos { left: var(--e3); right: var(--e3); width: auto; }
+}
+
+/* O bloco todo e clicavel: abre o painel de edicao. */
+.bloco { cursor: pointer; }
+.bloco:hover { border-color: var(--borda-forte); }
+.bloco:focus-visible { outline: 2px solid var(--foco); outline-offset: 1px; }
+
+/* =======================  histórico  =======================
+   Mapa de constância: uma coluna por semana, uma linha por dia da semana. */
+
+.mapa-rolagem {
+  overflow-x: auto;
+  padding-bottom: var(--e2);
+}
+
+.mapa {
+  display: flex;
+  gap: 3px;
+  min-width: max-content;
+}
+
+.mapa-coluna {
+  display: grid;
+  grid-template-rows: auto repeat(7, 1fr);
+  gap: 3px;
+}
+
+.mapa-mes {
+  height: 14px;
+  font-size: var(--t-xs);
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+.mapa-dia {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--superficie-afundada);
+  border: 1px solid var(--borda-suave);
+}
+
+.mapa-dia.mapa-vazio { background: none; border-color: transparent; }
+
+/* A escala vai do acento lavado ao cheio; o nível vem do melhor dia do período. */
+.mapa-dia.nivel-1 { background: color-mix(in srgb, var(--acento) 28%, transparent); border-color: transparent; }
+.mapa-dia.nivel-2 { background: color-mix(in srgb, var(--acento) 52%, transparent); border-color: transparent; }
+.mapa-dia.nivel-3 { background: color-mix(in srgb, var(--acento) 76%, transparent); border-color: transparent; }
+.mapa-dia.nivel-4 { background: var(--acento); border-color: transparent; }
+
+.mapa-legenda {
+  display: flex;
+  gap: var(--e2);
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: var(--e3);
+}

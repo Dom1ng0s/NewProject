@@ -1,0 +1,133 @@
+/* Identidade do Estudos: grafite + ambar, geometria isometrica.
+   Este arquivo define o vocabulario; estilo.css so consome. */
+
+:root {
+  /* ---- escala de tinta (grafite) ---- */
+  --tinta-950: #0f1013;
+  --tinta-900: #15161a;
+  --tinta-850: #1d1f24;
+  --tinta-800: #24262d;
+  --tinta-700: #2e313a;
+  --tinta-600: #3f434e;
+  --tinta-500: #5b606d;
+  --tinta-400: #868c9b;
+  --tinta-300: #b4bac6;
+  --tinta-200: #d8dce4;
+  --tinta-150: #e6e9ef;
+  --tinta-100: #eff1f5;
+  --tinta-50: #f7f8fa;
+  --papel: #ffffff;
+
+  /* ---- ambar: a cor da marca ---- */
+  --ambar-700: #9a3412;
+  --ambar-600: #c2410c;
+  --ambar-500: #e2690f;
+  --ambar-400: #f59e4b;
+  --ambar-300: #fbc07e;
+  --ambar-100: #fdf0e1;
+
+  /* ---- sinais ---- */
+  --jade-600: #0f6b48;
+  --jade-400: #34c48c;
+  --jade-100: #e3f5ed;
+  --rubi-600: #a62019;
+  --rubi-400: #f4786c;
+  --rubi-100: #fdeae8;
+
+  /* ---- espaco: escala de 4 ---- */
+  --e1: 4px;
+  --e2: 8px;
+  --e3: 12px;
+  --e4: 16px;
+  --e5: 24px;
+  --e6: 32px;
+  --e7: 48px;
+  --e8: 64px;
+
+  /* ---- raio ---- */
+  --raio-p: 5px;
+  --raio-m: 9px;
+  --raio-g: 14px;
+  --raio-total: 999px;
+
+  /* ---- profundidade: discreta, so para o que flutua ---- */
+  --sombra-p: 0 1px 2px rgb(15 16 19 / 0.06);
+  --sombra-m: 0 2px 4px -1px rgb(15 16 19 / 0.08), 0 1px 2px rgb(15 16 19 / 0.04);
+  --sombra-g: 0 12px 28px -8px rgb(15 16 19 / 0.2), 0 2px 6px rgb(15 16 19 / 0.06);
+
+  /* ---- tipografia ---- */
+  --fonte-titulo: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --fonte-corpo: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --fonte-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+
+  --t-xs: 11.5px;
+  --t-sm: 13px;
+  --t-base: 14.5px;
+  --t-md: 16px;
+  --t-lg: 19px;
+  --t-xl: 24px;
+  --t-2xl: 31px;
+  --t-3xl: 44px;
+
+  --rastro-apertado: -0.02em;
+  --rastro-largo: 0.06em;
+
+  /* ---- movimento ---- */
+  --rapido: 120ms cubic-bezier(0.2, 0, 0.3, 1);
+  --medio: 220ms cubic-bezier(0.2, 0, 0.2, 1);
+
+  /* ================= camada semantica: claro ================= */
+  --fundo: var(--tinta-100);
+  --superficie: var(--papel);
+  --superficie-afundada: var(--tinta-50);
+  --superficie-elevada: var(--papel);
+  --texto: var(--tinta-900);
+  --texto-suave: var(--tinta-500);
+  --texto-tenue: var(--tinta-400);
+  --borda: var(--tinta-200);
+  --borda-suave: var(--tinta-150);
+  --borda-forte: var(--tinta-300);
+  --acento: var(--ambar-600);
+  --acento-forte: var(--ambar-700);
+  --acento-lavado: var(--ambar-100);
+  --acento-sobre: #ffffff;
+  --ok: var(--jade-600);
+  --ok-lavado: var(--jade-100);
+  --alerta: var(--rubi-600);
+  --alerta-lavado: var(--rubi-100);
+  --foco: var(--ambar-500);
+
+  /* malha isometrica do fundo */
+  --malha: 184px;
+  --malha-1: #e8ebf1;
+  --malha-2: #eff1f6;
+  --malha-3: #e3e6ed;
+  --malha-forca: 1;
+}
+
+:root[data-tema="escuro"] {
+  --fundo: var(--tinta-950);
+  --superficie: var(--tinta-850);
+  --superficie-afundada: var(--tinta-900);
+  --superficie-elevada: var(--tinta-800);
+  --texto: #eceef3;
+  --texto-suave: var(--tinta-400);
+  --texto-tenue: var(--tinta-500);
+  --borda: var(--tinta-700);
+  --borda-suave: var(--tinta-800);
+  --borda-forte: var(--tinta-600);
+  --acento: var(--ambar-400);
+  --acento-forte: var(--ambar-300);
+  --acento-lavado: rgb(245 158 75 / 0.14);
+  --acento-sobre: var(--tinta-950);
+  --ok: var(--jade-400);
+  --ok-lavado: rgb(52 196 140 / 0.14);
+  --alerta: var(--rubi-400);
+  --alerta-lavado: rgb(244 120 108 / 0.14);
+  --foco: var(--ambar-400);
+
+  --malha-1: #1d1d1d;
+  --malha-2: #4e4f51;
+  --malha-3: #3c3c3c;
+  --malha-forca: 0.5;
+}

@@ -1,0 +1,59 @@
+{% extends "estudos/base.html" %}
+{% load estaticos %}
+{% block titulo %}Sessão de estudo{% endblock %}
+{% block cabecalho %}Sessão de estudo{% endblock %}
+{% block legenda %}<p class="legenda">O cronômetro continua contando se você recarregar ou fechar a aba.</p>{% endblock %}
+
+{% block corpo %}
+<section class="painel-foco" id="painel-cronometro"
+         data-foco="{{ pomodoro_foco }}" data-pausa="{{ pomodoro_pausa }}"
+         data-pausa-longa="{{ pomodoro_pausa_longa }}" data-ciclos="{{ pomodoro_ciclos }}">
+  <div class="linha-form">
+    <select id="topico" aria-label="Tópico" class="cresce"></select>
+    <select id="modo" aria-label="Modo">
+      <option value="livre">Livre</option>
+      <option value="pomodoro">Pomodoro</option>
+    </select>
+    <input type="number" id="min-foco" min="1" value="{{ pomodoro_foco }}" style="flex: 0 0 76px"
+           aria-label="Minutos de foco" title="Minutos de foco">
+    <input type="number" id="min-pausa" min="1" value="{{ pomodoro_pausa }}" style="flex: 0 0 76px"
+           aria-label="Minutos de pausa" title="Minutos de pausa">
+  </div>
+
+  <p class="cronometro" id="mostrador">00:00</p>
+  <p class="cronometro-fase" id="fase-atual">Parado</p>
+  <p class="ajuda" id="ciclo-atual"></p>
+
+  <div class="linha-form">
+    <button type="button" class="botao" id="iniciar">Iniciar</button>
+    <button type="button" class="botao botao-discreto" id="pausar">Pausar</button>
+    <button type="button" class="botao botao-fantasma" id="interromper"
+            title="Alguém chamou, o celular tocou…">Interrupção <span id="n-interrupcoes">0</span></button>
+    <button type="button" class="botao botao-discreto" id="finalizar">Finalizar e salvar</button>
+    <button type="button" class="botao botao-perigo" id="descartar">Descartar</button>
+  </div>
+
+  <textarea id="nota" rows="3" placeholder="O que estudei, dúvidas que ficaram…" style="margin-top: var(--e4)"></textarea>
+
+  <label class="campo campo-marcar" style="margin-top: var(--e3)">
+    <input type="checkbox" id="avisar-fase" checked>
+    <span>Avisar quando a fase virar (som e notificação)</span>
+  </label>
+</section>
+
+<section class="painel">
+  <h2 class="painel-titulo">Histórico</h2>
+
+  <form id="filtros" class="linha-form" style="margin-bottom: var(--e4)">
+    <select id="f-materia" aria-label="Matéria"><option value="">Todas as matérias</option></select>
+    <input type="date" id="f-de" aria-label="De">
+    <input type="date" id="f-ate" aria-label="Até">
+    <button type="submit" class="botao botao-discreto">Filtrar</button>
+  </form>
+
+  <p class="ajuda" id="total-sessoes"></p>
+  <div id="historico"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{% estatico 'js/sessao.js' %}"></script>{% endblock %}

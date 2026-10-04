@@ -1,0 +1,57 @@
+{% extends "estudos/base.html" %}
+{% load estaticos %}
+{% block titulo %}Matérias e tópicos{% endblock %}
+{% block cabecalho %}Matérias e tópicos{% endblock %}
+{% block legenda %}<p class="legenda">Três níveis: matéria &rsaquo; assunto &rsaquo; subtópico.</p>{% endblock %}
+
+{% block corpo %}
+<form id="form-materia" class="barra">
+  <input type="text" name="nome" placeholder="Nova matéria" required class="cresce">
+  <input type="color" name="cor" value="#c2410c" aria-label="Cor da matéria">
+  <input type="number" name="meta_horas_semanais" step="0.5" min="0" value="0" style="flex: 0 0 90px"
+         aria-label="Meta de horas semanais" title="Meta de horas semanais">
+  <button type="submit" class="botao">Adicionar</button>
+</form>
+
+<div class="assuntos" id="assuntos"></div>
+
+{# --- moldes usados pelo materias.js --- #}
+
+<template id="molde-assunto">
+  <section class="assunto">
+    <header class="assunto-topo">
+      <h2 class="assunto-nome"></h2>
+      <span class="assunto-meta"></span>
+      <div class="assunto-acoes">
+        <input type="color" aria-label="Cor da matéria">
+        <button type="button" class="botao botao-discreto botao-mini" data-acao="novo-assunto">
+          Novo assunto
+        </button>
+        <button type="button" class="botao botao-perigo botao-mini" data-acao="excluir-materia"
+                aria-label="Excluir matéria">&times;</button>
+      </div>
+    </header>
+    <div class="assunto-corpo">
+      <div class="arvore"><ul></ul></div>
+    </div>
+  </section>
+</template>
+
+<template id="molde-ramo">
+  <li class="ramo">
+    <input type="checkbox" class="gatilho">
+    <div class="ramo-linha">
+      <label class="ramo-rotulo">
+        <span class="nome"></span>
+      </label>
+      <div class="ramo-acoes"></div>
+    </div>
+    <div class="ramo-filhos-caixa"><ul class="ramo-filhos"></ul></div>
+  </li>
+</template>
+
+{# o JS monta os seletores de status a partir desta lista #}
+{{ status|json_script:"status-opcoes" }}
+{% endblock %}
+
+{% block scripts %}<script src="{% estatico 'js/materias.js' %}"></script>{% endblock %}

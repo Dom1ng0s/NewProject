@@ -1,0 +1,100 @@
+{% extends "estudos/base.html" %}
+{% load estaticos %}
+{% block titulo %}Configurações{% endblock %}
+{% block cabecalho %}Configurações{% endblock %}
+{% block legenda %}<p class="legenda">Os ajustes valem a partir da próxima revisão agendada — o que já está marcado não se move.</p>{% endblock %}
+
+{% block corpo %}
+<form id="form-config">
+  <section class="painel-foco">
+    <h2 class="painel-titulo">Revisão</h2>
+
+    <div class="campo-trio">
+      <label class="campo">
+        <span>Primeiro intervalo</span>
+        <input type="number" name="primeiro_intervalo_dias" min="1" max="365" required>
+        <small class="ajuda">dias até a 1ª revisão</small>
+      </label>
+      <label class="campo">
+        <span>Segundo intervalo</span>
+        <input type="number" name="segundo_intervalo_dias" min="1" max="365" required>
+        <small class="ajuda">dias após o 2º acerto</small>
+      </label>
+      <label class="campo">
+        <span>Teto do intervalo</span>
+        <input type="number" name="intervalo_maximo_dias" min="1" max="3650" required>
+        <small class="ajuda">máximo entre revisões</small>
+      </label>
+    </div>
+
+    <div class="campo-par">
+      <label class="campo">
+        <span>Facilidade mínima</span>
+        <input type="number" name="facilidade_minima" min="1.1" max="3" step="0.1" required>
+        <small class="ajuda">quanto mais baixa, mais o erro aperta a volta</small>
+      </label>
+      <label class="campo">
+        <span>Revisões por dia</span>
+        <input type="number" name="maximo_revisoes_por_dia" min="0" max="500" required>
+        <small class="ajuda">0 desliga o teto; o excedente escorrega para o dia seguinte</small>
+      </label>
+    </div>
+  </section>
+
+  <section class="painel">
+    <h2 class="painel-titulo">Metas e avisos</h2>
+
+    <div class="campo-trio">
+      <label class="campo">
+        <span>Meta semanal</span>
+        <input type="number" name="meta_horas_semanais" min="0" max="168" step="0.5" required>
+        <small class="ajuda">horas por semana</small>
+      </label>
+      <label class="campo">
+        <span>Matéria parada</span>
+        <input type="number" name="dias_materia_parada" min="1" max="365" required>
+        <small class="ajuda">dias sem estudar até o aviso</small>
+      </label>
+      <label class="campo">
+        <span>Provas no dashboard</span>
+        <input type="number" name="dias_proximas_avaliacoes" min="1" max="365" required>
+        <small class="ajuda">quantos dias à frente</small>
+      </label>
+    </div>
+  </section>
+
+  <section class="painel">
+    <h2 class="painel-titulo">Pomodoro</h2>
+
+    <div class="campo-trio">
+      <label class="campo">
+        <span>Foco</span>
+        <input type="number" name="pomodoro_foco_min" min="1" max="180" required>
+        <small class="ajuda">minutos</small>
+      </label>
+      <label class="campo">
+        <span>Pausa</span>
+        <input type="number" name="pomodoro_pausa_min" min="1" max="60" required>
+        <small class="ajuda">minutos</small>
+      </label>
+      <label class="campo">
+        <span>Pausa longa</span>
+        <input type="number" name="pomodoro_pausa_longa_min" min="1" max="120" required>
+        <small class="ajuda">minutos</small>
+      </label>
+    </div>
+
+    <label class="campo">
+      <span>Ciclos até a pausa longa</span>
+      <input type="number" name="pomodoro_ciclos" min="1" max="12" required>
+    </label>
+  </section>
+
+  <div class="linha-form">
+    <button type="submit" class="botao">Salvar</button>
+    <button type="button" class="botao botao-discreto" id="restaurar">Voltar ao padrão</button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}<script src="{% estatico 'js/configuracoes.js' %}"></script>{% endblock %}

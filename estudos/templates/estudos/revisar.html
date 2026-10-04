@@ -1,0 +1,15 @@
+{% extends "estudos/base.html" %}
+{% load estaticos %}
+{% block titulo %}Revisar hoje{% endblock %}
+{% block cabecalho %}Revisar hoje{% endblock %}
+{% block legenda %}<p class="legenda">Tente lembrar antes de ver a resposta; a nota decide quando o tópico volta.</p>{% endblock %}
+
+{% block corpo %}
+<section class="painel-foco">
+  <h2 class="painel-titulo">Fila de hoje <span class="etiqueta" id="n-fila">0</span></h2>
+  <p class="ajuda" id="resumo-fila"></p>
+  <div id="fila"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{% estatico 'js/revisar.js' %}"></script>{% endblock %}

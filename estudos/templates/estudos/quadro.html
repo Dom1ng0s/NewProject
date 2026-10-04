@@ -1,0 +1,21 @@
+{% extends "estudos/base.html" %}
+{% load estaticos %}
+{% block titulo %}Quadro{% endblock %}
+{% block cabecalho %}Quadro{% endblock %}
+{% block legenda %}<p class="legenda">Arraste as fichas entre colunas, ou use as setas <kbd>‹</kbd> <kbd>›</kbd>.</p>{% endblock %}
+
+{% block corpo %}
+<div class="barra">
+  <select id="f-materia" aria-label="Filtrar por matéria" style="flex: 0 1 240px">
+    <option value="">Todas as matérias</option>
+  </select>
+  <label class="marcador"><input type="checkbox" id="so-folhas"> Só subtópicos</label>
+</div>
+
+<div class="quadro" id="quadro"></div>
+
+{# o JS monta uma coluna por status #}
+{{ status|json_script:"status-opcoes" }}
+{% endblock %}
+
+{% block scripts %}<script src="{% estatico 'js/quadro.js' %}"></script>{% endblock %}

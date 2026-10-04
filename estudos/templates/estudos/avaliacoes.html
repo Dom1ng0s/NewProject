@@ -1,0 +1,97 @@
+{% extends "estudos/base.html" %}
+{% load estaticos %}
+{% block titulo %}Provas e prazos{% endblock %}
+{% block cabecalho %}Provas e prazos{% endblock %}
+{% block legenda %}<p class="legenda">A data da prova é o que diz o que estudar antes.</p>{% endblock %}
+
+{% block corpo %}
+<form id="form-avaliacao" class="barra">
+  <input type="text" name="titulo" placeholder="P1, entrega do relatório…" required class="cresce">
+  <select name="materia_id" aria-label="Matéria" required></select>
+  <select name="tipo" aria-label="Tipo">
+    {% for valor, rotulo in tipos %}<option value="{{ valor }}">{{ rotulo }}</option>{% endfor %}
+  </select>
+  <input type="date" name="data" required aria-label="Data">
+  <button type="submit" class="botao">Adicionar</button>
+</form>
+
+<section class="painel-foco">
+  <h2 class="painel-titulo">Em aberto <span class="etiqueta" id="n-abertas">0</span></h2>
+  <div id="abertas"></div>
+</section>
+
+<section class="painel">
+  <h2 class="painel-titulo">Concluídas</h2>
+  <div id="concluidas"></div>
+</section>
+
+{# --- molde do formulário de edição, aberto em diálogo --- #}
+
+<template id="molde-form-avaliacao">
+  <form>
+    <h2>Avaliação</h2>
+
+    <label class="campo">
+      <span>Título</span>
+      <input type="text" name="titulo" maxlength="120" required>
+    </label>
+
+    <div class="campo-trio">
+      <label class="campo">
+        <span>Matéria</span>
+        <select name="materia_id" required></select>
+      </label>
+      <label class="campo">
+        <span>Tipo</span>
+        <select name="tipo">
+          {% for valor, rotulo in tipos %}<option value="{{ valor }}">{{ rotulo }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="campo">
+        <span>Peso</span>
+        <input type="number" name="peso" step="0.5" min="0">
+      </label>
+    </div>
+
+    <div class="campo-trio">
+      <label class="campo">
+        <span>Data</span>
+        <input type="date" name="data" required>
+      </label>
+      <label class="campo">
+        <span>Hora</span>
+        <input type="time" name="hora">
+      </label>
+      <label class="campo">
+        <span>Nota</span>
+        <input type="number" name="nota" step="0.1" placeholder="—">
+      </label>
+    </div>
+
+    <label class="campo">
+      <span>Observações</span>
+      <input type="text" name="descricao" placeholder="Sala, matéria da prova, o que entregar…">
+    </label>
+
+    <div class="campo">
+      <span>Conteúdo que cai</span>
+      <div class="conteudo-topicos" data-campo="topicos"></div>
+      <p class="ajuda" data-campo="aviso-topicos"></p>
+    </div>
+
+    <label class="campo campo-marcar">
+      <input type="checkbox" name="concluida">
+      <span>Já aconteceu</span>
+    </label>
+
+    <div class="dialogo-acoes dialogo-acoes-partidas">
+      <button type="button" class="botao botao-perigo botao-discreto" data-acao="excluir">Excluir</button>
+      <span class="cresce"></span>
+      <button type="button" class="botao botao-discreto" data-acao="cancelar">Cancelar</button>
+      <button type="submit" class="botao">Salvar</button>
+    </div>
+  </form>
+</template>
+{% endblock %}
+
+{% block scripts %}<script src="{% estatico 'js/avaliacoes.js' %}"></script>{% endblock %}

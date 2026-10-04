@@ -1,0 +1,41 @@
+{% extends "estudos/base.html" %}
+{% load estaticos %}
+{% block titulo %}Dados{% endblock %}
+{% block cabecalho %}Dados{% endblock %}
+{% block legenda %}<p class="legenda">Tudo fica num SQLite nesta máquina. O backup é a única cópia que existe.</p>{% endblock %}
+
+{% block corpo %}
+<section class="painel-foco">
+  <h2 class="painel-titulo">Exportar</h2>
+  <p class="ajuda">
+    Baixa um JSON com matérias, tópicos, sessões, blocos do planner e revisões.
+    Guarde fora desta pasta — um <code>db.sqlite3</code> perdido leva o histórico inteiro.
+  </p>
+  <div class="linha-form" style="margin-top: var(--e3)">
+    <a class="botao" href="/api/backup/exportar/" download>Baixar backup</a>
+  </div>
+</section>
+
+<section class="painel">
+  <h2 class="painel-titulo">Importar</h2>
+  <form id="form-backup">
+    <div class="linha-form">
+      <input type="file" id="b-arquivo" accept=".json,application/json" required>
+      <select id="b-modo" aria-label="Como importar">
+        <option value="mesclar">Somar ao que já existe</option>
+        <option value="substituir">Apagar tudo e substituir</option>
+      </select>
+      <button type="submit" class="botao botao-discreto">Conferir</button>
+      <button type="button" class="botao" id="b-importar" disabled>Importar</button>
+    </div>
+  </form>
+  <p class="ajuda" style="margin-top: var(--e3)">
+    <strong>Somar</strong> reaproveita o que já está no banco: matéria pelo nome, tópico
+    pelo nome dentro do mesmo pai, sessão pelo instante de início. Importar o mesmo
+    arquivo duas vezes não duplica nada.
+  </p>
+  <div id="b-resultado"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{% estatico 'js/dados.js' %}"></script>{% endblock %}

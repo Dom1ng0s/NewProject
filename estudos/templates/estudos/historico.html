@@ -1,0 +1,55 @@
+{% extends "estudos/base.html" %}
+{% load estaticos %}
+{% block titulo %}Histórico{% endblock %}
+{% block cabecalho %}Histórico{% endblock %}
+{% block legenda %}<p class="legenda">Constância das últimas 26 semanas, não só a semana corrente.</p>{% endblock %}
+
+{% block corpo %}
+<div class="metricas">
+  <section class="metrica metrica-principal">
+    <span class="rotulo">Sequência atual</span>
+    <p class="numero"><span id="sequencia">—</span><span class="unidade"> dias</span></p>
+    <p class="ajuda" id="sequencia-detalhe"></p>
+  </section>
+
+  <section class="metrica">
+    <span class="rotulo">Dias estudados</span>
+    <p class="numero"><span id="dias-ativos">—</span><span class="unidade" id="dias-periodo"></span></p>
+    <p class="ajuda" id="media-dia"></p>
+  </section>
+
+  <section class="metrica">
+    <span class="rotulo">Total no período</span>
+    <p class="numero"><span id="total-horas">—</span><span class="unidade"> h</span></p>
+    <p class="ajuda" id="maior-sequencia"></p>
+  </section>
+</div>
+
+<section class="painel">
+  <h2 class="painel-titulo">Constância</h2>
+  <div class="mapa-rolagem">
+    <div class="mapa" id="mapa"></div>
+  </div>
+  <div class="mapa-legenda">
+    <span class="ajuda">menos</span>
+    <span class="mapa-dia nivel-0"></span>
+    <span class="mapa-dia nivel-1"></span>
+    <span class="mapa-dia nivel-2"></span>
+    <span class="mapa-dia nivel-3"></span>
+    <span class="mapa-dia nivel-4"></span>
+    <span class="ajuda">mais</span>
+  </div>
+</section>
+
+<section class="painel">
+  <h2 class="painel-titulo">Últimas 12 semanas</h2>
+  <div id="tendencia"></div>
+</section>
+
+<section class="painel">
+  <h2 class="painel-titulo">Tópicos com mais tempo</h2>
+  <div id="topicos"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{% estatico 'js/historico.js' %}"></script>{% endblock %}

@@ -1,0 +1,6 @@
+# Texto normalizado para LF no repositorio; o checkout no Windows fica a cargo do git.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary

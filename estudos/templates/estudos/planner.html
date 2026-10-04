@@ -1,0 +1,143 @@
+{% extends "estudos/base.html" %}
+{% load estaticos %}
+{% block titulo %}Planner semanal{% endblock %}
+{% block cabecalho %}Planner semanal{% endblock %}
+{% block legenda %}<p class="legenda">Blocos semanais valem para sempre; dá para pular uma ocorrência sem apagar a recorrência.</p>{% endblock %}
+
+{% block corpo %}
+<div class="barra">
+  <button type="button" class="botao botao-fantasma" id="semana-anterior" aria-label="Semana anterior">&larr;</button>
+  <strong id="rotulo-semana" class="cresce"></strong>
+  <button type="button" class="botao botao-discreto botao-mini" id="semana-atual">Esta semana</button>
+  <button type="button" class="botao botao-fantasma" id="semana-seguinte" aria-label="Próxima semana">&rarr;</button>
+</div>
+
+<section class="painel">
+  <h2 class="painel-titulo">Semana</h2>
+  <div class="grade" id="grade"></div>
+</section>
+
+<section class="painel">
+  <h2 class="painel-titulo">Novo bloco</h2>
+  <form id="form-bloco">
+    <div class="linha-form">
+      <select id="b-tipo" aria-label="Tipo">
+        {% for valor, rotulo in tipos %}<option value="{{ valor }}">{{ rotulo }}</option>{% endfor %}
+      </select>
+      <select id="b-dia" aria-label="Dia da semana"></select>
+      <input type="time" id="b-inicio" value="19:00" required aria-label="Hora de início">
+      <input type="time" id="b-fim" value="20:00" required aria-label="Hora de fim">
+    </div>
+    <div class="linha-form">
+      <input type="text" id="b-titulo" placeholder="Título (ex.: Aula de Cálculo, Academia)">
+      <select id="b-materia" aria-label="Matéria"><option value="">Sem matéria</option></select>
+      <select id="b-topico" aria-label="Tópico"><option value="">Sem tópico</option></select>
+    </div>
+    <div class="linha-form">
+      <label class="marcador"><input type="checkbox" id="b-recorrente" checked> Repetir toda semana</label>
+      <button type="submit" class="botao">Adicionar bloco</button>
+    </div>
+  </form>
+</section>
+
+<section class="painel">
+  <h2 class="painel-titulo">Importar calendário .ics</h2>
+  <form id="form-ical">
+    <div class="linha-form">
+      <input type="file" id="i-arquivo" accept=".ics,text/calendar" required>
+      <select id="i-tipo" aria-label="Importar como">
+        {% for valor, rotulo in tipos %}<option value="{{ valor }}"{% if valor == 'aula' %} selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+      </select>
+      <select id="i-materia" aria-label="Matéria">
+        <option value="">Detectar pelo nome do evento</option>
+      </select>
+      <button type="submit" class="botao botao-discreto">Conferir</button>
+      <button type="button" class="botao" id="i-importar" disabled>Importar</button>
+    </div>
+  </form>
+  <p class="ajuda" style="margin-top: var(--e3)">
+    Eventos que se repetem toda semana viram blocos semanais; os demais vão para a
+    semana da própria data. Eventos de dia inteiro são ignorados.
+  </p>
+  <div id="i-resultado"></div>
+</section>
+
+<section class="painel">
+  <h2 class="painel-titulo">Planejado × realizado</h2>
+  <div id="comparativo"></div>
+</section>
+
+{# Painel de edicao de um bloco. O JS clona, preenche e abre como <dialog>. #}
+<template id="molde-painel-bloco">
+  <form class="painel-bloco" method="dialog">
+    <header class="painel-bloco-topo">
+      <h2>Editar bloco</h2>
+      <p class="ajuda" data-campo="resumo"></p>
+    </header>
+
+    <label class="campo">
+      <span>Nome</span>
+      <input type="text" name="titulo" maxlength="120" placeholder="Ex.: Aula de Cálculo">
+    </label>
+
+    <label class="campo">
+      <span>Descrição</span>
+      <textarea name="descricao" rows="3" placeholder="O que acontece neste bloco (opcional)"></textarea>
+    </label>
+
+    <div class="campo-par">
+      <label class="campo">
+        <span>Tipo</span>
+        <select name="tipo">
+          {% for valor, rotulo in tipos %}<option value="{{ valor }}">{{ rotulo }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="campo">
+        <span>Frequência</span>
+        <select name="recorrente">
+          <option value="1">Toda semana</option>
+          <option value="">Só nesta semana</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="campo-par">
+      <label class="campo">
+        <span>Matéria</span>
+        <select name="materia_id"><option value="">Sem matéria</option></select>
+      </label>
+      <label class="campo">
+        <span>Tópico</span>
+        <select name="topico_id"><option value="">Sem tópico</option></select>
+      </label>
+    </div>
+
+    <div class="campo-trio">
+      <label class="campo">
+        <span>Dia</span>
+        <select name="dia_semana"></select>
+      </label>
+      <label class="campo">
+        <span>Início</span>
+        <input type="time" name="hora_inicio" required>
+      </label>
+      <label class="campo">
+        <span>Fim</span>
+        <input type="time" name="hora_fim" required>
+      </label>
+    </div>
+    <p class="ajuda" data-campo="duracao"></p>
+
+    <div class="dialogo-acoes dialogo-acoes-partidas">
+      <button type="button" class="botao botao-perigo botao-discreto" data-acao="excluir">Excluir</button>
+      <button type="button" class="botao botao-discreto" data-acao="estudar">Estudar agora</button>
+      <span class="cresce"></span>
+      <button type="button" class="botao botao-discreto" data-acao="cancelar">Cancelar</button>
+      <button type="submit" class="botao">Salvar</button>
+    </div>
+  </form>
+</template>
+
+{% endblock %}
+
+{% block scripts %}<script src="{% estatico 'js/planner.js' %}"></script>{% endblock %}
