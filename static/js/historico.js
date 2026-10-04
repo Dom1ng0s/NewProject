@@ -100,6 +100,57 @@ function desenharTopicos(topicos) {
   });
 }
 
+/* Tópicos frágeis: o estado do tópico diz onde a escada está, não quantas vezes
+   ela caiu. Isto sai do log de respostas, e é a lista que decide onde gastar a
+   próxima hora. */
+function desenharFrageis(frageis) {
+  const alvo = document.getElementById('frageis');
+  document.getElementById('n-frageis').textContent = frageis.length;
+  alvo.replaceChildren();
+
+  if (!frageis.length) {
+    alvo.append(vazio('Nenhum tópico com erro recorrente no período.', true));
+    return;
+  }
+
+  frageis.forEach((t) => {
+    const detalhe =
+      `${plural(t.erros, 'erro', 'erros')} em ${t.respostas} revisões · ` +
+      `facilidade ${t.facilidade}` +
+      (t.interrupcoes_media ? ` · ${t.interrupcoes_media} interrupções por sessão` : '');
+
+    alvo.append(
+      el('div', { className: 'item' }, [
+        ponto(t.cor),
+        el('div', { className: 'cresce' }, [
+          el('span', { textContent: `${t.materia} · ${t.topico}` }),
+          el('small', { textContent: detalhe }),
+        ]),
+        el('span', {
+          className: 'etiqueta' + (t.taxa_erro >= 50 ? ' etiqueta-alerta' : ''),
+          textContent: `${t.taxa_erro}% errado`,
+        }),
+      ])
+    );
+  });
+}
+
+/* O número que nenhuma outra ferramenta tem: quem erra mais estuda mais picado?
+   Não prova causa — mas é a pergunta que o contador de interrupções existe para
+   responder, e ela só aparece com os dois lados na mesma base. */
+function desenharInterrupcoes(d) {
+  const alvo = document.getElementById('interrupcoes-erro');
+  if (d.com_erro === null || d.sem_erro === null) {
+    alvo.textContent = '';
+    return;
+  }
+  const diferenca = d.com_erro > d.sem_erro ? 'mais' : 'menos';
+  alvo.textContent =
+    `Os ${d.topicos_com_erro} tópicos que erraram foram estudados com ${d.com_erro} ` +
+    `interrupções por sessão — ${diferenca} que os ${d.topicos_sem_erro} que não erraram ` +
+    `(${d.sem_erro}).`;
+}
+
 async function carregar() {
   const d = await pegar('/api/historico/');
 
@@ -121,6 +172,8 @@ async function carregar() {
     'dias'
   )}`;
 
+  desenharFrageis(d.frageis);
+  desenharInterrupcoes(d.interrupcoes_e_erro);
   desenharMapa(d.mapa);
   desenharTendencia(d.semanas);
   desenharTopicos(d.topicos);

@@ -222,6 +222,16 @@ corrente:
   acabou, e zerar a contagem às 00h01 só puniria quem estuda de manhã.
 - **Últimas 12 semanas** com horas estudadas e revisões fechadas em cada uma.
 - **Tópicos com mais tempo** no período — o dashboard só agrega por matéria.
+- **Tópicos frágeis**: os que erram de novo. Sai do log de respostas, porque o
+  estado do tópico diz onde a escada está, não quantas vezes ela caiu. Entra
+  quem tem pelo menos duas respostas em 90 dias e errou alguma — errar uma vez é
+  um dia ruim, não uma fragilidade. A ordem soma um ponto por erro e dois pontos
+  por unidade de facilidade abaixo de 2.5, então dois erros com a facilidade
+  intacta ficam atrás de dois erros que derrubaram a escada.
+- **Interrupções e erro**: a média de interrupções por sessão dos tópicos que
+  erraram, contra a dos que não erraram. Não prova causa nenhuma — mas é a
+  pergunta que o contador de interrupções existe para responder, e nenhuma outra
+  ferramenta tem os dois números na mesma base.
 
 ## Testes
 

@@ -365,6 +365,8 @@ def dados_historico(dias=DIAS_DO_MAPA):
         "media_por_dia_ativo": round(total_minutos / dias_ativos / 60, 1) if dias_ativos else 0,
         "semanas": semanas,
         "topicos": topicos,
+        "frageis": topicos_frageis(),
+        "interrupcoes_e_erro": interrupcoes_e_erro(),
     }
 
 
@@ -652,3 +654,129 @@ def alertas_de_colisao(por_dia, provas, teto):
                 }
             )
     return alertas
+
+
+# ---------------------------------------------------------------- fragilidade
+
+# Periodo que a conta olha. Um erro de marco nao diz nada sobre como o topico
+# esta hoje; tres meses e tempo de a escada subir ou cair de verdade.
+DIAS_DA_FRAGILIDADE = 90
+
+# Abaixo de duas respostas nao ha padrao nenhum: errar uma vez e um dia ruim.
+MINIMO_DE_RESPOSTAS = 2
+
+QUANTOS_FRAGEIS = 8
+
+
+def pontos_de_fragilidade(erros, facilidade):
+    """Quao frageis sao os erros deste topico, numa conta que da para explicar.
+
+    Cada erro vale um ponto; a facilidade que o SM-2 derrubou vale dois pontos
+    por unidade abaixo do inicio (2.5). Um topico com dois erros e facilidade
+    1.9 soma 2 + 1.2 = 3.2 -- e fica na frente de um com dois erros e facilidade
+    intacta, que provavelmente so teve um mes ruim.
+    """
+    return round(erros + max(2.5 - facilidade, 0) * 2, 2)
+
+
+def topicos_frageis(quantos=QUANTOS_FRAGEIS, dias=DIAS_DA_FRAGILIDADE):
+    """Os topicos que voce acha que sabe e nao sabe.
+
+    Sai do log de respostas: o estado atual do topico diz onde a escada esta,
+    nao quantas vezes ela caiu. Topico sem erro nenhum nao entra -- a lista e
+    para decidir onde gastar a proxima hora, nao para listar o que existe.
+    """
+    desde = timezone.now() - timedelta(days=dias)
+    por_topico = {}
+    for resposta in RespostaRevisao.objects.filter(
+        respondida_em__gte=desde
+    ).select_related("topico__materia"):
+        dados = por_topico.setdefault(
+            resposta.topico_id,
+            {"topico": resposta.topico, "respostas": 0, "erros": 0, "ultima": None},
+        )
+        dados["respostas"] += 1
+        if not resposta.acertou:
+            dados["erros"] += 1
+        if dados["ultima"] is None:
+            dados["ultima"] = resposta.qualidade
+
+    interrupcoes = interrupcoes_por_topico(desde)
+
+    lista = []
+    for dados in por_topico.values():
+        if dados["respostas"] < MINIMO_DE_RESPOSTAS or not dados["erros"]:
+            continue
+        topico = dados["topico"]
+        lista.append(
+            {
+                "topico_id": topico.id,
+                "topico": topico.nome,
+                "materia": topico.materia.nome,
+                "cor": topico.materia.cor,
+                "respostas": dados["respostas"],
+                "erros": dados["erros"],
+                "taxa_erro": round(dados["erros"] * 100 / dados["respostas"]),
+                "facilidade": round(topico.facilidade, 2),
+                "ultima_nota": dados["ultima"],
+                "interrupcoes_media": interrupcoes.get(topico.id, {}).get("media", 0),
+                "pontos": pontos_de_fragilidade(dados["erros"], topico.facilidade),
+            }
+        )
+
+    lista.sort(key=lambda d: (-d["pontos"], -d["taxa_erro"], d["topico"]))
+    return lista[:quantos]
+
+
+def interrupcoes_por_topico(desde):
+    """topico_id -> interrupcoes por sessao e quantas sessoes, desde `desde`."""
+    linhas = (
+        SessaoEstudo.objects.filter(inicio__gte=desde)
+        .values("topico_id")
+        .annotate(sessoes=Count("id"), total=Sum("interrupcoes"))
+    )
+    return {
+        linha["topico_id"]: {
+            "sessoes": linha["sessoes"],
+            "media": round((linha["total"] or 0) / linha["sessoes"], 1),
+        }
+        for linha in linhas
+    }
+
+
+def interrupcoes_e_erro(dias=DIAS_DA_FRAGILIDADE):
+    """Quem erra mais estuda mais picado? A pergunta que so este app responde.
+
+    Compara a media de interrupcoes das sessoes dos topicos que erraram alguma
+    revisao no periodo com a dos que nao erraram. Nao prova causa nenhuma -- mas
+    e a unica ferramenta que tem os dois numeros na mesma base.
+    """
+    desde = timezone.now() - timedelta(days=dias)
+    erraram = set(
+        RespostaRevisao.objects.filter(respondida_em__gte=desde, qualidade__lt=3)
+        .values_list("topico_id", flat=True)
+    )
+    responderam = set(
+        RespostaRevisao.objects.filter(respondida_em__gte=desde).values_list(
+            "topico_id", flat=True
+        )
+    )
+    interrupcoes = interrupcoes_por_topico(desde)
+
+    def media(ids):
+        sessoes = sum(interrupcoes[i]["sessoes"] for i in ids if i in interrupcoes)
+        if not sessoes:
+            return None
+        total = sum(
+            interrupcoes[i]["media"] * interrupcoes[i]["sessoes"]
+            for i in ids
+            if i in interrupcoes
+        )
+        return round(total / sessoes, 1)
+
+    return {
+        "com_erro": media(erraram),
+        "sem_erro": media(responderam - erraram),
+        "topicos_com_erro": len(erraram),
+        "topicos_sem_erro": len(responderam - erraram),
+    }
