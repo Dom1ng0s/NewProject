@@ -31,9 +31,8 @@ async function mover(id, status) {
 
   try {
     const r = await enviar(`/api/topicos/${id}/status/`, { status });
-    if (r.revisoes_criadas) {
-      avisar(`${topico.nome}: ${plural(r.revisoes_criadas, 'revisão agendada', 'revisões agendadas')}.`, 'ok');
-    }
+    // Booleano, não contagem: há no máximo uma revisão pendente por tópico.
+    if (r.revisao_agendada) avisar(`${topico.nome}: próxima revisão agendada.`, 'ok');
   } catch (erro) {
     topico.status = anterior;
     desenhar();

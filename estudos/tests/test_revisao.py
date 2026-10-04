@@ -2,7 +2,9 @@
 que o dashboard ve."""
 
 from datetime import timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.utils import timezone
 
 from estudos.models import Cartao, Revisao, Topico
@@ -445,3 +447,42 @@ class LimpezaDoAgendamentoAntigo(CasoBase):
         # A de outro tópico fica, e a já feita é histórico: não se mexe.
         self.assertEqual(pendentes.filter(topico=outro).count(), 1)
         self.assertTrue(Revisao.objects.filter(pk=feita.pk).exists())
+
+
+class ContratoDoAvisoDeAgendamento(CasoBase):
+    """A tela lia uma chave que a API nunca mandou, e o aviso sumia calado.
+
+    Erro de digitação em JavaScript não quebra nada: `r.revisoes_criadas` era
+    `undefined`, o `if` dava falso e o aviso simplesmente não aparecia. Estes
+    testes prendem os dois lados do combinado.
+    """
+
+    ARQUIVOS = ["materias.js", "quadro.js"]
+
+    def fonte(self, nome):
+        caminho = Path(settings.BASE_DIR) / "static" / "js" / nome
+        return caminho.read_text(encoding="utf-8")
+
+    def test_a_api_responde_com_revisao_agendada(self):
+        resposta = self.post(
+            f"/api/topicos/{self.topico.id}/status/", {"status": Topico.REVISADO}
+        )
+        self.assertEqual(
+            set(resposta.json()), {"ok", "topico", "revisao_agendada"}
+        )
+
+    def test_e_um_booleano_e_nao_uma_contagem(self):
+        dados = self.post(
+            f"/api/topicos/{self.topico.id}/status/", {"status": Topico.REVISADO}
+        ).json()
+        self.assertIsInstance(dados["revisao_agendada"], bool)
+
+    def test_as_telas_leem_a_chave_que_existe(self):
+        for nome in self.ARQUIVOS:
+            with self.subTest(arquivo=nome):
+                self.assertIn("revisao_agendada", self.fonte(nome))
+
+    def test_nenhuma_tela_le_a_chave_que_nunca_existiu(self):
+        for nome in self.ARQUIVOS:
+            with self.subTest(arquivo=nome):
+                self.assertNotIn("revisoes_criadas", self.fonte(nome))

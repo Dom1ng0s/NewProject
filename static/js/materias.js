@@ -30,9 +30,10 @@ function seletorStatus(topico) {
   select.onchange = async () => {
     try {
       const r = await enviar(`/api/topicos/${topico.id}/status/`, { status: select.value });
-      if (r.revisoes_criadas) {
-        avisar(`${topico.nome}: ${plural(r.revisoes_criadas, 'revisão agendada', 'revisões agendadas')}.`, 'ok');
-      }
+      // A API devolve um booleano: existe no máximo uma revisão pendente por
+      // tópico, então nunca houve plural a fazer aqui.
+      if (r.revisao_agendada) avisar(`${topico.nome}: próxima revisão agendada.`, 'ok');
+      topico.status = select.value;
     } catch (erro) {
       select.value = topico.status;
       reclamar(erro);
