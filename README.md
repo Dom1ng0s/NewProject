@@ -167,6 +167,21 @@ o que dá urgência ao resto: a fila de revisão do dashboard e da tela "Revisar
 hoje" passa a vir ordenada pela prova mais próxima, com a etiqueta do prazo em
 cada linha.
 
+**Plano de ataque.** Com o conteúdo marcado, o botão na linha da avaliação monta
+o estudo até a véspera: pega os buracos livres da sua agenda (fora do que já
+está na grade, entre 8h e 22h, em blocos de 1h com teto de 3h por dia) e
+distribui os tópicos neles, começando pelos que o log diz que você mais erra.
+O **Conferir** mostra antes; só o **Gravar no planner** escreve, e os blocos
+viram linhas normais do planner — com o tópico junto, o botão "Estudar agora" já
+funciona neles. Gravar duas vezes não duplica, e o estudo já marcado conta para
+o teto do dia, então rodar de novo não empilha uma segunda jornada por cima da
+primeira. O que não coube até a véspera é dito pelo nome, em vez de o plano
+fingir que cobre tudo.
+
+É o único lugar do app em que as quatro pontas se encontram — o conteúdo que
+cai, a data, o histórico de erros e os horários livres. Nenhuma ferramenta de
+fora tem as quatro na mesma base.
+
 O dashboard lista o que vence nos próximos `DIAS_PROXIMAS_AVALIACOES` dias. Uma
 avaliação cuja data já passou continua aparecendo enquanto não for marcada como
 "já aconteceu" — esquecer de fechar não pode sumir com ela da tela.

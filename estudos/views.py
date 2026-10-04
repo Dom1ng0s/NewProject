@@ -27,6 +27,8 @@ from .services import (
     NadaParaDesfazer,
     avaliacoes_proximas,
     carga_futura,
+    gravar_plano,
+    plano_de_ataque,
     desfazer_ultima_resposta,
     registrar_resposta,
     ultima_resposta,
@@ -1081,6 +1083,26 @@ def api_avaliacao_editar(request, pk):
     except ValueError as erro:
         return JsonResponse({"erro": str(erro)}, status=400)
     return JsonResponse({"ok": True, "avaliacao": avaliacao.json()})
+
+
+@require_POST
+def api_avaliacao_plano(request, pk):
+    """Monta (e, sem `preview`, grava) o plano de estudo ate a vespera da prova.
+
+    E o unico lugar em que o conteudo que cai, a data, o historico de erros e os
+    buracos da semana decidem juntos. Com `preview`, nada e gravado.
+    """
+    avaliacao = get_object_or_404(Avaliacao, pk=pk)
+    try:
+        plano = plano_de_ataque(avaliacao)
+    except ValueError as erro:
+        return JsonResponse({"erro": str(erro)}, status=400)
+
+    if corpo(request).get("preview"):
+        return JsonResponse({"ok": True, "plano": plano, "gravado": None})
+    return JsonResponse(
+        {"ok": True, "plano": plano, "gravado": gravar_plano(avaliacao, plano)}
+    )
 
 
 @require_POST

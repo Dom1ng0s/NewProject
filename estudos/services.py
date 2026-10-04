@@ -780,3 +780,188 @@ def interrupcoes_e_erro(dias=DIAS_DA_FRAGILIDADE):
         "topicos_com_erro": len(erraram),
         "topicos_sem_erro": len(responderam - erraram),
     }
+
+
+# ---------------------------------------------------------------- plano de ataque
+
+# Faixa do dia em que o plano pode marcar estudo. Fora dela nao e agenda, e
+# insonia -- e um plano que ninguem cumpre e pior que nenhum plano.
+HORA_INICIAL_DO_PLANO = 8
+HORA_FINAL_DO_PLANO = 22
+
+# Pedaco minimo que vale marcar e tamanho padrao de um bloco de revisao.
+MINIMO_DO_BLOCO_MIN = 30
+BLOCO_DO_PLANO_MIN = 60
+
+# Teto por dia, para o plano nao transformar sabado inteiro em maratona.
+MAXIMO_POR_DIA_MIN = 180
+
+
+def vagas_do_dia(dia, blocos_da_grade):
+    """Os buracos livres daquele dia, dentro da faixa do plano.
+
+    O que ja esta na grade (aula, trabalho, academia) e intocavel: o plano so
+    ocupa o que sobra, senao ele marca estudo por cima da aula.
+    """
+    ocupados = sorted(
+        (b["inicio_min"], b["inicio_min"] + b["duracao_min"])
+        for b in blocos_da_grade
+        if not b["pulado"] and b["dia_semana"] == dia.weekday()
+    )
+
+    vagas = []
+    cursor = HORA_INICIAL_DO_PLANO * 60
+    fim_do_dia = HORA_FINAL_DO_PLANO * 60
+    for inicio, fim in ocupados + [(fim_do_dia, fim_do_dia)]:
+        if inicio > cursor:
+            livre = min(inicio, fim_do_dia) - cursor
+            if livre >= MINIMO_DO_BLOCO_MIN:
+                vagas.append((cursor, min(inicio, fim_do_dia)))
+        cursor = max(cursor, fim)
+        if cursor >= fim_do_dia:
+            break
+    return vagas
+
+
+def estudo_ja_marcado(dia, blocos_da_grade):
+    """Minutos de estudo que aquele dia ja tem na grade.
+
+    Conta para o teto do dia: rodar o plano duas vezes, ou ter marcado estudo a
+    mao, nao pode virar uma segunda jornada por cima da primeira.
+    """
+    return sum(
+        b["duracao_min"]
+        for b in blocos_da_grade
+        if not b["pulado"]
+        and b["dia_semana"] == dia.weekday()
+        and b["tipo"] == BlocoPlanejado.ESTUDO
+    )
+
+
+def ordem_de_ataque(topicos):
+    """O que estudar primeiro: o que mais erra, depois o que a escada derrubou.
+
+    Topico nunca revisado vem antes de topico dominado -- nao ha o que confirmar
+    em quem nunca foi cobrado.
+    """
+    erros = {}
+    for linha in (
+        RespostaRevisao.objects.filter(topico__in=topicos, qualidade__lt=3)
+        .values("topico_id")
+        .annotate(total=Count("id"))
+    ):
+        erros[linha["topico_id"]] = linha["total"]
+
+    return sorted(
+        topicos,
+        key=lambda t: (
+            -erros.get(t.id, 0),
+            t.status == Topico.DOMINADO,
+            t.facilidade,
+            t.nome,
+        ),
+    )
+
+
+def minutos_para_hora(minutos):
+    return time(minutos // 60, minutos % 60)
+
+
+def plano_de_ataque(avaliacao, hoje=None):
+    """Distribui o conteudo da avaliacao nos horarios livres ate a vespera.
+
+    E o unico lugar do app em que as quatro pontas se encontram: o conteudo que
+    cai, a data da prova, a ordem que o log de respostas sugere e os buracos que
+    a sua semana realmente tem. Nenhuma ferramenta de fora sabe as quatro.
+
+    Devolve a lista de blocos propostos e o que ficou de fora.
+    """
+    hoje = hoje or timezone.localdate()
+    topicos = list(avaliacao.topicos.all())
+    if not topicos:
+        raise ValueError("Marque o conteúdo que cai na avaliação antes de montar o plano.")
+
+    # Estudar na véspera ainda e estudar; no dia da prova, ja e tarde para
+    # planejar -- o que fosse caber ali nao passa por um plano.
+    dias = [hoje + timedelta(days=i) for i in range((avaliacao.data - hoje).days)]
+    if not dias:
+        raise ValueError("A prova é hoje ou já passou: não há o que planejar.")
+
+    fila = ordem_de_ataque(topicos)
+    grades = {}
+    itens = []
+    proximo = 0
+
+    for dia in dias:
+        semana = segunda_da_semana(dia)
+        if semana not in grades:
+            grades[semana] = blocos_da_semana(semana)
+
+        usados = estudo_ja_marcado(dia, grades[semana])
+        for inicio, fim in vagas_do_dia(dia, grades[semana]):
+            if usados >= MAXIMO_POR_DIA_MIN:
+                break
+            while inicio + MINIMO_DO_BLOCO_MIN <= fim and usados < MAXIMO_POR_DIA_MIN:
+                duracao = min(BLOCO_DO_PLANO_MIN, fim - inicio, MAXIMO_POR_DIA_MIN - usados)
+                if duracao < MINIMO_DO_BLOCO_MIN:
+                    break
+                topico = fila[proximo % len(fila)]
+                proximo += 1
+                itens.append(
+                    {
+                        "data": dia.isoformat(),
+                        "semana": semana.isoformat(),
+                        "dia_semana": dia.weekday(),
+                        "hora_inicio": minutos_para_hora(inicio).strftime("%H:%M"),
+                        "hora_fim": minutos_para_hora(inicio + duracao).strftime("%H:%M"),
+                        "minutos": duracao,
+                        "topico_id": topico.id,
+                        "topico": topico.nome,
+                        "titulo": f"Revisar {topico.nome}",
+                    }
+                )
+                inicio += duracao
+                usados += duracao
+            if usados >= MAXIMO_POR_DIA_MIN:
+                break
+
+    cobertos = {i["topico_id"] for i in itens}
+    return {
+        "avaliacao": avaliacao.titulo,
+        "materia": avaliacao.materia.nome,
+        "data": avaliacao.data.isoformat(),
+        "dias": len(dias),
+        "blocos": itens,
+        "minutos": sum(i["minutos"] for i in itens),
+        "topicos": len(fila),
+        # Conteudo que nao coube em nenhum buraco ate a vespera: dizer isso e
+        # mais util do que fingir que o plano cobre tudo.
+        "de_fora": [t.nome for t in fila if t.id not in cobertos],
+    }
+
+
+@transaction.atomic
+def gravar_plano(avaliacao, plano):
+    """Escreve os blocos do plano no planner, sem repetir o que ja esta la."""
+    criados = 0
+    existentes = 0
+    for item in plano["blocos"]:
+        chave = {
+            "titulo": item["titulo"],
+            "semana": date.fromisoformat(item["semana"]),
+            "dia_semana": item["dia_semana"],
+            "hora_inicio": time.fromisoformat(item["hora_inicio"]),
+            "hora_fim": time.fromisoformat(item["hora_fim"]),
+        }
+        if BlocoPlanejado.objects.filter(**chave).exists():
+            existentes += 1
+            continue
+        BlocoPlanejado.objects.create(
+            tipo=BlocoPlanejado.ESTUDO,
+            materia=avaliacao.materia,
+            topico_id=item["topico_id"],
+            descricao=f"Plano de ataque: {avaliacao.titulo}",
+            **chave,
+        )
+        criados += 1
+    return {"criados": criados, "existentes": existentes}

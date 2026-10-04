@@ -34,6 +34,15 @@ function linha(a) {
       el('p', { className: 'ajuda', textContent: detalhe.join(' · ') }),
     ]),
     el('span', { className: classeDaEtiqueta(a), textContent: a.concluida ? 'concluída' : contagem(a) }),
+    // Plano só faz sentido para prova que ainda vem e com conteúdo marcado.
+    !a.concluida && a.dias > 0 && a.topicos.length
+      ? el('button', {
+          type: 'button',
+          className: 'botao botao-discreto botao-mini',
+          textContent: 'Plano de ataque',
+          onclick: () => abrirPlano(a).catch(reclamar),
+        })
+      : null,
     el('button', {
       type: 'button',
       className: 'botao botao-discreto botao-mini',
@@ -41,6 +50,85 @@ function linha(a) {
       onclick: () => abrirEdicao(a),
     }),
   ]);
+}
+
+// ---------------------------------------------------------------- plano
+
+/* O plano de ataque é o único lugar em que as quatro pontas se encontram: o
+   conteúdo que cai, a data da prova, o que o log diz que você erra e os buracos
+   que a sua semana realmente tem. Mostra antes de gravar, como o import de
+   .ics: um plano escrito no planner sem conferência seria um plano imposto. */
+async function abrirPlano(a) {
+  const d = await enviar(`/api/avaliacoes/${a.id}/plano/`, { preview: 1 });
+  const plano = d.plano;
+
+  const porDia = new Map();
+  plano.blocos.forEach((b) => {
+    if (!porDia.has(b.data)) porDia.set(b.data, []);
+    porDia.get(b.data).push(b);
+  });
+
+  const lista = el('div', { className: 'plano-dias' },
+    [...porDia.entries()].map(([data, blocos]) =>
+      el('div', { className: 'plano-dia' }, [
+        el('strong', {
+          textContent: `${DIAS_CURTOS[blocos[0].dia_semana]} ${dataBr(data)}`,
+        }),
+        ...blocos.map((b) =>
+          el('span', {
+            className: 'ajuda',
+            textContent: `${b.hora_inicio}–${b.hora_fim} · ${b.topico}`,
+          })
+        ),
+      ])
+    )
+  );
+
+  const resumo = plano.blocos.length
+    ? `${plural(plano.blocos.length, 'bloco', 'blocos')} · ` +
+      `${minutosParaTexto(plano.minutos)} nos ${plural(plano.dias, 'dia', 'dias')} até a véspera.`
+    : 'Não sobrou nenhum buraco livre na agenda até a véspera.';
+
+  const gravar = el('button', {
+    type: 'button',
+    className: 'botao',
+    textContent: 'Gravar no planner',
+    disabled: !plano.blocos.length,
+    onclick: async () => {
+      try {
+        const salvo = await enviar(`/api/avaliacoes/${a.id}/plano/`);
+        dialogo.close();
+        avisar(
+          `${plural(salvo.gravado.criados, 'bloco gravado', 'blocos gravados')} no planner.`,
+          'ok'
+        );
+      } catch (erro) {
+        reclamar(erro);
+      }
+    },
+  });
+
+  const dialogo = abrirDialogo([
+    el('h2', { textContent: `Plano até ${a.titulo}` }),
+    el('p', { textContent: resumo }),
+    lista,
+    plano.de_fora.length
+      ? el('p', {
+          className: 'ajuda',
+          textContent: `Não coube: ${plano.de_fora.join(', ')}. Abra espaço na agenda ou comece antes.`,
+        })
+      : null,
+    el('div', { className: 'dialogo-acoes' }, [
+      el('button', {
+        type: 'button',
+        className: 'botao botao-discreto',
+        textContent: 'Fechar',
+        onclick: () => dialogo.close(),
+      }),
+      gravar,
+    ]),
+  ], () => gravar.focus());
+  dialogo.classList.add('dialogo-plano');
 }
 
 function desenhar() {

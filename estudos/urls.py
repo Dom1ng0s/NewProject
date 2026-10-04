@@ -55,6 +55,7 @@ urlpatterns = [
     path("api/avaliacoes/", views.api_avaliacoes),
     path("api/avaliacoes/criar/", views.api_avaliacao_criar),
     path("api/avaliacoes/<int:pk>/editar/", views.api_avaliacao_editar),
+    path("api/avaliacoes/<int:pk>/plano/", views.api_avaliacao_plano),
     path("api/avaliacoes/<int:pk>/excluir/", views.api_avaliacao_excluir),
     path("api/backup/exportar/", views.api_backup_exportar),
     path("api/backup/importar/", views.api_backup_importar),

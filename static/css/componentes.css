@@ -651,3 +651,25 @@ kbd {
 }
 
 .previa-cartoes .ajuda { margin: var(--e2) 0 0; }
+
+/* Prévia do plano de ataque: um bloco por dia, antes de gravar no planner. */
+.dialogo-plano { width: min(520px, calc(100vw - 2 * var(--e4))); }
+
+.plano-dias {
+  display: grid;
+  gap: var(--e2);
+  max-height: 46vh;
+  overflow-y: auto;
+  margin-bottom: var(--e4);
+}
+
+.plano-dia {
+  display: grid;
+  gap: 1px;
+  padding: var(--e2) var(--e3);
+  border-left: 3px solid var(--acento);
+  border-radius: var(--raio-p);
+  background: var(--superficie-afundada);
+}
+
+.plano-dia .ajuda { margin: 0; font-family: var(--fonte-mono); font-size: var(--t-xs); }
