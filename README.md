@@ -14,6 +14,25 @@ python manage.py runserver
 
 Abra http://127.0.0.1:8000/
 
+## Revisar do celular
+
+Revisar é atividade de fila de ônibus, não de mesa. Para abrir o app no celular,
+suba o servidor ouvindo a rede local em vez de só o `localhost`:
+
+```bash
+python manage.py runserver 0.0.0.0:8000
+```
+
+Depois é `http://<ip-da-máquina>:8000/` no navegador do celular (`ipconfig` no
+Windows mostra o IP; na primeira vez o firewall pergunta se libera a porta). O
+`ALLOWED_HOSTS` já aceita qualquer host — o app é de uma pessoa, na rede de
+casa, e exigir configuração para isso seria burocracia.
+
+A tela de revisão foi feita para 390px: o diálogo ocupa a tela, as quatro notas
+ficam em 2x2 ao alcance do polegar, os alvos crescem em aparelho de toque e as
+dicas de tecla (`(1)`, `(espaço)`) desaparecem onde não há teclado. Não há nada
+para instalar: é o mesmo app, no navegador do celular.
+
 `popular_dados --limpar` apaga tudo antes de popular.
 
 ## Telas

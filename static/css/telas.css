@@ -445,3 +445,42 @@ select.status { padding: 3px 6px; font-size: var(--t-xs); flex: 0 0 auto; max-wi
 }
 
 .linha-desfazer:empty { display: none; }
+
+/* =======================  revisar no celular  =======================
+   Revisar é atividade de fila de ônibus: a tela de 390px é o caso de uso, não
+   uma adaptação. O que muda é o alvo do dedo e a largura do palco do cartão. */
+
+@media (pointer: coarse) {
+  /* 44px é o alvo que o dedo acerta sem mirar. */
+  .botao { min-height: 40px; }
+  .botao-mini { min-height: 34px; }
+  .linha-desfazer .botao { min-height: 34px; }
+}
+
+@media (max-width: 560px) {
+  /* O diálogo de revisão vira a tela inteira: não há o que mais olhar. */
+  dialog.dialogo {
+    width: calc(100vw - 2 * var(--e3));
+    padding: var(--e4);
+    max-height: calc(100vh - 2 * var(--e4));
+  }
+
+  .cartao-palco { min-height: 160px; padding: var(--e3); }
+  .cartao-frente { font-size: var(--t-lg); }
+
+  /* As quatro notas em 2x2, só no diálogo de revisão (o que tem palco de
+     cartão): numa coluna só, "fácil" fica fora do alcance do polegar. */
+  dialog.dialogo:has(.cartao-palco) .dialogo-acoes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--e2);
+  }
+  dialog.dialogo:has(.cartao-palco) .dialogo-acoes .botao {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Na fila, o nome do tópico fica em cima e o botão ocupa a linha. */
+  .painel-foco .item .cresce { flex: 1 0 100%; }
+  .painel-foco .item > .botao { flex: 1 0 100%; justify-content: center; }
+}

@@ -1,6 +1,10 @@
 /* Revisar hoje: tenta lembrar antes de ver a resposta, e a nota decide quando
    o tópico volta. As quatro notas são as do SM-2: errei, difícil, bom, fácil. */
 
+/* Aparelho de toque: sem teclado, as dicas "(1)" e "(espaço)" nos botões não
+   ajudam ninguém e encurtam o rótulo numa tela de 390px. */
+const NO_DEDO = window.matchMedia('(pointer: coarse)').matches;
+
 // A tecla é o atalho: numa fila de 20 cartões, a mão não volta para o mouse.
 const NOTAS = [
   ['errei', 'Errei', 'botao-perigo botao-discreto', '1'],
@@ -53,7 +57,8 @@ async function revisar(r) {
     return el('button', {
       type: 'button',
       className: `botao ${classe}`,
-      textContent: tecla ? `${rotulo} (${tecla})` : rotulo,
+      // No celular não há tecla para apertar; a dica só rouba largura do rótulo.
+      textContent: tecla && !NO_DEDO ? `${rotulo} (${tecla})` : rotulo,
       onclick: aoClicar,
     });
   }
@@ -226,7 +231,7 @@ function desenharDesfazer(ultima) {
     el('button', {
       type: 'button',
       className: 'botao botao-discreto botao-mini',
-      textContent: 'Desfazer (u)',
+      textContent: NO_DEDO ? 'Desfazer' : 'Desfazer (u)',
       onclick: () => desfazer(),
     })
   );
