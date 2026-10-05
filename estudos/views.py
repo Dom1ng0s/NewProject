@@ -660,7 +660,9 @@ def preencher_bloco(bloco, dados, semana_atual=None):
         bloco.dia_semana = int(dados.get("dia_semana") or 0)
         bloco.hora_inicio = dados["hora_inicio"]
         bloco.hora_fim = dados["hora_fim"]
-        bloco.full_clean(exclude=["topico", "materia", "semana"])
+        # perfil fica de fora como os outros: quem o preenche e o save() do
+        # ComDono, depois desta validacao -- valida-lo aqui reprova todo bloco novo.
+        bloco.full_clean(exclude=["topico", "materia", "semana", "perfil"])
     except KeyError:
         return "Informe inicio e fim."
     except Exception:
