@@ -21,6 +21,7 @@ from .models import (
     Revisao,
     SessaoEstudo,
     Topico,
+    hora_do_texto,
 )
 from . import backup, escopo
 from .cartoes import cartoes_da_nota
@@ -33,6 +34,10 @@ from .services import (
     bloco_de_agora,
     carga_futura,
     cartao_surpresa,
+    dados_lembrete,
+    investimento,
+    marcos_novos,
+    resumo_da_sessao,
     continuar_de_onde_parou,
     escada_dos_topicos,
     gravar_plano,
@@ -153,7 +158,40 @@ def ir_para_agora(request):
 
 @require_GET
 def api_dashboard(request):
-    return JsonResponse(dados_dashboard())
+    """Tudo o que a tela de abertura mostra, numa chamada.
+
+    O investimento e o lembrete entram aqui e nao em `dados_dashboard`: quem
+    mais chama aquela funcao e a tela de revisao, que nao mostra nenhum dos
+    dois e nao tem por que pagar as consultas deles.
+    """
+    return JsonResponse(
+        {
+            **dados_dashboard(),
+            "investimento": investimento(),
+            "lembrete": dados_lembrete(),
+        }
+    )
+
+
+@require_POST
+def api_marcos(request):
+    """Os marcos ainda nao anunciados -- e os marca como anunciados.
+
+    E POST porque escreve: ler a tela nao pode gastar o "ja falei disso", senao
+    um F5 no caminho entre a conta e o aviso engole o parabens para sempre. O
+    front pede isto depois de ja ter o dashboard na tela, e mostra o que vier.
+    """
+    return JsonResponse({"marcos": marcos_novos()})
+
+
+@require_GET
+def api_lembrete(request):
+    """O lembrete do dia: o que ha em jogo e a que hora dizer.
+
+    Serve a tela e tambem o service worker, que e quem consegue avisar com o
+    app fechado onde o navegador deixa.
+    """
+    return JsonResponse(dados_lembrete())
 
 
 @require_GET
@@ -561,7 +599,14 @@ def api_sessao_criar(request):
         topico.save()
     criada = topico.iniciar_revisoes()
     return JsonResponse(
-        {"ok": True, "sessao": sessao.json(), "revisao_agendada": bool(criada)}
+        {
+            "ok": True,
+            "sessao": sessao.json(),
+            "revisao_agendada": bool(criada),
+            # O que esta sessao acabou de mover. Sem isto ela termina em nada:
+            # o cronometro zera e cinquenta minutos de esforco nao aparecem.
+            "resumo": resumo_da_sessao(sessao),
+        }
     )
 
 
@@ -995,6 +1040,25 @@ def api_configuracoes_salvar(request):
                 status=400,
             )
         setattr(config, nome, valor)
+
+    # O lembrete nao e um numero com faixa: um e caixa de marcar, o outro e uma
+    # hora que pode vir vazia querendo dizer "escolha por mim".
+    if "lembrete_ativo" in dados:
+        config.lembrete_ativo = str(dados["lembrete_ativo"]).lower() in (
+            "1",
+            "true",
+            "on",
+            "sim",
+        )
+    if "lembrete_hora" in dados:
+        bruto = str(dados["lembrete_hora"] or "").strip()
+        hora = hora_do_texto(bruto)
+        if bruto and hora is None:
+            return JsonResponse(
+                {"erro": "A hora do lembrete precisa estar no formato 19:00."},
+                status=400,
+            )
+        config.lembrete_hora = hora
 
     if config.segundo_intervalo_dias <= config.primeiro_intervalo_dias:
         return JsonResponse(

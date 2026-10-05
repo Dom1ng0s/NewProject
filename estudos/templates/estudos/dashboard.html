@@ -5,18 +5,26 @@
 {% block legenda %}<p class="legenda">O que precisa de atenção hoje e como foi a semana. Atalhos do teclado em <kbd>?</kbd>.</p>{% endblock %}
 
 {% block corpo %}
+{% comment %}O que está em jogo hoje, antes de qualquer número: a corrida em pé
+e o que ela custa para continuar. Some quando não há nada em jogo — uma faixa
+que aparece todo dia não informa nada, e dizer "você não estudou" é o aviso que
+faz fechar a aba.{% endcomment %}
+<section class="corrida" id="corrida" hidden>
+  <div class="corrida-corpo" id="corrida-corpo"></div>
+</section>
+
 {# Um clique entre abrir o app e estar estudando; o JS esconde se nao houver o que continuar. #}
 <section class="painel-foco continuar" id="continuar" hidden>
   <div class="continuar-corpo" id="continuar-corpo"></div>
 </section>
 
-{% comment %}Entrada de custo zero: um cartão que você já sabe, sem nota para
-dar. Quem abre por curiosidade com frequência fica para a sessão.{% endcomment %}
-<p class="linha-surpresa">
-  <button type="button" class="botao botao-fantasma botao-mini" id="surpresa">
-    Carta da manga <kbd>s</kbd>
-  </button>
-</p>
+{% comment %}Entrada de custo zero: a pergunta já na tela, de um tópico
+dominado, sem nota para dar. O custo de entrada é o que mata app de estudo, não
+a falta de recompensa — e aqui ele é zero: a pessoa já está respondendo antes de
+decidir estudar.{% endcomment %}
+<section class="painel surpresa-inline" id="surpresa-inline" hidden>
+  <div id="surpresa-corpo"></div>
+</section>
 
 <div class="metricas">
   {# A fila do dia como coisa que fecha: o anel chega a 100%, a dívida não. #}
@@ -72,6 +80,14 @@ dar. Quem abre por curiosidade com frequência fica para a sessão.{% endcomment
 <section class="painel">
   <h2 class="painel-titulo">Paradas há mais de 7 dias</h2>
   <div id="paradas"></div>
+</section>
+
+{% comment %}O tamanho do que já foi feito, desde o primeiro dia. Não decide
+nada hoje — e é por isso que fica no fim. Serve para a conta existir: é o único
+lugar em que o passado inteiro aparece de uma vez.{% endcomment %}
+<section class="painel investimento" id="investimento" hidden>
+  <h2 class="painel-titulo">Desde o começo <span class="ajuda" id="investimento-desde"></span></h2>
+  <div class="investimento-numeros" id="investimento-numeros"></div>
 </section>
 {% endblock %}
 

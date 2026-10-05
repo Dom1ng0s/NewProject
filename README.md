@@ -350,6 +350,93 @@ corrente:
   pergunta que o contador de interrupções existe para responder, e nenhuma outra
   ferramenta tem os dois números na mesma base.
 
+## O laço do hábito
+
+Um app de estudo não é abandonado por falta de recompensa — é abandonado porque
+a tarefa nunca termina, porque o esforço não aparece em lugar nenhum e porque
+nada lembra de começar. As peças abaixo fecham esses três buracos, e nenhuma
+delas inventa número: cada uma mostra, na hora em que mudou, um dado que já
+estava no banco.
+
+**O fecho do dia.** Quando a fila zera, o anel anda de onde estava até 100%, a
+sequência aparece inteira e o que volta amanhã é dito no fim, em letra miúda.
+Antes isto era um aviso de canto que sumia em três segundos: terminar a fila era
+indistinguível de desistir dela, porque a tela ficava igual nos dois casos. O
+movimento do anel é o recado — não o texto. O anel tem um relógio atrás do
+`requestAnimationFrame` de propósito: em janela minimizada o `rAF` não roda, e um
+anel congelado em 90% numa fila fechada seria um número falso no exato instante
+que ele existe para marcar.
+
+**A corrida, no topo.** Uma faixa com os dias seguidos, quantas folgas a semana
+ainda perdoa e o que basta para segurar o dia. Ela só aparece quando há uma
+sequência em pé e o dia ainda não foi cumprido (`em_risco`): quem não tem
+corrida não tem o que perder, e cobrar dessa pessoa é cobrar justamente do dia
+em que ela voltou. A formulação é metade do trabalho — "13 dias seguidos · 1
+folga de sobra" faz abrir; "você não estudou hoje" faz fechar a aba.
+
+**O fim da sessão, com número.** Salvar deixa de ser um aviso de canto e passa a
+dizer o que mudou: minutos, o total do dia, as horas da semana andando para a
+meta (e quanto falta, em minutos, porque "faltam 40 min" é acionável e "67% da
+meta" não é) e a sequência. As interrupções vão comparadas com a sua própria
+média dos últimos 60 dias — o contador de interrupções existe para responder
+isso, e até agora a resposta só aparecia no histórico, noventa dias depois. Sem
+histórico não há comparação: dizer "0,0 de média" no primeiro dia seria inventar
+um recorde para quebrar.
+
+**A carta da manga na tela.** A pergunta já aberta quando o dashboard carrega, de
+um tópico já dominado, sem nota para dar e sem nada do SM-2 se movendo. O botão
+continua existindo (tecla `s`, em qualquer tela), mas quase ninguém aperta um
+botão para começar — e o custo de entrada é o que mata app de estudo, não a falta
+de recompensa. Quem respondeu uma pergunta já está estudando.
+
+**Desde o começo.** No fim do dashboard, o total de sempre: horas, dias de
+estudo, revisões fechadas, tópicos dominados. É o único lugar em que o passado
+inteiro aparece de uma vez — o resto do app olha para a semana ou para os últimos
+180 dias. Não decide nada hoje, e é por isso que fica no fim; serve para a conta
+existir, porque quanto maior ela fica, mais caro fica abandonar.
+
+**Marcos.** Fatos raros ditos em voz alta, uma vez só: o primeiro tópico
+dominado de cada matéria, um intervalo que passou de 90 dias, 7/30/100 dias
+seguidos, 4/12 semanas na meta, 100/500/1000 revisões, uma matéria que volta
+depois de parada. Não são pontos nem moeda — a diferença prática é que não há o
+que clicar para ganhar "90 dias de intervalo". A tabela `Marco` guarda só o "já
+falei disso", porque um parabéns repetido deixa de ser parabéns em dois dias.
+
+A primeira passada de um perfil **semeia em silêncio**: um app que acabou de
+importar um backup — ou que ganhou esta função com um ano de histórico dentro —
+tem dezenas de marcos verdadeiros de uma vez, e trinta parabéns juntos não são
+trinta parabéns, são ruído. A semeadura é uma linha gravada (`_semeado`) e não a
+ausência de linhas: inferir "primeira passada" do vazio faria o primeiro marco
+real de um perfil novo cair no silêncio da semeadura, uma vez só e para sempre.
+
+Pedir os marcos é um `POST /api/marcos/`, nunca um GET: a chamada é o que grava
+que eles já foram ditos, e um `F5` no caminho entre a conta e o aviso engoliria o
+parabéns. O front só pede depois de a tela estar montada.
+
+**O lembrete do dia.** O único gatilho que vem de fora da tela, e a única peça do
+hábito que não se resolve dentro dela. Liga em `/configuracoes/`, desligado por
+padrão. A hora vem, na ordem de quem sabe mais: o bloco de hoje no planner (ele
+diz a intenção, e bloco pulado não conta), a hora mais frequente das suas sessões
+(ela diz o hábito) ou 19h. Lembrar às 7h quem estuda às 22h é o jeito mais rápido
+de a pessoa desligar o lembrete — e um desligado não lembra nada.
+
+Sai uma vez por dia e só quando ainda há algo a fazer: dia cumprido não rende
+notificação, porque notificação sem conteúdo é o que ensina a ignorar as
+próximas. O texto diz o que está em jogo, nunca o que foi falhado.
+
+O alcance é honesto e limitado: **sem servidor não há push**. O aviso sai ao
+abrir o app depois da hora, e o service worker tenta de novo em segundo plano
+onde o navegador deixa (`periodicSync`, hoje só em PWA instalado no Chrome, e com
+o navegador decidindo a hora de verdade). Clicar no lembrete abre `/agora/` — a
+mesma porta do atalho da tela inicial — reaproveitando uma aba já aberta.
+
+**O que não foi feito, de propósito:** sequência que zera sem folga (perda de
+streak é o principal evento de abandono em app de hábito), dívida na manchete
+(ver "Revisão"), moeda, XP, recompensa aleatória e ranking. Recompensa aleatória
+descola o reforço do conteúdo: a pessoa passa a otimizar o clique, não a memória
+— e num app de SM-2 isso degrada o próprio algoritmo, porque incentiva responder
+"fácil" para avançar mais rápido.
+
 ## Testes
 
 ```bash
@@ -429,6 +516,9 @@ editar código. Há um botão para voltar tudo ao padrão, e eles entram no back
 | Meta semanal | `10` | Horas por semana |
 | Matéria parada | `7` | Dias sem estudar até o aviso |
 | Provas no dashboard | `30` | Horizonte das provas |
+| Folgas por semana | `1` | Dias que a sequência perdoa em cada sete |
+| Lembrar de estudar | desligado | Liga o lembrete do dia |
+| Hora do lembrete | vazio | Vazio = o horário em que você costuma estudar |
 | Foco / pausa / pausa longa | `25` / `5` / `15` | Minutos do pomodoro |
 | Ciclos até a pausa longa | `4` | Focos antes do descanso longo |
 
@@ -458,3 +548,11 @@ milissegundos. Os estáticos continuam cacheáveis, que é o que o `?v=` permite
 por isso a versão usada é a **mais recente entre o arquivo e tudo que ele
 importa**, recursivamente. Sem isso, editar `telas.css` não invalidava nada e o
 navegador continuava servindo o CSS velho.
+
+Falta a outra metade: quem versiona é **quem escreve a URL**, e o `@import` não
+versiona nada. `componentes.css` e companhia são sempre pedidos no mesmo
+endereço, então o service worker os guardava cache-primeiro e eles sobreviviam à
+própria edição — o `?v=` da folha de entrada mudava, o navegador baixava a folha
+nova, e ela importava a versão velha das partes. Por isso o `sw.js` só usa
+cache-primeiro em `/static/` **quando a URL tem `?v=`**; sem versão, vai pela
+rede. Era o único ponto em que a regra de cache contrariava a própria razão dela.

@@ -271,6 +271,158 @@ function desenharColisoes(alertas) {
   });
 }
 
+/* A corrida: o que está em jogo hoje, dito antes de qualquer outro número.
+
+   Esta faixa é a diferença entre informação passiva e um motivo para começar.
+   `em_risco` vem do servidor e quer dizer uma coisa só: existe uma sequência em
+   pé e o dia ainda não foi cumprido. Quem não tem corrida não vê faixa nenhuma
+   — cobrar de quem está voltando é cobrar justamente do dia em que voltou.
+
+   A formulação é metade do trabalho: "6 dias seguidos — 1 folga disponível"
+   engaja; "você não estudou hoje" faz fechar a aba. O texto diz o que está em
+   pé e o que basta para mantê-lo, nunca o que foi falhado. */
+function desenharCorrida(s, progresso) {
+  const secao = document.getElementById('corrida');
+  // Nada em jogo: dia cumprido, ou nenhuma corrida para manter.
+  secao.hidden = !s.em_risco;
+  if (!s.em_risco) return;
+
+  const detalhes = [];
+  if (s.folgas) {
+    detalhes.push(
+      s.folgas_restantes
+        ? `${plural(s.folgas_restantes, 'folga', 'folgas')} de sobra nesta semana`
+        : 'sem folga nesta semana'
+    );
+  }
+  if (s.semanas) detalhes.push(`${plural(s.semanas, 'semana', 'semanas')} na meta`);
+
+  // O que basta para segurar o dia. Uma revisão conta como estudo? Não: a
+  // sequência é de sessões, e dizer o que de fato a mantém é o mínimo.
+  const basta = progresso.restantes
+    ? `${plural(progresso.restantes, 'revisão', 'revisões')} na fila · uma sessão segura o dia`
+    : 'uma sessão de qualquer tamanho segura o dia';
+
+  document.getElementById('corrida-corpo').replaceChildren(
+    el('div', { className: 'cresce' }, [
+      el('strong', { className: 'corrida-numero' }, [
+        el('span', { textContent: String(s.dias) }),
+        el('span', {
+          className: 'unidade',
+          textContent: s.dias === 1 ? ' dia seguido' : ' dias seguidos',
+        }),
+      ]),
+      el('p', { className: 'ajuda', textContent: detalhes.join(' · ') }),
+      el('p', { className: 'ajuda', textContent: basta }),
+    ]),
+    el('a', { className: 'botao', href: '/agora/', textContent: 'Estudar agora' })
+  );
+}
+
+/* O investimento acumulado: o passado inteiro, uma vez.
+
+   É sunk cost honesto — nada aqui pede nada nem cobra nada, e o número cresce
+   só quando a pessoa estuda. Fica no fim da tela de propósito: não decide nada
+   hoje, e o que não decide nada hoje não disputa o topo. */
+function desenharInvestimento(inv) {
+  const secao = document.getElementById('investimento');
+  secao.hidden = !inv || !inv.minutos;
+  if (secao.hidden) return;
+
+  document.getElementById('investimento-desde').textContent = inv.desde
+    ? `desde ${dataBr(inv.desde)}`
+    : '';
+
+  const numeros = [
+    [`${inv.horas}h`, 'estudadas'],
+    [inv.dias, inv.dias === 1 ? 'dia de estudo' : 'dias de estudo'],
+    [inv.revisoes, inv.revisoes === 1 ? 'revisão fechada' : 'revisões fechadas'],
+    [inv.dominados, inv.dominados === 1 ? 'tópico dominado' : 'tópicos dominados'],
+  ];
+
+  document.getElementById('investimento-numeros').replaceChildren(
+    ...numeros.map(([valor, rotulo]) =>
+      el('div', { className: 'investimento-item' }, [
+        el('strong', { textContent: String(valor) }),
+        el('span', { className: 'ajuda', textContent: rotulo }),
+      ])
+    )
+  );
+}
+
+/* A carta da manga na tela, não atrás de um botão.
+
+   O botão existia e quase ninguém aperta um botão para começar: o custo de
+   entrada é o que mata app de estudo, e aqui ele vira zero — a pergunta já está
+   aberta quando a tela carrega, de um tópico já dominado, sem nota para dar e
+   sem nada do SM-2 se movendo. Quem respondeu uma pergunta já está estudando; o
+   botão no fim só dá nome ao que já aconteceu.
+
+   Carrega por fora do `carregar()` principal: um sorteio que falha (nenhum
+   tópico dominado tem cartão) não pode atrasar nem derrubar o dashboard. */
+async function montarSurpresaInline() {
+  const secao = document.getElementById('surpresa-inline');
+  let d;
+  try {
+    d = await pegar('/api/cartoes/surpresa/');
+  } catch (erro) {
+    secao.hidden = true; // sem cartão em tópico dominado: a seção não existe
+    return;
+  }
+
+  let revelado = false;
+  const alvo = document.getElementById('surpresa-corpo');
+
+  function desenhar() {
+    const acoes = [];
+    if (!revelado) {
+      acoes.push(
+        el('button', {
+          type: 'button',
+          className: 'botao botao-mini',
+          textContent: 'Mostrar resposta',
+          onclick: () => {
+            revelado = true;
+            desenhar();
+          },
+        })
+      );
+    } else {
+      acoes.push(
+        el('button', {
+          type: 'button',
+          className: 'botao botao-fantasma botao-mini',
+          textContent: 'Outro',
+          onclick: () => montarSurpresaInline(),
+        }),
+        el('a', {
+          className: 'botao botao-mini',
+          href: `/sessao/?topico_id=${d.topico_id}&minutos=${d.minutos}&iniciar=1`,
+          textContent: 'Estudar este tópico',
+        })
+      );
+    }
+
+    // `replaceChildren` não pula nulo como o `el()` pula: ele escreveria a
+    // palavra "null" na tela. O verso só existe depois de revelado.
+    alvo.replaceChildren(
+      ...[
+        el('p', { className: 'surpresa-rotulo' }, [
+          ponto(d.cor),
+          el('span', { textContent: `${d.materia} · ${d.topico}` }),
+          el('span', { className: 'ajuda', textContent: 'sem nota, nada muda de lugar' }),
+        ]),
+        el('p', { className: 'cartao-frente', textContent: d.cartao.frente }),
+        revelado ? el('p', { className: 'cartao-verso', textContent: d.cartao.verso }) : null,
+        el('div', { className: 'surpresa-acoes' }, acoes),
+      ].filter(Boolean)
+    );
+  }
+
+  desenhar();
+  secao.hidden = false;
+}
+
 async function carregar() {
   const [d, carga] = await Promise.all([pegar('/api/dashboard/'), pegar('/api/carga/')]);
 
@@ -292,7 +444,9 @@ async function carregar() {
 
   desenharProgresso(d);
   desenharSequencia(d.sequencia);
+  desenharCorrida(d.sequencia, d.progresso);
   desenharContinuar(d.continuar);
+  desenharInvestimento(d.investimento);
   desenharCarga(carga);
   desenharColisoes(carga.alertas);
   desenharAvaliacoes(d.avaliacoes);
@@ -300,6 +454,13 @@ async function carregar() {
   desenharParadas(d.materias_paradas);
 }
 
-document.getElementById('surpresa').onclick = () => abrirSurpresa();
+/* A carta inline e os marcos correm por fora da carga principal: nenhum dos
+   dois pode atrasar a tela, e a tecla `s` continua abrindo o diálogo em
+   qualquer lugar do app. */
+montarSurpresaInline();
 
-carregar().catch(reclamar);
+carregar()
+  // Os marcos só são pedidos depois de a tela estar montada: o POST é o que
+  // grava "já falei disso", então pedir e não mostrar engoliria o parabéns.
+  .then(conferirMarcos)
+  .catch(reclamar);

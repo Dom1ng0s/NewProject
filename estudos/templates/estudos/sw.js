@@ -6,8 +6,16 @@
 
    A regra de cache aqui é a de `middleware.py` levada a sério, não contrariada:
 
-   - `/static/`: cache primeiro. A URL já tem `?v=<mtime>`, então um arquivo
-     novo é uma URL nova e nunca há o que invalidar.
+   - `/static/` **com `?v=`**: cache primeiro. A URL carrega o mtime, então um
+     arquivo novo é uma URL nova e nunca há o que invalidar.
+   - `/static/` **sem `?v=`**: rede primeiro. Quem versiona é quem escreve a
+     URL, e o `@import` dentro de `estilo.css` não versiona nada: os pedidos de
+     `tokens.css`, `base.css`, `componentes.css` e `telas.css` saem sempre no
+     mesmo endereço. Guardados cache-primeiro, eles sobrevivem à própria edição
+     -- o `?v=` do `estilo.css` muda (ele usa o mtime mais recente de tudo o que
+     importa), o navegador baixa a folha de entrada nova, e ela volta a importar
+     a versão velha das partes. O CSS antigo com cara de bug é exatamente o que
+     o `?v=` existe para evitar.
    - navegação (HTML): rede primeiro, cache só quando a rede falha. É o que
      mantém a promessa do `no-store` — nunca mostrar uma tela velha sem saber
      que é velha — e ainda assim abrir algo offline. Online, o cache nunca é
@@ -73,6 +81,65 @@ async function daRede(pedido) {
   }
 }
 
+/* ----------------------------------------------------------- lembrete
+
+   O único jeito de o app lembrar de estudar com a aba fechada, sem pôr um
+   servidor de push no meio de algo que roda na própria máquina.
+
+   `periodicSync` existe hoje só em PWA instalado no Chrome, e o navegador
+   decide a hora de verdade -- pedimos um intervalo mínimo e ele acorda quando
+   quer. Onde não existe, o lembrete continua valendo ao abrir o app
+   (`conferirLembrete`, em comum.js). É pouco e é honesto: não há promessa de
+   push aqui.
+
+   Quem decide se há o que dizer é o servidor, em `/api/lembrete/`: o worker não
+   repete regra nenhuma, só entrega o texto que vier -- e texto vazio não vira
+   notificação, porque notificação sem conteúdo é o que ensina a ignorar as
+   próximas. */
+
+async function lembrar() {
+  try {
+    const resposta = await fetch('/api/lembrete/', {
+      headers: { Accept: 'application/json' },
+    });
+    if (!resposta.ok) return;
+    const d = await resposta.json();
+    if (!d.ativo || !d.vale_lembrar || !d.texto) return;
+    await self.registration.showNotification('Estudos', {
+      body: d.texto,
+      tag: 'lembrete',
+      icon: '/static/icone-192.png',
+      badge: '/static/icone-192.png',
+    });
+  } catch (erro) { /* sem servidor no ar: não há lembrete a dar */ }
+}
+
+self.addEventListener('periodicsync', (evento) => {
+  if (evento.tag === 'lembrete') evento.waitUntil(lembrar());
+});
+
+/* Clicar no lembrete abre o app já estudando, e não uma aba qualquer: `/agora/`
+   é a mesma porta do atalho da tela inicial. Uma aba já aberta é reaproveitada
+   -- abrir a quinta aba do mesmo app é o que faz a pessoa fechar todas. */
+self.addEventListener('notificationclick', (evento) => {
+  evento.notification.close();
+  evento.waitUntil(
+    (async () => {
+      const abertas = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      });
+      for (const aba of abertas) {
+        if (new URL(aba.url).origin === location.origin) {
+          await aba.focus();
+          return;
+        }
+      }
+      await self.clients.openWindow('/agora/');
+    })()
+  );
+});
+
 self.addEventListener('fetch', (evento) => {
   const pedido = evento.request;
   if (pedido.method !== 'GET') return;
@@ -86,7 +153,9 @@ self.addEventListener('fetch', (evento) => {
   if (url.pathname === '/sw.js') return;
 
   if (url.pathname.startsWith('/static/')) {
-    evento.respondWith(doCache(pedido));
+    // Sem `?v=` não há como saber se o guardado é o de agora: ver o comentário
+    // do topo, e os `@import` de `estilo.css`, que são justamente este caso.
+    evento.respondWith(url.searchParams.has('v') ? doCache(pedido) : daRede(pedido));
     return;
   }
 

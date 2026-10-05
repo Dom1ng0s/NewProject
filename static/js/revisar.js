@@ -54,6 +54,11 @@ if (correndo) {
   history.replaceState(null, '', location.pathname);
 }
 
+/* De onde o anel parte quando a fila fecha. Guardar o percentual da carga
+   anterior é mais simples e mais honesto que recalcular: é literalmente onde o
+   anel estava na tela um instante antes da última resposta. */
+let percentualAnterior = 0;
+
 // ---------------------------------------------------------------- revisão
 
 /* Abre a revisão: mostra a pergunta, espera, revela a resposta e só então
@@ -282,13 +287,24 @@ function desenharProgresso(d) {
 /* Fila zerada: o fim da tarefa dito como fim, uma vez só.
 
    É o momento que o anel existe para produzir. Sem ele, terminar a fila é
-   indistinguível de desistir dela — a tela fica igual nos dois casos. */
+   indistinguível de desistir dela — a tela fica igual nos dois casos.
+
+   Era um aviso de canto, que some em três segundos e concorre com o próximo
+   cartão. Agora é um diálogo: o anel fecha de onde estava até 100%, a sequência
+   aparece inteira, e a dívida continua dita no fim, em letra miúda. O anel
+   partir do percentual anterior é o recado todo — é o movimento que diz que
+   acabou, não o texto. */
 function celebrar(d) {
-  const sequencia = d.sequencia || {};
-  const partes = ['Fila de hoje zerada.'];
-  if (sequencia.dias > 1) partes.push(`${plural(sequencia.dias, 'dia', 'dias')} seguidos.`);
-  if (d.esperando) partes.push(`${d.esperando} voltam amanhã.`);
-  avisar(partes.join(' '), 'ok');
+  celebrarFechamento({
+    progresso: d.progresso,
+    sequencia: d.sequencia,
+    esperando: d.esperando,
+    antes: percentualAnterior,
+    acao: { href: '/', rotulo: 'Ver o dashboard' },
+  });
+  // Uma nota pode ter levado um tópico a 90 dias de intervalo; é um marco, e
+  // ele só existe por causa da resposta que acabou de ser dada.
+  conferirMarcos();
 }
 
 // ---------------------------------------------------------------- desfazer
@@ -335,7 +351,10 @@ async function carregar() {
   desenharProgresso(d);
   desenharDesfazer(d.ultima_resposta);
 
-  if (!correndo) return;
+  if (!correndo) {
+    percentualAnterior = d.progresso.percentual;
+    return;
+  }
   if (d.fila.length) {
     // O próximo cartão abre sozinho: entre dois cartões não cabe uma lista.
     await revisar(d.fila[0]);
@@ -343,6 +362,7 @@ async function carregar() {
   }
   correndo = false;
   if (d.progresso.fechou_agora) celebrar(d);
+  percentualAnterior = d.progresso.percentual;
 }
 
 registrarAtalhos({ u: { rotulo: 'Desfazer a última nota', acao: desfazer } });

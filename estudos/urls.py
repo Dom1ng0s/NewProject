@@ -22,6 +22,9 @@ urlpatterns = [
     path("sw.js", views.service_worker, name="service-worker"),
     # api
     path("api/dashboard/", views.api_dashboard),
+    # Marcos e POST: anunciar gasta o "ja falei disso", e um GET nao pode gastar.
+    path("api/marcos/", views.api_marcos),
+    path("api/lembrete/", views.api_lembrete),
     path("api/materias/", views.api_materias),
     path("api/materias/criar/", views.api_materia_criar),
     path("api/materias/<int:pk>/editar/", views.api_materia_editar),

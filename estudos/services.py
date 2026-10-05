@@ -3,15 +3,17 @@
 from datetime import date, datetime, time, timedelta
 
 from django.db import transaction
-from django.db.models import Count, Max, Sum
+from django.db.models import Avg, Count, Max, Min, Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
+from .escopo import atual_id
 from .models import (
     Avaliacao,
     Cartao,
     Configuracao,
     BlocoPlanejado,
+    Marco,
     Materia,
     OcorrenciaPulada,
     RespostaRevisao,
@@ -170,6 +172,11 @@ def resumo_da_sequencia(hoje=None, config=None):
         "folgas": config.folgas_por_semana,
         "folgas_restantes": folgas_restantes(estudados, hoje, config.folgas_por_semana),
         "estudou_hoje": hoje in estudados,
+        # Ha uma corrida em pe e o dia ainda nao foi cumprido. Nao e culpa: e o
+        # que esta em jogo, e dizer o que esta em jogo e o que faz comecar.
+        # Sequencia zerada nao entra aqui -- quem nao tem corrida nao tem o que
+        # perder, e cobrar dessa pessoa e cobrar do dia em que ela voltou.
+        "em_risco": bool(dias) and hoje not in estudados,
     }
 
 
@@ -1209,3 +1216,405 @@ def gravar_plano(avaliacao, plano):
         )
         criados += 1
     return {"criados": criados, "existentes": existentes}
+
+
+# ---------------------------------------------------------------- investimento
+
+
+def investimento():
+    """O total acumulado desde o primeiro dia, sem recorte de periodo.
+
+    O resto do app olha para a semana ou para os ultimos 180 dias, e por isso
+    nenhuma tela mostra o tamanho do que ja foi feito. Este numero nao serve
+    para decidir nada hoje -- serve para a conta existir: quanto maior ele
+    fica, mais caro fica abandonar. E o unico lugar do app onde o passado
+    inteiro aparece de uma vez, e ele e honesto, porque e so a soma do que
+    aconteceu.
+    """
+    agregado = SessaoEstudo.objects.aggregate(
+        minutos=Sum("duracao_min"), primeira=Min("inicio")
+    )
+    minutos = agregado["minutos"] or 0
+    dias = (
+        SessaoEstudo.objects.annotate(dia=TruncDate("inicio"))
+        .values("dia")
+        .distinct()
+        .count()
+    )
+    primeira = agregado["primeira"]
+    return {
+        "minutos": minutos,
+        "horas": round(minutos / 60, 1),
+        "dias": dias,
+        "sessoes": SessaoEstudo.objects.count(),
+        "revisoes": Revisao.objects.filter(feita=True).count(),
+        "dominados": Topico.objects.filter(status=Topico.DOMINADO).count(),
+        "cartoes": Cartao.objects.count(),
+        "desde": timezone.localtime(primeira).date().isoformat() if primeira else "",
+    }
+
+
+# ---------------------------------------------------------------- fim da sessao
+
+
+# Janela da media de interrupcoes. Comparar o foco de hoje com o de um ano
+# atras nao diz nada util: o que interessa e se hoje foi melhor que o habito
+# recente.
+DIAS_DA_MEDIA = 60
+
+
+def media_de_interrupcoes(fora=None, dias=DIAS_DA_MEDIA):
+    """Media de interrupcoes por sessao nos ultimos dias, ou None sem historico.
+
+    `fora` tira uma sessao da conta -- a que acabou de ser salva, que nao pode
+    entrar na media com que ela mesma vai ser comparada.
+    """
+    desde = timezone.now() - timedelta(days=dias)
+    sessoes = SessaoEstudo.objects.filter(inicio__gte=desde)
+    if fora is not None:
+        sessoes = sessoes.exclude(pk=fora)
+    media = sessoes.aggregate(media=Avg("interrupcoes"))["media"]
+    return round(media, 1) if media is not None else None
+
+
+def resumo_da_sessao(sessao):
+    """O que a sessao que acabou de ser salva mudou, em numeros.
+
+    Sem isto a sessao termina em nada: o cronometro zera, a lista ganha uma
+    linha e o esforco de cinquenta minutos nao aparece em lugar nenhum. O que
+    volta aqui e o mesmo material do dashboard -- horas da semana, sequencia,
+    interrupcoes -- mas no instante em que ele acabou de se mover, que e o unico
+    instante em que ele significa alguma coisa.
+    """
+    config = Configuracao.atual()
+    hoje = timezone.localdate()
+    semana = segunda_da_semana(hoje)
+    inicio, fim = intervalo_semana(semana)
+
+    minutos_semana = SessaoEstudo.objects.filter(
+        inicio__gte=inicio, inicio__lt=fim
+    ).aggregate(total=Sum("duracao_min"))["total"] or 0
+
+    comeco_do_dia = timezone.make_aware(datetime.combine(hoje, time.min))
+    do_dia = SessaoEstudo.objects.filter(
+        inicio__gte=comeco_do_dia, inicio__lt=comeco_do_dia + timedelta(days=1)
+    ).aggregate(total=Sum("duracao_min"), quantas=Count("id"))
+
+    meta = config.meta_horas_semanais
+    horas_semana = round(minutos_semana / 60, 1)
+
+    return {
+        "minutos": sessao.duracao_min,
+        "topico": sessao.topico.nome,
+        "materia": sessao.topico.materia.nome,
+        "cor": sessao.topico.materia.cor,
+        "interrupcoes": sessao.interrupcoes,
+        # None quando nao ha com que comparar: dizer "0,0 de media" no primeiro
+        # dia seria inventar um recorde para quebrar.
+        "media_interrupcoes": media_de_interrupcoes(fora=sessao.pk),
+        "minutos_do_dia": do_dia["total"] or 0,
+        "sessoes_do_dia": do_dia["quantas"] or 0,
+        "horas_semana": horas_semana,
+        "meta_horas_semanais": meta,
+        "percentual_meta": min(round(horas_semana * 100 / meta), 100) if meta else 0,
+        # Quanto falta para a meta da semana, em minutos: "faltam 40 min" e uma
+        # frase acionavel, "67% da meta" nao e.
+        "faltam_min": max(round(meta * 60 - minutos_semana), 0) if meta else 0,
+        "bateu_meta": bool(meta) and minutos_semana >= meta * 60,
+        "sequencia": resumo_da_sequencia(hoje, config),
+    }
+
+
+# ---------------------------------------------------------------- marcos
+
+
+# Degraus dos marcos de contagem. Raros de proposito: um marco que chega toda
+# semana nao e um marco, e um contador.
+DIAS_SEGUIDOS = (7, 30, 100, 365)
+SEMANAS_NA_META = (4, 12, 52)
+REVISOES_FECHADAS = (100, 500, 1000, 5000)
+HORAS_ESTUDADAS = (10, 50, 100, 500, 1000)
+TOPICOS_DOMINADOS = (10, 50, 100)
+
+# A linha que marca "este perfil ja foi semeado". Nao e um marco: nunca sai em
+# `marcos_de_agora`, e por isso nunca e anunciada.
+SEMEADO = "_semeado"
+MARCA_DA_SEMEADURA = ("Marcos ligados", "o que ja existia entrou em silencio")
+
+# A partir de quantos dias de intervalo um topico conta como memoria de longo
+# prazo. Noventa dias e o ponto em que o SM-2 deixou de estar ensinando e passou
+# a estar so conferindo.
+INTERVALO_LONGO = 90
+
+
+def _degrau(valor, degraus):
+    """O maior degrau que `valor` ja passou, ou None."""
+    passados = [d for d in degraus if valor >= d]
+    return max(passados) if passados else None
+
+
+def marcos_de_agora(hoje=None, config=None):
+    """Todos os marcos verdadeiros neste instante: chave -> (titulo, detalhe).
+
+    Le e nao escreve. Quem decide o que anunciar e `marcos_novos`, que compara
+    isto com o que ja foi dito -- a conta aqui nao sabe nem se importa se a
+    pessoa ja viu.
+
+    Cada marco e um fato que ja estava no banco. Nenhum e uma moeda, e a
+    diferenca pratica e que nao da para farmar nenhum deles sem de fato estudar:
+    nao ha o que clicar para ganhar "90 dias de intervalo".
+    """
+    hoje = hoje or timezone.localdate()
+    config = config or Configuracao.atual()
+    marcos = {}
+
+    por_dia = minutos_por_dia(hoje - timedelta(days=DIAS_DO_MAPA - 1))
+    _, maior_dias = sequencia(set(por_dia), hoje, config.folgas_por_semana)
+    _, maior_semanas = semanas_na_meta(por_dia, hoje, config.meta_horas_semanais)
+
+    degrau = _degrau(maior_dias, DIAS_SEGUIDOS)
+    if degrau:
+        marcos["dias_%d" % degrau] = (
+            "%d dias seguidos" % degrau,
+            "a sequência mais longa até agora",
+        )
+
+    degrau = _degrau(maior_semanas, SEMANAS_NA_META)
+    if degrau:
+        marcos["semanas_%d" % degrau] = (
+            "%d semanas na meta" % degrau,
+            "%d semanas seguidas batendo %gh" % (degrau, config.meta_horas_semanais),
+        )
+
+    total = investimento()
+
+    degrau = _degrau(total["revisoes"], REVISOES_FECHADAS)
+    if degrau:
+        marcos["revisoes_%d" % degrau] = (
+            "%d revisões fechadas" % degrau,
+            "cada uma é um assunto que você não deixou cair",
+        )
+
+    degrau = _degrau(total["horas"], HORAS_ESTUDADAS)
+    if degrau:
+        marcos["horas_%d" % degrau] = (
+            "%d horas estudadas" % degrau,
+            "em %d dias de estudo" % total["dias"],
+        )
+
+    degrau = _degrau(total["dominados"], TOPICOS_DOMINADOS)
+    if degrau:
+        marcos["dominados_%d" % degrau] = (
+            "%d tópicos dominados" % degrau,
+            "conteúdo que saiu da fila para sempre",
+        )
+
+    # Primeiro topico dominado de cada materia: o degrau mais importante de
+    # todos, porque e o que prova que a materia tem fim.
+    for linha in (
+        Topico.objects.filter(status=Topico.DOMINADO)
+        .values("materia_id", "materia__nome")
+        .distinct()
+    ):
+        marcos["dominado:%d" % linha["materia_id"]] = (
+            "Primeiro tópico dominado em %s" % linha["materia__nome"],
+            "a matéria tem fim, e você já viu um pedaço dele",
+        )
+
+    # Intervalo longo: a escada do SM-2 chegando onde ela existe para chegar.
+    for topico in Topico.objects.filter(
+        intervalo_dias__gte=INTERVALO_LONGO
+    ).select_related("materia"):
+        marcos["intervalo_longo:%d" % topico.id] = (
+            "%s volta só em %d dias" % (topico.nome, topico.intervalo_dias),
+            "%s · memória de longo prazo, pelo SM-2" % topico.materia.nome,
+        )
+
+    marcos.update(_marcos_de_retomada(hoje, config))
+    return marcos
+
+
+def _marcos_de_retomada(hoje, config):
+    """Materia que estava parada e voltou a ser estudada hoje.
+
+    Sair da lista de "paradas" e o unico evento do app que depende de ter sido
+    ruim antes, e por isso o mais facil de nao notar: a materia simplesmente
+    desaparece do aviso. A chave leva a data para uma retomada no ano que vem
+    poder ser dita de novo -- cada volta e uma volta.
+    """
+    marcos = {}
+    comeco = timezone.make_aware(datetime.combine(hoje, time.min))
+    de_hoje = set(
+        SessaoEstudo.objects.filter(inicio__gte=comeco)
+        .values_list("topico__materia_id", flat=True)
+        .distinct()
+    )
+    if not de_hoje:
+        return marcos
+
+    anteriores = (
+        SessaoEstudo.objects.filter(topico__materia_id__in=de_hoje, inicio__lt=comeco)
+        .values("topico__materia_id", "topico__materia__nome")
+        .annotate(ultima=Max("inicio"))
+    )
+    for linha in anteriores:
+        parada = (hoje - timezone.localtime(linha["ultima"]).date()).days
+        if parada <= config.dias_materia_parada:
+            continue
+        chave = "retomada:%d:%s" % (linha["topico__materia_id"], hoje.isoformat())
+        marcos[chave] = (
+            "%s voltou" % linha["topico__materia__nome"],
+            "estava parada há %d dias" % parada,
+        )
+    return marcos
+
+
+def marcos_novos(hoje=None, config=None):
+    """Os marcos ainda nao anunciados, ja gravados como anunciados.
+
+    A primeira passada de um perfil nao anuncia nada: um app que acabou de
+    importar um backup -- ou que ganhou esta funcao com um ano de historico
+    dentro -- tem dezenas de marcos verdadeiros de uma vez, e trinta parabens
+    juntos nao sao trinta parabens, sao ruido. A primeira passada semeia em
+    silencio, e dali em diante cada marco chega no dia em que foi conquistado.
+
+    Escreve, e por isso nao mora numa view de GET: quem chama e o POST que o
+    front faz depois de mostrar o que recebeu.
+    """
+    # Sem dono nao ha a quem dar parabens -- e `bulk_create` nao passa pelo
+    # `save()` que herdaria o perfil, entao a linha entraria sem dono e sumiria
+    # do manager que filtra por ele.
+    dono = atual_id()
+    if dono is None:
+        return []
+
+    ja_ditos = set(Marco.objects.values_list("chave", flat=True))
+    # A semeadura e um fato gravado, nao a ausencia de linhas: um perfil novo
+    # nao tem marco nenhum de verdade, e inferir "primeira passada" do vazio
+    # faria o primeiro marco real dele cair no silencio da semeadura -- uma vez
+    # so, e para sempre, porque a segunda passada ja acharia a linha gravada.
+    semeando = SEMEADO not in ja_ditos
+
+    de_agora = marcos_de_agora(hoje, config)
+    novas = [chave for chave in de_agora if chave not in ja_ditos]
+    if semeando:
+        novas.append(SEMEADO)
+
+    Marco.objects.bulk_create(
+        [
+            Marco(
+                perfil_id=dono,
+                chave=chave,
+                titulo=de_agora.get(chave, MARCA_DA_SEMEADURA)[0],
+                detalhe=de_agora.get(chave, MARCA_DA_SEMEADURA)[1],
+            )
+            for chave in novas
+        ],
+        # Duas abas abrindo o dashboard juntas disputam as mesmas chaves; a
+        # constraint decide qual grava, e a corrida perdida nao e um erro.
+        ignore_conflicts=True,
+    )
+
+    if semeando:
+        return []
+    return [
+        {"chave": c, "titulo": de_agora[c][0], "detalhe": de_agora[c][1]} for c in novas
+    ]
+
+
+# ---------------------------------------------------------------- lembrete
+
+
+# O horario do lembrete quando nao ha planner nem historico de sessao que diga
+# outro. Comeco da noite: depois da aula, antes de o dia ter acabado.
+HORA_PADRAO_DO_LEMBRETE = time(19, 0)
+
+# Quantas sessoes recentes olhar para achar a hora de costume. Duzentas cobrem
+# meses de habito sem fazer a conta andar pelo banco inteiro.
+SESSOES_DO_HABITO = 200
+
+
+def horario_de_estudo(hoje=None):
+    """A hora em que esta pessoa costuma estudar, em "HH:MM".
+
+    Na ordem do que sabe mais: o bloco de hoje no planner (ele diz a intencao),
+    depois a hora mais frequente das sessoes reais (ela diz o habito), e por fim
+    um padrao. Lembrar as 7h quem estuda as 22h e o jeito mais rapido de a
+    pessoa desligar o lembrete -- e um lembrete desligado nao lembra nada.
+    """
+    hoje = hoje or timezone.localdate()
+
+    # `blocos_da_semana` devolve o json dos blocos, nao os modelos: as horas
+    # chegam aqui como "HH:MM", que e justamente o formato de saida.
+    #
+    # Bloco pulado nao vale: aula cancelada nao e hora de estudo, e lembrar no
+    # horario de um feriado e o jeito de o lembrete perder credito.
+    horas = sorted(
+        bloco["hora_inicio"]
+        for bloco in blocos_da_semana(segunda_da_semana(hoje))
+        if bloco["dia_semana"] == hoje.weekday()
+        and bloco["tipo"] != BlocoPlanejado.OUTRO
+        and not bloco["pulado"]
+    )
+    if horas:
+        return horas[0]
+
+    horas = {}
+    for inicio in SessaoEstudo.objects.values_list("inicio", flat=True)[
+        :SESSOES_DO_HABITO
+    ]:
+        hora = timezone.localtime(inicio).hour
+        horas[hora] = horas.get(hora, 0) + 1
+    if horas:
+        # Empate desce para a hora mais cedo: e a que ainda deixa o dia salvar.
+        melhor = max(horas, key=lambda h: (horas[h], -h))
+        return "%02d:00" % melhor
+
+    return HORA_PADRAO_DO_LEMBRETE.strftime("%H:%M")
+
+
+def dados_lembrete(hoje=None, config=None):
+    """O lembrete do dia: se ha o que lembrar, a que hora, e em que palavras.
+
+    A regra do texto e a do resto do app: o que esta em jogo, nunca o que foi
+    falhado. "6 dias seguidos em pe - 4 revisoes pedem 10 min" faz abrir; "voce
+    nao estudou hoje" faz fechar a aba e desinstalar na semana seguinte.
+
+    So vale lembrar quem ainda nao estudou hoje: notificacao sem conteudo e o
+    que ensina a ignorar as proximas.
+    """
+    hoje = hoje or timezone.localdate()
+    config = config or Configuracao.atual()
+    corrida = resumo_da_sequencia(hoje, config)
+    pendentes = restantes_do_dia(hoje, config)
+
+    partes = []
+    if corrida["dias"] and not corrida["estudou_hoje"]:
+        partes.append("%d dias seguidos em pé" % corrida["dias"])
+    if pendentes:
+        # Dois minutos por revisao e o que uma fila de cartoes custa de fato; o
+        # tamanho dito em minutos e o que faz a pessoa comecar.
+        minutos = max(pendentes * 2, 5)
+        uma = pendentes == 1
+        partes.append(
+            "%d %s %s %d min"
+            % (pendentes, "revisão" if uma else "revisões", "pede" if uma else "pedem", minutos)
+        )
+    elif not corrida["estudou_hoje"]:
+        partes.append("nada na fila — um pomodoro já segura o dia")
+
+    return {
+        "ativo": config.lembrete_ativo,
+        "hora": (
+            config.lembrete_hora.strftime("%H:%M")
+            if config.lembrete_hora
+            else horario_de_estudo(hoje)
+        ),
+        "automatico": config.lembrete_hora is None,
+        "estudou_hoje": corrida["estudou_hoje"],
+        "pendentes": pendentes,
+        "dias": corrida["dias"],
+        "folgas_restantes": corrida["folgas_restantes"],
+        "vale_lembrar": not corrida["estudou_hoje"],
+        "texto": " · ".join(partes),
+    }

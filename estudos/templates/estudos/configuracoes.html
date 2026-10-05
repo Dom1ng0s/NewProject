@@ -72,6 +72,39 @@
   </section>
 
   <section class="painel">
+    <h2 class="painel-titulo">Lembrete do dia</h2>
+    <p class="ajuda" style="margin-top: 0">
+      O gatilho que vem de fora da tela — a única peça do hábito que o app não
+      resolve sozinho. Sai uma vez por dia, só quando ainda há algo a fazer, e
+      nunca para cobrar um dia perdido.
+    </p>
+
+    <label class="campo campo-marcar">
+      <input type="checkbox" name="lembrete_ativo">
+      <span>Lembrar de estudar</span>
+    </label>
+
+    <label class="campo">
+      <span>Hora</span>
+      <input type="time" name="lembrete_hora">
+      <small class="ajuda">
+        vazio = o horário em que você costuma estudar, lido do planner e das suas
+        sessões
+      </small>
+    </label>
+
+    <p class="ajuda" id="estado-notificacao"></p>
+    <p class="linha-form">
+      <button type="button" class="botao botao-discreto botao-mini" id="permitir-notificacao">
+        Permitir notificação do sistema
+      </button>
+      <button type="button" class="botao botao-fantasma botao-mini" id="testar-lembrete">
+        Ver o lembrete de hoje
+      </button>
+    </p>
+  </section>
+
+  <section class="painel">
     <h2 class="painel-titulo">Pomodoro</h2>
 
     <div class="campo-trio">

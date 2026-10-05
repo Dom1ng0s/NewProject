@@ -749,3 +749,190 @@ kbd {
   /* Numa tela de 390px o nome do tópico vale mais que o traço. */
   .escadinha { display: none; }
 }
+
+/* =======================  corrida  =======================
+   O que está em jogo hoje, antes de qualquer número. Faixa e não painel: ela
+   aparece só quando há algo a segurar, e some no dia cumprido — um aviso que
+   aparece todo dia não é aviso, é moldura. */
+
+.corrida {
+  display: flex;
+  margin-bottom: var(--e4);
+  padding: var(--e4) var(--e5);
+  border: 1px solid var(--borda);
+  border-left: 3px solid var(--acento);
+  border-radius: var(--raio-m);
+  background: var(--acento-lavado);
+}
+
+.corrida-corpo {
+  display: flex;
+  align-items: center;
+  gap: var(--e4);
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.corrida-numero {
+  display: block;
+  font-family: var(--fonte-titulo);
+  font-size: var(--t-xl);
+  letter-spacing: var(--rastro-apertado);
+  line-height: 1.1;
+}
+
+.corrida-numero .unidade {
+  font-family: var(--fonte-corpo);
+  font-size: var(--t-base);
+  font-weight: 400;
+  color: var(--texto-suave);
+  letter-spacing: normal;
+}
+
+.corrida .ajuda { margin: var(--e1) 0 0; }
+.corrida a.botao { text-decoration: none; }
+
+/* =======================  carta da manga na tela  =======================
+   A pergunta já aberta quando o dashboard carrega: custo de entrada zero. O
+   painel é discreto de propósito — ele convida, não cobra. */
+
+.surpresa-inline { border-style: dashed; }
+
+.surpresa-rotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  flex-wrap: wrap;
+  margin: 0 0 var(--e3);
+  font-size: var(--t-sm);
+  color: var(--texto-suave);
+}
+
+.surpresa-rotulo .ajuda { margin: 0; }
+
+.surpresa-acoes {
+  display: flex;
+  gap: var(--e2);
+  flex-wrap: wrap;
+  margin-top: var(--e4);
+}
+
+.surpresa-acoes a.botao { text-decoration: none; }
+
+/* =======================  investimento  =======================
+   O passado inteiro, uma vez. Fica no fim da tela: não decide nada hoje. */
+
+.investimento .painel-titulo .ajuda {
+  margin: 0;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.investimento-numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--e4);
+}
+
+.investimento-item strong {
+  display: block;
+  font-family: var(--fonte-titulo);
+  font-size: var(--t-xl);
+  letter-spacing: var(--rastro-apertado);
+}
+
+.investimento-item .ajuda { margin: 0; }
+
+/* =======================  fecho do dia  =======================
+   O instante em que a fila zera. O anel anda de onde estava até fechar, e é o
+   movimento que diz que acabou — o texto só confirma. */
+
+.dialogo-fecho { max-width: 25rem; }
+
+.fecho {
+  display: flex;
+  align-items: center;
+  gap: var(--e5);
+  flex-wrap: wrap;
+}
+
+.fecho .anel { width: 84px; height: 84px; }
+
+.fecho-texto { display: grid; gap: var(--e2); min-width: 0; }
+
+.dialogo .fecho-conta {
+  font-family: var(--fonte-titulo);
+  font-size: var(--t-lg);
+  letter-spacing: var(--rastro-apertado);
+}
+
+.dialogo .fecho .ajuda { margin: 0; }
+
+.dialogo .fecho-sequencia {
+  display: flex;
+  align-items: baseline;
+  gap: var(--e2);
+  flex-wrap: wrap;
+  margin: var(--e1) 0 0;
+}
+
+.fecho-sequencia strong {
+  font-family: var(--fonte-titulo);
+  font-size: var(--t-md);
+}
+
+.dialogo .fecho-divida { color: var(--texto-tenue); }
+
+/* =======================  marco  =======================
+   Um fato raro, dito uma vez. Grande porque é raro: se chegasse toda semana,
+   esta caixa seria ruído em duas semanas. */
+
+.dialogo-marco { max-width: 23rem; text-align: center; }
+
+.dialogo .marco-rotulo {
+  margin: 0;
+  font-size: var(--t-xs);
+  letter-spacing: var(--rastro-largo);
+  text-transform: uppercase;
+  color: var(--acento);
+}
+
+.dialogo .marco-titulo {
+  margin: var(--e2) 0 var(--e3);
+  font-size: var(--t-xl);
+  letter-spacing: var(--rastro-apertado);
+}
+
+.dialogo-marco .dialogo-acoes { justify-content: center; }
+
+/* =======================  resumo da sessão  =======================
+   O fim da sessão com número: o esforço que acabou, visto no instante em que
+   ele mexeu em algo. */
+
+.dialogo-resumo { max-width: 24rem; }
+
+.dialogo .resumo-tempo {
+  margin: var(--e2) 0 var(--e4);
+  font-size: var(--t-2xl);
+  letter-spacing: var(--rastro-apertado);
+}
+
+.dialogo .resumo-linha {
+  display: flex;
+  align-items: baseline;
+  gap: var(--e3);
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.dialogo .resumo-linha .ajuda { margin: 0; }
+
+.resumo-meta {
+  display: grid;
+  gap: var(--e2);
+  margin: var(--e3) 0;
+}
+
+.dialogo-resumo .ajuda { margin: var(--e2) 0 0; }
+.dialogo-resumo a.botao { text-decoration: none; }

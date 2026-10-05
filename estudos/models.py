@@ -1,9 +1,27 @@
-from datetime import timedelta
+from datetime import time, timedelta
 
 from django.db import models
 from django.utils import timezone
 
 from .escopo import ComDono, PorPerfil, atual_id
+
+
+def hora_do_texto(valor):
+    """"19:00" -> time(19, 0). Texto vazio ou torto vira None, nao erro.
+
+    O horario do lembrete e um ajuste opcional preenchido a mao; uma hora
+    invalida tem de virar "o app escolhe", que e o que `None` significa ali --
+    nunca um 500 no meio de salvar as configuracoes.
+    """
+    if isinstance(valor, time):
+        return valor
+    texto = (valor or "").strip()
+    if not texto:
+        return None
+    try:
+        return time.fromisoformat(texto)
+    except ValueError:
+        return None
 
 
 class Perfil(models.Model):
@@ -79,6 +97,17 @@ class Configuracao(ComDono):
         default=1, help_text="dias que a sequência perdoa por semana; 0 = nenhum"
     )
 
+    # lembrete do dia
+    #
+    # O app tem tudo para o estudo acontecer e nada que o lembre de comecar --
+    # e um gatilho externo e a unica peca do habito que nao se resolve dentro
+    # da tela. `lembrete_hora` vazio deixa o app escolher: o horario em que a
+    # pessoa de fato estuda, que o planner e o historico de sessoes sabem.
+    lembrete_ativo = models.BooleanField(default=False)
+    lembrete_hora = models.TimeField(
+        null=True, blank=True, help_text="vazio = o horário em que você costuma estudar"
+    )
+
     # pomodoro
     pomodoro_foco_min = models.PositiveSmallIntegerField(default=25)
     pomodoro_pausa_min = models.PositiveSmallIntegerField(default=5)
@@ -118,6 +147,12 @@ class Configuracao(ComDono):
         que ja existe, em vez de bater na constraint: e o que mantem o importar
         do backup escrevendo ajustes sem precisar saber se ja havia algum.
         """
+        # A hora do lembrete viaja como texto: e assim que ela sai no `json()`,
+        # no backup e no formulario. Converter aqui, e nao em cada chamador, e o
+        # que impede uma string de ser gravada como hora e voltar ilegivel.
+        if isinstance(self.lembrete_hora, str):
+            self.lembrete_hora = hora_do_texto(self.lembrete_hora)
+
         if self._state.adding and self.pk is None:
             if self.perfil_id is None:
                 self.perfil_id = atual_id()
@@ -135,7 +170,12 @@ class Configuracao(ComDono):
     def json(self):
         fora = {"id", "perfil"}
         campos = [c.name for c in self._meta.fields if c.name not in fora]
-        return {nome: getattr(self, nome) for nome in campos}
+        dados = {nome: getattr(self, nome) for nome in campos}
+        # "HH:MM" e nao um objeto `time`: e o que o <input type="time"> le, o
+        # que o backup grava e o que sobrevive a um json.dumps sem encoder.
+        hora = dados.get("lembrete_hora")
+        dados["lembrete_hora"] = hora.strftime("%H:%M") if hora else ""
+        return dados
 
 
 class Materia(ComDono):
@@ -685,4 +725,48 @@ class RespostaRevisao(ComDono):
             "facilidade_depois": self.facilidade_depois,
             "intervalo_antes": self.intervalo_antes,
             "intervalo_depois": self.intervalo_depois,
+        }
+
+
+class Marco(ComDono):
+    """Uma conquista que já foi anunciada, para ser anunciada uma vez só.
+
+    Os marcos nao sao pontos: cada um e um fato que ja estava no banco -- o
+    primeiro topico dominado de uma materia, um intervalo que passou de 90
+    dias, a sequencia chegando a 30. Inventar uma moeda faria a pessoa otimizar
+    o clique; dizer em voz alta o que ela acabou de conseguir faz ela voltar.
+
+    O que esta tabela guarda e so o "ja falei disso". Sem ela, todo marco
+    reapareceria em cada carregamento do dashboard, e um parabens repetido deixa
+    de ser parabens em dois dias.
+
+    `chave` carrega o alvo quando o marco e de um alvo so ("dominado:3"), para
+    a mesma materia nao conquistar duas vezes e materias diferentes nao
+    disputarem a mesma linha.
+    """
+
+    chave = models.CharField(max_length=60)
+    titulo = models.CharField(max_length=80)
+    detalhe = models.CharField(max_length=160, blank=True)
+    conquistado_em = models.DateTimeField(default=timezone.now)
+
+    class Meta(ComDono.Meta):
+        ordering = ["-conquistado_em", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["perfil", "chave"], name="um_marco_por_chave_e_perfil"
+            )
+        ]
+
+    def __str__(self):
+        return self.titulo
+
+    def json(self):
+        return {
+            "chave": self.chave,
+            "titulo": self.titulo,
+            "detalhe": self.detalhe,
+            "conquistado_em": timezone.localtime(self.conquistado_em).isoformat(
+                timespec="minutes"
+            ),
         }

@@ -37,27 +37,9 @@ function limpar() {
   desenhar();
 }
 
-// Dois bipes curtos em WebAudio: nenhum arquivo de som para baixar, e o
-// navegador em segundo plano continua tocando.
-function bipar() {
-  try {
-    const audio = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.22].forEach((atraso, i) => {
-      const oscilador = audio.createOscillator();
-      const volume = audio.createGain();
-      oscilador.connect(volume);
-      volume.connect(audio.destination);
-      oscilador.frequency.value = i ? 760 : 560;
-      const comeco = audio.currentTime + atraso;
-      volume.gain.setValueAtTime(0.0001, comeco);
-      volume.gain.exponentialRampToValueAtTime(0.25, comeco + 0.02);
-      volume.gain.exponentialRampToValueAtTime(0.0001, comeco + 0.18);
-      oscilador.start(comeco);
-      oscilador.stop(comeco + 0.2);
-    });
-    setTimeout(() => audio.close(), 1200);
-  } catch (e) { /* sem áudio: o aviso na tela continua valendo */ }
-}
+/* O som da troca de fase mora em `comum.js` (`bipar`), junto com o do fim da
+   fila: são a mesma interrupção sonora para quem está do lado, e quem silencia
+   uma silencia as duas. */
 
 function notificar(texto) {
   try {
@@ -266,14 +248,145 @@ document.getElementById('finalizar').onclick = async () => {
 
     limpar();
     document.getElementById('nota').value = '';
-
-    const agendada = r.revisao_agendada ? ' Próxima revisão agendada.' : '';
-    avisar(`Sessão de ${minutosParaTexto(minutos)} salva.${agendada}`, 'ok');
+    mostrarResumoDaSessao(r.resumo, r.revisao_agendada);
     listar();
+    // Um marco pode ter nascido desta sessão — o primeiro tópico dominado da
+    // matéria, a matéria que voltou depois de um mês.
+    conferirMarcos();
   } catch (erro) {
     reclamar(erro);
   }
 };
+
+/* O fim da sessão, com número.
+
+   Antes isto era um aviso de canto: "Sessão de 50min salva." O cronômetro
+   zerava, a lista ganhava uma linha e cinquenta minutos de esforço não
+   apareciam em lugar nenhum. O que mantém alguém voltando não é a recompensa, é
+   ver o próprio esforço virar um número que se move — e todos os números daqui
+   já existiam no banco, só nunca tinham sido mostrados na hora em que mudaram.
+
+   O foco comparado com a média é o único dado do app que ninguém mais tem: o
+   contador de interrupções existe exatamente para responder isso, e até agora a
+   resposta só aparecia no histórico, noventa dias depois. */
+function mostrarResumoDaSessao(r, revisaoAgendada) {
+  if (!r) return;
+
+  const linhas = [
+    el('p', { className: 'ajuda' }, [
+      ponto(r.cor),
+      el('span', { textContent: `${r.materia} · ${r.topico}` }),
+    ]),
+  ];
+
+  // Interrupções contra o próprio histórico. Sem média não há comparação, e
+  // inventar "0,0 de média" no primeiro dia seria criar um recorde falso.
+  if (r.media_interrupcoes !== null) {
+    const diferenca = r.interrupcoes - r.media_interrupcoes;
+    const melhor = diferenca < -0.05;
+    linhas.push(
+      el('p', { className: 'resumo-linha' }, [
+        el('span', {
+          className: 'cresce',
+          textContent: `${plural(r.interrupcoes, 'interrupção', 'interrupções')}`,
+        }),
+        el('span', {
+          className: 'etiqueta' + (melhor ? ' etiqueta-ok' : ''),
+          textContent: melhor
+            ? `melhor que sua média de ${r.media_interrupcoes}`
+            : `média de ${r.media_interrupcoes}`,
+        }),
+      ])
+    );
+  } else if (r.interrupcoes) {
+    linhas.push(
+      el('p', {
+        className: 'ajuda',
+        textContent: plural(r.interrupcoes, 'interrupção', 'interrupções'),
+      })
+    );
+  }
+
+  if (r.sessoes_do_dia > 1) {
+    linhas.push(
+      el('p', {
+        className: 'ajuda',
+        textContent: `${minutosParaTexto(r.minutos_do_dia)} no dia, em ${plural(
+          r.sessoes_do_dia,
+          'sessão',
+          'sessões'
+        )}.`,
+      })
+    );
+  }
+
+  // A meta da semana andando: o que falta dito em minutos, porque "faltam
+  // 40 min" é uma frase acionável e "67% da meta" não é.
+  if (r.meta_horas_semanais) {
+    const medidor = el('div', { className: 'medidor' }, [
+      el('div', {
+        className: 'medidor-preenchido',
+        style: { width: r.percentual_meta + '%' },
+      }),
+    ]);
+    linhas.push(
+      el('div', { className: 'resumo-meta' }, [
+        el('p', { className: 'resumo-linha' }, [
+          el('span', {
+            className: 'cresce',
+            textContent: `${r.horas_semana}h de ${r.meta_horas_semanais}h na semana`,
+          }),
+          r.bateu_meta
+            ? el('span', { className: 'etiqueta etiqueta-ok', textContent: 'meta batida' })
+            : el('span', {
+                className: 'ajuda',
+                textContent: `faltam ${minutosParaTexto(r.faltam_min)}`,
+              }),
+        ]),
+        medidor,
+      ])
+    );
+  }
+
+  if (r.sequencia && r.sequencia.dias) {
+    linhas.push(
+      el('p', {
+        className: 'ajuda',
+        textContent:
+          plural(r.sequencia.dias, 'dia seguido', 'dias seguidos') +
+          (r.sequencia.semanas
+            ? ` · ${plural(r.sequencia.semanas, 'semana', 'semanas')} na meta`
+            : ''),
+      })
+    );
+  }
+
+  if (revisaoAgendada) {
+    linhas.push(el('p', { className: 'ajuda', textContent: 'Primeira revisão agendada.' }));
+  }
+
+  const fechar = el('button', {
+    type: 'button',
+    className: 'botao',
+    textContent: 'Fechar',
+    onclick: () => dialogo.close(),
+  });
+
+  const dialogo = abrirDialogo(
+    [
+      el('p', { className: 'marco-rotulo', textContent: 'Sessão salva' }),
+      el('h2', { className: 'resumo-tempo', textContent: minutosParaTexto(r.minutos) }),
+      ...linhas,
+      el('div', { className: 'dialogo-acoes' }, [
+        el('a', { className: 'botao botao-discreto', href: '/revisar/', textContent: 'Revisar hoje' }),
+        fechar,
+      ]),
+    ],
+    () => fechar.focus()
+  );
+  dialogo.classList.add('dialogo-resumo');
+  return dialogo;
+}
 
 async function preencherSeletores() {
   const [{ topicos }, { materias }] = await Promise.all([

@@ -657,6 +657,329 @@ function ligarAtalhos() {
   });
 }
 
+// ----------------------------------------------------------------- som
+
+/* Som curto em WebAudio: nenhum arquivo para baixar, e a aba em segundo plano
+   continua tocando. `notas` é uma lista de [frequência, atraso em segundos].
+
+   Quem desliga, desliga de verdade: a preferência mora no localStorage e vale
+   para o pomodoro e para o fim da fila, porque são a mesma interrupção sonora
+   do ponto de vista de quem está do lado. */
+const CHAVE_DO_SOM = 'som';
+
+function somLigado() {
+  try {
+    return localStorage.getItem(CHAVE_DO_SOM) !== 'off';
+  } catch (e) {
+    return true;
+  }
+}
+
+function ligarSom(ligado) {
+  try {
+    localStorage.setItem(CHAVE_DO_SOM, ligado ? 'on' : 'off');
+  } catch (e) { /* sem localStorage: vale só nesta aba */ }
+}
+
+function tocarNotas(notas) {
+  if (!somLigado()) return;
+  try {
+    const audio = new (window.AudioContext || window.webkitAudioContext)();
+    notas.forEach(([frequencia, atraso]) => {
+      const oscilador = audio.createOscillator();
+      const volume = audio.createGain();
+      oscilador.connect(volume);
+      volume.connect(audio.destination);
+      oscilador.frequency.value = frequencia;
+      const comeco = audio.currentTime + atraso;
+      volume.gain.setValueAtTime(0.0001, comeco);
+      volume.gain.exponentialRampToValueAtTime(0.25, comeco + 0.02);
+      volume.gain.exponentialRampToValueAtTime(0.0001, comeco + 0.18);
+      oscilador.start(comeco);
+      oscilador.stop(comeco + 0.2);
+    });
+    setTimeout(() => audio.close(), 1600);
+  } catch (e) { /* sem áudio: o aviso na tela continua valendo */ }
+}
+
+// Dois bipes: a fase do pomodoro virou. Aviso, não comemoração.
+function bipar() {
+  tocarNotas([
+    [560, 0],
+    [760, 0.22],
+  ]);
+}
+
+// Três notas subindo: a tarefa do dia acabou. Só toca quando algo fecha de
+// verdade, e por isso ainda significa algo depois de um mês.
+function tocarFanfarra() {
+  tocarNotas([
+    [587, 0],
+    [740, 0.12],
+    [880, 0.24],
+  ]);
+}
+
+// ----------------------------------------------------------------- fechamento
+
+/* O instante em que a fila do dia zera.
+
+   É o que o anel existe para produzir. Sem isto, terminar a fila é
+   indistinguível de desistir dela: a tela fica igual nos dois casos, e o
+   esforço não tem fim visível. O cérebro não volta pelo que ganhou — volta pelo
+   que viu terminar.
+
+   Nada aqui é inventado: o anel que fecha é a fila de hoje, o número que sobe é
+   a sequência que já estava no banco, e o que "volta amanhã" é a dívida dita em
+   voz baixa, no fim, onde ela não rouba o fecho. */
+
+function animarAnel(grafico, de, para) {
+  const arco = grafico.querySelector('.anel-arco');
+  if (!arco) return;
+  const raio = Number(arco.getAttribute('r'));
+  const volta = 2 * Math.PI * raio;
+  const risco = (valor) => {
+    const fatia = Math.max(0, Math.min(valor, 100)) / 100;
+    arco.setAttribute('stroke-dasharray', `${volta * fatia} ${volta}`);
+  };
+
+  risco(de);
+  grafico.classList.remove('anel-cheio');
+
+  let aplicado = false;
+  const chegar = () => {
+    if (aplicado) return;
+    aplicado = true;
+    risco(para);
+    if (para >= 100) grafico.classList.add('anel-cheio');
+  };
+
+  /* Dois frames: um para o navegador registrar o estado inicial, outro para a
+     transição do CSS ter de onde sair. Num só, ele pinta direto no destino.
+
+     E um relógio atrás deles, porque `requestAnimationFrame` não roda em janela
+     que não está desenhando — minimizada, atrás de outra, em aba de fundo. Sem
+     o relógio, o anel congelaria no percentual antigo e o número na tela seria
+     falso justamente no instante que ele existe para marcar. Perder a animação
+     é aceitável; mostrar 90% numa fila fechada não é. */
+  requestAnimationFrame(() => requestAnimationFrame(chegar));
+  setTimeout(chegar, 150);
+}
+
+/* `antes` é o percentual de onde o anel parte — a conta de antes da última
+   resposta. Sem ele o anel já nasceria cheio, e o movimento é o recado. */
+function celebrarFechamento({ progresso, sequencia, esperando, antes, acao }) {
+  const corrida = sequencia || {};
+  const total = progresso.total || 0;
+
+  const anel = anelProgresso(
+    100,
+    `${progresso.feitas}/${total}`,
+    `${progresso.feitas} de ${total} revisões de hoje, fila fechada`
+  );
+
+  const linhas = [
+    el('strong', { className: 'fecho-conta', textContent: 'Fila de hoje fechada' }),
+    el('p', {
+      className: 'ajuda',
+      textContent: `${plural(progresso.feitas, 'revisão respondida', 'revisões respondidas')} hoje.`,
+    }),
+  ];
+
+  // A sequência é o que está em pé por causa de hoje; é o número que faz voltar
+  // amanhã, então ele aparece grande e sozinho.
+  if (corrida.dias) {
+    linhas.push(
+      el('p', { className: 'fecho-sequencia' }, [
+        el('strong', { textContent: plural(corrida.dias, 'dia seguido', 'dias seguidos') }),
+        corrida.maior_dias > corrida.dias
+          ? el('span', { className: 'ajuda', textContent: `recorde de ${corrida.maior_dias}` })
+          : el('span', { className: 'etiqueta etiqueta-ok', textContent: 'seu recorde' }),
+      ])
+    );
+  }
+
+  if (corrida.semanas) {
+    linhas.push(
+      el('p', {
+        className: 'ajuda',
+        textContent: `${plural(corrida.semanas, 'semana', 'semanas')} seguidas na meta.`,
+      })
+    );
+  }
+
+  // A dívida existe e é dita — no fim, em letra miúda, depois do fecho.
+  if (esperando) {
+    linhas.push(
+      el('p', {
+        className: 'ajuda fecho-divida',
+        textContent: `${plural(esperando, 'revisão volta', 'revisões voltam')} amanhã, na ordem da prova mais próxima.`,
+      })
+    );
+  }
+
+  const acoes = el('div', { className: 'dialogo-acoes' }, [
+    el('button', {
+      type: 'button',
+      className: 'botao botao-fantasma botao-mini',
+      textContent: somLigado() ? 'Silenciar' : 'Com som',
+      onclick: (evento) => {
+        ligarSom(!somLigado());
+        evento.currentTarget.textContent = somLigado() ? 'Silenciar' : 'Com som';
+      },
+    }),
+    acao
+      ? el('a', { className: 'botao botao-discreto', href: acao.href, textContent: acao.rotulo })
+      : null,
+    el('button', {
+      type: 'button',
+      className: 'botao',
+      textContent: 'Fechar',
+      onclick: () => dialogo.close(),
+    }),
+  ]);
+
+  const dialogo = abrirDialogo(
+    [
+      el('div', { className: 'fecho' }, [anel, el('div', { className: 'fecho-texto cresce' }, linhas)]),
+      acoes,
+    ],
+    () => {
+      animarAnel(anel, antes === undefined ? 0 : antes, 100);
+      tocarFanfarra();
+    }
+  );
+  dialogo.classList.add('dialogo-fecho');
+  return dialogo;
+}
+
+// ----------------------------------------------------------------- marcos
+
+/* Marcos: um fato raro dito em voz alta, uma vez só.
+
+   O servidor é que decide o que é novo — e gravar que já foi dito é o POST em
+   si, então pedir é consumir. Por isso isto só roda quando a tela já está
+   montada: pedir e não mostrar seria engolir o parabéns para sempre.
+
+   Um por vez, com o próximo entrando quando o anterior fecha: três diálogos
+   empilhados não são três conquistas, são um atropelo. */
+function mostrarMarco(marco, resto) {
+  /* O próximo entra pelo clique e também pelo Esc, e só uma vez pelos dois: a
+     fila não pode avançar dois passos nem parar no meio porque a pessoa fechou
+     com o teclado. Avançar no `onclick` em vez de só no evento `close` é o que
+     mantém isto funcionando onde `close` não chega. */
+  let avancou = false;
+  const seguir = () => {
+    if (avancou) return;
+    avancou = true;
+    if (resto.length) mostrarMarco(resto[0], resto.slice(1));
+  };
+
+  const fechar = el('button', {
+    type: 'button',
+    className: 'botao',
+    textContent: resto.length ? `Próximo (${resto.length})` : 'Fechar',
+    onclick: () => {
+      dialogo.close();
+      seguir();
+    },
+  });
+
+  const dialogo = abrirDialogo(
+    [
+      el('p', { className: 'marco-rotulo', textContent: 'Marco' }),
+      el('h2', { className: 'marco-titulo', textContent: marco.titulo }),
+      marco.detalhe ? el('p', { className: 'ajuda', textContent: marco.detalhe }) : null,
+      el('div', { className: 'dialogo-acoes' }, [fechar]),
+    ],
+    () => {
+      fechar.focus();
+      tocarFanfarra();
+    }
+  );
+  dialogo.classList.add('dialogo-marco');
+  dialogo.addEventListener('close', seguir);
+  return dialogo;
+}
+
+async function conferirMarcos() {
+  try {
+    const { marcos } = await enviar('/api/marcos/');
+    if (marcos.length) mostrarMarco(marcos[0], marcos.slice(1));
+  } catch (e) { /* marco é um extra: falhar aqui não atrapalha a tela */ }
+}
+
+// ----------------------------------------------------------------- lembrete
+
+/* O lembrete do dia, o único gatilho que vem de fora da tela.
+
+   Sem servidor não há push, então o alcance é honesto e limitado: o aviso sai
+   quando o app é aberto depois da hora de costume, e o service worker tenta de
+   novo em segundo plano onde o navegador deixa (`periodicSync`, hoje só em PWA
+   instalado no Chrome). É pouco, mas é o que existe sem pôr um servidor de
+   notificação no meio de um app que roda na própria máquina.
+
+   Uma vez por dia e só. Um lembrete que repete é um lembrete que se desliga, e
+   um desligado não lembra nada. */
+const CHAVE_DO_LEMBRETE = 'lembrete-visto';
+
+function lembreteJaFoiHoje(hoje) {
+  try {
+    return localStorage.getItem(CHAVE_DO_LEMBRETE) === hoje;
+  } catch (e) {
+    return true; // sem localStorage não há como não repetir; então não insiste
+  }
+}
+
+function marcarLembrete(hoje) {
+  try {
+    localStorage.setItem(CHAVE_DO_LEMBRETE, hoje);
+  } catch (e) { /* sem localStorage: segue sem marcar */ }
+}
+
+function passouDaHora(hora) {
+  const [h, m] = (hora || '00:00').split(':').map(Number);
+  const agora = new Date();
+  return agora.getHours() * 60 + agora.getMinutes() >= h * 60 + m;
+}
+
+function notificarSistema(texto) {
+  try {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return false;
+    new Notification('Estudos', { body: texto, tag: 'lembrete', icon: '/static/icone-192.png' });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function conferirLembrete() {
+  // Já saiu hoje: nem pergunta. Isto roda em toda carga de página, e navegar
+  // pelo app não é motivo para uma consulta cuja resposta já se sabe.
+  const hoje = new Date().toISOString().slice(0, 10);
+  if (lembreteJaFoiHoje(hoje)) return;
+
+  let d;
+  try {
+    d = await pegar('/api/lembrete/');
+  } catch (e) {
+    return;
+  }
+  if (!d.ativo || !d.vale_lembrar || !d.texto) return;
+  if (!passouDaHora(d.hora)) return;
+
+  marcarLembrete(hoje);
+  // Na tela sempre; no sistema quando houver permissão. O aviso de canto é o
+  // que garante que o lembrete existe mesmo para quem negou a notificação.
+  if (!notificarSistema(d.texto)) avisar(d.texto, 'info');
+
+  // O service worker tenta de novo com o app fechado, onde o navegador deixa.
+  try {
+    const registro = await navigator.serviceWorker?.ready;
+    await registro?.periodicSync?.register('lembrete', { minInterval: 12 * 60 * 60 * 1000 });
+  } catch (e) { /* sem periodicSync: o lembrete vale ao abrir o app */ }
+}
+
 // ----------------------------------------------------------------- shell
 
 // O tema ja foi aplicado no <head> para nao piscar; aqui so fica a troca.
@@ -694,6 +1017,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   ligarAtalhos();
+
+  // O lembrete vale em qualquer tela: quem abre o app às 22h já abriu, e quem
+  // abre às 8h ainda não tem o que ser lembrado.
+  conferirLembrete();
 
   const menuBotao = document.getElementById('menu-botao');
   const lateral = document.getElementById('lateral');

@@ -38,6 +38,24 @@ class ServiceWorker(CasoBase):
         corpo = self.client.get("/sw.js").content.decode()
         self.assertIn("'/api/'", corpo)
 
+    def test_estatico_sem_versao_vem_da_rede(self):
+        """Cache-primeiro em `/static/` só vale para URL versionada.
+
+        Os `@import` de `estilo.css` pedem `componentes.css` e companhia sempre
+        no mesmo endereço, sem `?v=`. Guardados cache-primeiro, eles sobrevivem
+        à própria edição: o `?v=` da folha de entrada muda, o navegador baixa a
+        folha nova, e ela importa a versão velha das partes -- CSS antigo com
+        cara de bug, que é o que o `?v=` existe para evitar.
+        """
+        corpo = self.client.get("/sw.js").content.decode()
+        self.assertIn("searchParams.has('v')", corpo)
+
+    def test_o_lembrete_do_worker_sai_do_servidor(self):
+        """O worker não repete regra: ele entrega o texto que a API deu."""
+        corpo = self.client.get("/sw.js").content.decode()
+        self.assertIn("'/api/lembrete/'", corpo)
+        self.assertIn("periodicsync", corpo)
+
 
 class Manifesto(CasoBase):
     @property
