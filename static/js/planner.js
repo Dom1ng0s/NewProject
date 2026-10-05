@@ -372,10 +372,7 @@ async function enviarIcs(preview) {
   dados.append('materia_id', document.getElementById('i-materia').value);
   if (preview) dados.append('preview', '1');
 
-  const resposta = await fetch('/api/planner/importar-ical/', { method: 'POST', body: dados });
-  const corpo = await resposta.json().catch(() => ({}));
-  if (!resposta.ok) throw new Error(corpo.erro || 'Não consegui ler o arquivo.');
-  return corpo;
+  return enviarArquivo('/api/planner/importar-ical/', dados);
 }
 
 function mostrarIcs(resposta) {

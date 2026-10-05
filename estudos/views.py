@@ -11,6 +11,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from .models import (
     Avaliacao,
+    Perfil,
     Configuracao,
     BlocoPlanejado,
     Cartao,
@@ -21,8 +22,10 @@ from .models import (
     SessaoEstudo,
     Topico,
 )
-from . import backup
+from . import backup, escopo
 from .cartoes import cartoes_da_nota
+from .fotos import FotoInvalida, conferir as conferir_foto
+from .middleware import COOKIE_DO_PERFIL, DURACAO_DO_COOKIE
 from .ical import eventos_de_ics
 from .services import (
     NadaParaDesfazer,
@@ -786,6 +789,153 @@ FAIXAS = {
 DECIMAIS = {"facilidade_minima", "meta_horas_semanais"}
 
 
+# ---------------------------------------------------------------- perfis
+
+
+def pagina_perfis(request):
+    """A tela de escolha: quem está estudando.
+
+    Fica fora do `base.html` de propósito -- o menu lateral, a busca e o título
+    com as pendentes só fazem sentido depois de escolher de quem é o app.
+    """
+    return render(
+        request,
+        "estudos/perfis.html",
+        {"perfis": [p.json() for p in Perfil.objects.all()], "cores": Perfil.CORES},
+    )
+
+
+@require_GET
+def api_perfis(request):
+    return JsonResponse(
+        {
+            "perfis": [p.json() for p in Perfil.objects.all()],
+            "atual": request.perfil.id if request.perfil else None,
+            "cores": Perfil.CORES,
+        }
+    )
+
+
+def ler_perfil(dados, perfil, arquivo=None):
+    """Nome, cor e foto, validados. Levanta ValueError com o texto da tela."""
+    nome = (dados.get("nome") or "").strip()
+    if not nome:
+        raise ValueError("Escreva um nome.")
+    if len(nome) > 40:
+        raise ValueError("O nome passa de 40 letras.")
+
+    repetido = Perfil.objects.filter(nome__iexact=nome).exclude(pk=perfil.pk)
+    if repetido.exists():
+        raise ValueError(f'Já existe um perfil chamado "{nome}".')
+
+    cor = (dados.get("cor") or "").strip()
+    if cor and cor not in Perfil.CORES:
+        raise ValueError("Cor fora da paleta.")
+
+    perfil.nome = nome
+    if cor:
+        perfil.cor = cor
+
+    if arquivo is not None:
+        try:
+            extensao = conferir_foto(arquivo)
+        except FotoInvalida as erro:
+            raise ValueError(str(erro))
+        # O nome do arquivo vem de fora; o que vale e o formato que os bytes
+        # disseram, nao a extensao que veio escrita.
+        arquivo.name = f"{nome[:20]}.{extensao}"
+        perfil.foto = arquivo
+
+    return perfil
+
+
+@require_POST
+def api_perfil_criar(request):
+    dados = request.POST if request.FILES else corpo(request)
+    try:
+        perfil = ler_perfil(dados, Perfil(), request.FILES.get("foto"))
+    except ValueError as erro:
+        return JsonResponse({"erro": str(erro)}, status=400)
+    perfil.save()
+    return JsonResponse({"ok": True, "perfil": perfil.json()})
+
+
+@require_POST
+def api_perfil_editar(request, pk):
+    perfil = get_object_or_404(Perfil, pk=pk)
+    dados = request.POST if request.FILES else corpo(request)
+    try:
+        ler_perfil(dados, perfil, request.FILES.get("foto"))
+    except ValueError as erro:
+        return JsonResponse({"erro": str(erro)}, status=400)
+
+    if dados.get("remover_foto") in ("1", True, "true"):
+        perfil.foto = ""
+    perfil.save()
+    return JsonResponse({"ok": True, "perfil": perfil.json()})
+
+
+@require_POST
+def api_perfil_excluir(request, pk):
+    """Apaga o perfil e, junto, tudo o que era dele.
+
+    O aviso na tela diz o tamanho do estrago antes: sem isso, "excluir perfil"
+    parece apagar um nome e apaga um semestre.
+    """
+    perfil = get_object_or_404(Perfil, pk=pk)
+    # O id tem de ser lido antes: `delete()` zera o `pk` da instancia, e a
+    # comparacao depois nunca bateria -- o cookie ficaria apontando para um
+    # perfil que nao existe mais.
+    era_o_meu = request.perfil is not None and request.perfil.pk == perfil.pk
+    perfil.delete()
+
+    resposta = JsonResponse({"ok": True})
+    if era_o_meu:
+        resposta.delete_cookie(COOKIE_DO_PERFIL)
+    return resposta
+
+
+@require_POST
+def api_perfil_entrar(request, pk):
+    """Guarda a escolha no cookie. É o único "login" que o app tem."""
+    perfil = get_object_or_404(Perfil, pk=pk)
+    resposta = JsonResponse({"ok": True, "perfil": perfil.json()})
+    resposta.set_cookie(
+        COOKIE_DO_PERFIL,
+        str(perfil.pk),
+        max_age=DURACAO_DO_COOKIE,
+        samesite="Lax",
+    )
+    return resposta
+
+
+@require_POST
+def api_perfil_sair(request):
+    resposta = JsonResponse({"ok": True})
+    resposta.delete_cookie(COOKIE_DO_PERFIL)
+    return resposta
+
+
+def resumo_do_perfil(perfil):
+    """Quanto dado o perfil tem, para o aviso de exclusão dizer o tamanho."""
+    with escopo.como(perfil):
+        return {
+            "materias": Materia.objects.count(),
+            "topicos": Topico.objects.count(),
+            "sessoes": SessaoEstudo.objects.count(),
+            "revisoes": Revisao.objects.filter(feita=True).count(),
+        }
+
+
+@require_GET
+def api_perfil_resumo(request, pk):
+    perfil = get_object_or_404(Perfil, pk=pk)
+    return JsonResponse(resumo_do_perfil(perfil))
+
+
+# ---------------------------------------------------------------- service worker
+
+
 def service_worker(request):
     """O `sw.js`, servido da raiz porque so dali ele controla o app inteiro.
 
@@ -818,8 +968,13 @@ def api_configuracoes_salvar(request):
     dados = corpo(request)
 
     if dados.get("restaurar"):
+        # Apaga e grava de novo com os padroes, em vez de so apagar: ler os
+        # ajustes nao cria linha nenhuma (`Configuracao.atual`), entao quem
+        # quer a linha de volta precisa pedir. Aqui e o unico lugar que pede.
         Configuracao.objects.all().delete()
-        return JsonResponse({"ok": True, "configuracao": Configuracao.atual().json()})
+        padrao = Configuracao()
+        padrao.save()
+        return JsonResponse({"ok": True, "configuracao": padrao.json()})
 
     config = Configuracao.atual()
     for nome, (minimo, maximo) in FAIXAS.items():

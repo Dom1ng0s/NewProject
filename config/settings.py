@@ -17,6 +17,9 @@ MIDDLEWARE = [
     # A pagina nunca fica em cache: era ela que carregava o ?v= antigo dos
     # estaticos e devolvia um CSS velho com cara de bug.
     "estudos.middleware.html_sem_cache",
+    # Quem esta usando: resolve o perfil do cookie e deixa as consultas
+    # filtradas por ele. Sem perfil escolhido, toda tela desvia para /perfis/.
+    "estudos.middleware.perfil_atual",
 ]
 
 ROOT_URLCONF = "config.urls"

@@ -3,13 +3,63 @@ from datetime import timedelta
 from django.db import models
 from django.utils import timezone
 
+from .escopo import ComDono, PorPerfil, atual_id
 
-class Configuracao(models.Model):
-    """Os ajustes do app, numa linha so.
+
+class Perfil(models.Model):
+    """Quem está estudando. Dono de tudo o que o app guarda.
+
+    O app continua sem login: perfil aqui não é conta nem senha, é a mesma
+    pergunta que a TV da sala faz -- quem está usando agora. Duas pessoas na
+    mesma máquina (ou a mesma pessoa separando faculdade de concurso) deixam de
+    disputar uma única lista de matérias.
+
+    É o único modelo sem dono, e por isso o único com o manager normal.
+    """
+
+    # Paleta do app, para o avatar sem foto não ser cinza nem pedir escolha.
+    CORES = ["#c2410c", "#0f6b48", "#1d4ed8", "#7c3aed", "#b91c1c", "#0e7490"]
+
+    nome = models.CharField(max_length=40, unique=True)
+    # FileField e nao ImageField: ImageField exige Pillow, e o app nao tem
+    # dependencia alem do Django. A foto e conferida pelos bytes iniciais em
+    # `fotos.py`, que e mais honesto que confiar na extensao de qualquer jeito.
+    foto = models.FileField(upload_to="perfis/", blank=True)
+    cor = models.CharField(max_length=7, default=CORES[0])
+    criado_em = models.DateTimeField(auto_now_add=True)
+    # Ordena a tela de escolha: quem usou por último aparece primeiro.
+    ultimo_acesso = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-ultimo_acesso", "nome"]
+        verbose_name = "perfil"
+        verbose_name_plural = "perfis"
+
+    def __str__(self):
+        return self.nome
+
+    @property
+    def inicial(self):
+        """A letra do avatar quando não há foto."""
+        return self.nome.strip()[:1].upper() or "?"
+
+    def json(self):
+        return {
+            "id": self.id,
+            "nome": self.nome,
+            "cor": self.cor,
+            "inicial": self.inicial,
+            "foto": self.foto.url if self.foto else "",
+        }
+
+
+class Configuracao(ComDono):
+    """Os ajustes do app, uma linha por perfil.
 
     Moravam em `settings.py`, o que obrigava a editar codigo para mudar a meta
-    da semana. Aqui ficam no banco, viram tela e entram no backup. E um
-    singleton: sempre a linha de id 1.
+    da semana. Aqui ficam no banco, viram tela e entram no backup. Era um
+    singleton de id 1; com perfis virou um por dono -- a meta de horas de quem
+    faz faculdade nao e a de quem estuda para concurso.
     """
 
     # repeticao espacada
@@ -35,36 +85,75 @@ class Configuracao(models.Model):
     pomodoro_pausa_longa_min = models.PositiveSmallIntegerField(default=15)
     pomodoro_ciclos = models.PositiveSmallIntegerField(default=4)
 
-    class Meta:
+    class Meta(ComDono.Meta):
         verbose_name = "configuração"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["perfil"], name="uma_configuracao_por_perfil"
+            )
+        ]
 
     def __str__(self):
         return "Configuração"
 
     @classmethod
     def atual(cls):
-        config, _ = cls.objects.get_or_create(pk=1)
-        return config
+        """Os ajustes do perfil atual. Ler nunca escreve.
+
+        Antes isto era um `get_or_create`, e com um perfil recem-criado virava
+        uma escrita no primeiro carregamento -- o dashboard pede duas APIs em
+        paralelo, as duas tentavam inserir a mesma linha e o SQLite trancava.
+        Perfil sem linha ainda recebe os padroes, numa instancia solta: quem
+        grava e a tela de ajustes, que e quem deveria gravar.
+        """
+        config = cls.objects.filter(perfil_id=atual_id()).first()
+        return config or cls(perfil_id=atual_id())
 
     def save(self, *args, **kwargs):
-        self.pk = 1  # nunca existe uma segunda linha
+        """Continua existindo uma linha so -- agora uma por perfil.
+
+        Antes isto era `self.pk = 1`: qualquer save virava a linha global. Com
+        perfis a regra e a mesma, por dono, e quem a garante de verdade e a
+        constraint do banco. Aqui o save de uma instancia nova adota a linha
+        que ja existe, em vez de bater na constraint: e o que mantem o importar
+        do backup escrevendo ajustes sem precisar saber se ja havia algum.
+        """
+        if self._state.adding and self.pk is None:
+            if self.perfil_id is None:
+                self.perfil_id = atual_id()
+            existente = (
+                type(self)
+                .todos.filter(perfil_id=self.perfil_id)
+                .values_list("pk", flat=True)
+                .first()
+            )
+            if existente is not None:
+                self.pk = existente
+                self._state.adding = False
         super().save(*args, **kwargs)
 
     def json(self):
-        campos = [c.name for c in self._meta.fields if c.name != "id"]
+        fora = {"id", "perfil"}
+        campos = [c.name for c in self._meta.fields if c.name not in fora]
         return {nome: getattr(self, nome) for nome in campos}
 
 
-class Materia(models.Model):
+class Materia(ComDono):
     """Subject."""
 
-    nome = models.CharField(max_length=80, unique=True)
+    # Unico por perfil, nao no mundo: duas pessoas podem cursar Calculo.
+    nome = models.CharField(max_length=80)
     cor = models.CharField(max_length=7, default="#4f8cff")
     meta_horas_semanais = models.FloatField(default=0)
     criada_em = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
+    class Meta(ComDono.Meta):
         ordering = ["nome"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["perfil", "nome"], name="materia_unica_por_perfil"
+            )
+        ]
 
     def __str__(self):
         return self.nome
@@ -126,8 +215,10 @@ def passo_do_sm2(facilidade, intervalo_dias, acertos_seguidos, qualidade, config
     return facilidade, intervalo_dias, acertos_seguidos
 
 
-class Topico(models.Model):
+class Topico(ComDono):
     """Topic: arvore de ate 3 niveis via `pai` (materia > assunto > subtopico)."""
+
+    dono_vem_de = "materia"
 
     NAO_INICIADO = "nao_iniciado"
     ESTUDANDO = "estudando"
@@ -157,7 +248,7 @@ class Topico(models.Model):
     intervalo_dias = models.PositiveIntegerField(default=0)
     acertos_seguidos = models.PositiveIntegerField(default=0)
 
-    class Meta:
+    class Meta(ComDono.Meta):
         ordering = ["nome"]
 
     def __str__(self):
@@ -236,7 +327,7 @@ class Topico(models.Model):
         return self.agendar(self.intervalo_dias, qualidade=qualidade)
 
 
-class Material(models.Model):
+class Material(ComDono):
     """Onde o assunto foi estudado: um link, um PDF, a pagina do livro.
 
     O tipo nao e um campo: e link quando tem `url` e arquivo quando tem
@@ -252,7 +343,9 @@ class Material(models.Model):
     nota = models.CharField(max_length=200, blank=True, help_text="página, capítulo…")
     criado_em = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
+    dono_vem_de = "topico"
+
+    class Meta(ComDono.Meta):
         ordering = ["-criado_em"]
 
     def __str__(self):
@@ -278,7 +371,7 @@ class Material(models.Model):
         }
 
 
-class Cartao(models.Model):
+class Cartao(ComDono):
     """O que se tenta lembrar na revisao: uma pergunta e a resposta.
 
     Sem isto a revisao e so um lembrete de que o topico existe -- o efeito de
@@ -291,7 +384,9 @@ class Cartao(models.Model):
     ordem = models.PositiveIntegerField(default=0)
     criado_em = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
+    dono_vem_de = "topico"
+
+    class Meta(ComDono.Meta):
         ordering = ["ordem", "id"]
 
     def __str__(self):
@@ -307,7 +402,7 @@ class Cartao(models.Model):
         }
 
 
-class Avaliacao(models.Model):
+class Avaliacao(ComDono):
     """Prova, trabalho ou entrega com data marcada.
 
     E o que da urgencia ao resto: sem uma data de prova, o app so sabe ordenar
@@ -333,7 +428,9 @@ class Avaliacao(models.Model):
     concluida = models.BooleanField(default=False)
     criada_em = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
+    dono_vem_de = "materia"
+
+    class Meta(ComDono.Meta):
         ordering = ["data", "hora"]
 
     def __str__(self):
@@ -367,8 +464,10 @@ class Avaliacao(models.Model):
         }
 
 
-class SessaoEstudo(models.Model):
+class SessaoEstudo(ComDono):
     """StudySession."""
+
+    dono_vem_de = "topico"
 
     topico = models.ForeignKey(Topico, on_delete=models.CASCADE, related_name="sessoes")
     inicio = models.DateTimeField(default=timezone.now)
@@ -379,7 +478,7 @@ class SessaoEstudo(models.Model):
     # mesma coisa que uma de 50 min inteiricas.
     interrupcoes = models.PositiveSmallIntegerField(default=0)
 
-    class Meta:
+    class Meta(ComDono.Meta):
         ordering = ["-inicio"]
 
     def json(self):
@@ -397,7 +496,7 @@ class SessaoEstudo(models.Model):
         }
 
 
-class BlocoPlanejado(models.Model):
+class BlocoPlanejado(ComDono):
     """PlannedBlock: dia da semana 0=segunda ... 6=domingo.
 
     `semana` nula marca um bloco recorrente, que aparece em todas as semanas
@@ -425,7 +524,7 @@ class BlocoPlanejado(models.Model):
     hora_inicio = models.TimeField()
     hora_fim = models.TimeField()
 
-    class Meta:
+    class Meta(ComDono.Meta):
         ordering = ["dia_semana", "hora_inicio"]
 
     def __str__(self):
@@ -468,7 +567,7 @@ class BlocoPlanejado(models.Model):
         }
 
 
-class OcorrenciaPulada(models.Model):
+class OcorrenciaPulada(ComDono):
     """Uma semana em que um bloco recorrente nao acontece (feriado, aula cancelada)."""
 
     bloco = models.ForeignKey(
@@ -476,12 +575,16 @@ class OcorrenciaPulada(models.Model):
     )
     semana = models.DateField()
 
-    class Meta:
+    dono_vem_de = "bloco"
+
+    class Meta(ComDono.Meta):
         unique_together = [("bloco", "semana")]
 
 
-class Revisao(models.Model):
+class Revisao(ComDono):
     """Review."""
+
+    dono_vem_de = "topico"
 
     topico = models.ForeignKey(Topico, on_delete=models.CASCADE, related_name="revisoes")
     data_prevista = models.DateField()
@@ -492,7 +595,7 @@ class Revisao(models.Model):
         null=True, blank=True, help_text="0 a 5, a nota que o SM-2 recebeu"
     )
 
-    class Meta:
+    class Meta(ComDono.Meta):
         ordering = ["data_prevista"]
 
     def json(self, cartoes=None):
@@ -513,7 +616,7 @@ class Revisao(models.Model):
         }
 
 
-class RespostaRevisao(models.Model):
+class RespostaRevisao(ComDono):
     """Uma resposta dada numa revisao, guardada para sempre.
 
     `Revisao` guarda o estado atual e o topico guarda a facilidade de agora --
@@ -550,7 +653,9 @@ class RespostaRevisao(models.Model):
     facilidade_depois = models.FloatField()
     intervalo_depois = models.PositiveIntegerField()
 
-    class Meta:
+    dono_vem_de = "topico"
+
+    class Meta(ComDono.Meta):
         ordering = ["-respondida_em", "-id"]
         verbose_name = "resposta de revisão"
         verbose_name_plural = "respostas de revisão"

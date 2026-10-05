@@ -16,6 +16,8 @@ urlpatterns = [
     path("historico/", views.pagina_historico, name="historico"),
     path("configuracoes/", views.pagina_configuracoes, name="configuracoes"),
     path("dados/", views.pagina_dados, name="dados"),
+    # Quem esta estudando. Fica antes de tudo: sem perfil, as telas desviam pra ca.
+    path("perfis/", views.pagina_perfis, name="perfis"),
     # Precisa estar na raiz para o service worker controlar o app todo.
     path("sw.js", views.service_worker, name="service-worker"),
     # api
@@ -62,6 +64,13 @@ urlpatterns = [
     path("api/avaliacoes/<int:pk>/editar/", views.api_avaliacao_editar),
     path("api/avaliacoes/<int:pk>/plano/", views.api_avaliacao_plano),
     path("api/avaliacoes/<int:pk>/excluir/", views.api_avaliacao_excluir),
+    path("api/perfis/", views.api_perfis),
+    path("api/perfis/criar/", views.api_perfil_criar),
+    path("api/perfis/<int:pk>/editar/", views.api_perfil_editar),
+    path("api/perfis/<int:pk>/excluir/", views.api_perfil_excluir),
+    path("api/perfis/<int:pk>/entrar/", views.api_perfil_entrar),
+    path("api/perfis/<int:pk>/resumo/", views.api_perfil_resumo),
+    path("api/perfis/sair/", views.api_perfil_sair),
     path("api/backup/exportar/", views.api_backup_exportar),
     path("api/backup/importar/", views.api_backup_importar),
 ]

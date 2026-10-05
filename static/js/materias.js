@@ -269,9 +269,7 @@ async function abrirNotas(topico) {
         dados.append('titulo', campoTitulo.value);
         dados.append('nota', campoPagina.value);
         dados.append('arquivo', arquivo);
-        const resposta = await fetch('/api/materiais/criar/', { method: 'POST', body: dados });
-        const corpo = await resposta.json().catch(() => ({}));
-        if (!resposta.ok) throw new Error(corpo.erro || 'Não consegui guardar o arquivo.');
+        await enviarArquivo('/api/materiais/criar/', dados);
       } else {
         await enviar('/api/materiais/criar/', {
           topico_id: topico.id,

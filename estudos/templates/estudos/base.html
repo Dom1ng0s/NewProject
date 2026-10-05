@@ -156,6 +156,22 @@
         </svg>
         <span>Dados</span>
       </a>
+
+      {% comment %}Quem está usando, no pé do menu: é onde se confere de quem é
+      a tela antes de confiar no número dela, e é a saída para trocar.{% endcomment %}
+      {% if perfil_atual %}
+        <a class="lateral-perfil" href="{% url 'perfis' %}" title="Trocar de perfil">
+          {% if perfil_atual.foto %}
+            <span class="avatar"><img src="{{ perfil_atual.foto.url }}" alt=""></span>
+          {% else %}
+            <span class="avatar" style="background: {{ perfil_atual.cor }}">
+              <span class="avatar-inicial">{{ perfil_atual.inicial }}</span>
+            </span>
+          {% endif %}
+          <span class="cresce">{{ perfil_atual.nome }}</span>
+          <span class="ajuda">trocar</span>
+        </a>
+      {% endif %}
     </nav>
 
     <main class="conteudo">

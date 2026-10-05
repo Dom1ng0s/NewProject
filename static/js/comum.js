@@ -20,6 +20,19 @@ async function enviar(url, dados) {
   return corpo;
 }
 
+/* Multipart, para quando vai arquivo junto.
+
+   Sem Content-Type na mao: o navegador precisa escrever o boundary, e dizer
+   "multipart/form-data" sem ele e exatamente o jeito de o Django receber um
+   corpo vazio. O tratamento do erro e o mesmo de `enviar`, para uma falha de
+   upload nao aparecer diferente de uma falha de qualquer outra chamada. */
+async function enviarArquivo(url, dados) {
+  const resposta = await fetch(url, { method: 'POST', body: dados });
+  const corpo = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) throw new Error(corpo.erro || 'A operação não foi concluída.');
+  return corpo;
+}
+
 // ----------------------------------------------------------------- DOM
 
 function el(tag, props, filhos) {

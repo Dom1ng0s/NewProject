@@ -25,8 +25,10 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from estudos.cartoes import cartoes_da_nota
+from estudos import escopo
 from estudos.models import (
     Avaliacao,
+    Perfil,
     BlocoPlanejado,
     Cartao,
     Configuracao,
@@ -238,8 +240,25 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--limpar", action="store_true", help="Apaga os dados antes")
+        parser.add_argument(
+            "--perfil",
+            default="Eu",
+            help="Nome do perfil que recebe o semestre (criado se não existir)",
+        )
 
     def handle(self, *args, **opcoes):
+        # Fora de um request nao ha perfil nenhum definido, e sem dono o
+        # primeiro `Materia.objects.create` nao saberia de quem e a materia.
+        # O comando escolhe (ou cria) um e roda inteiro dentro dele -- assim
+        # `--limpar` tambem so apaga o semestre deste perfil, nunca o de outro.
+        perfil, novo = Perfil.objects.get_or_create(
+            nome=opcoes["perfil"], defaults={"cor": Perfil.CORES[0]}
+        )
+        with escopo.como(perfil):
+            self.popular(perfil, novo, opcoes)
+
+    def popular(self, perfil, perfil_novo, opcoes):
+        self.perfil = perfil
         if opcoes["limpar"]:
             # Matéria em cascata leva tópico, sessão, revisão, cartão, log e
             # avaliação; bloco sem matéria e ocorrência pulada vão na mão.

@@ -1,7 +1,9 @@
 # Estudos
 
-Sistema web pessoal para organizar estudos. Uso local, sem login.
-Django + SQLite no backend; HTML, CSS e JavaScript puro no frontend (sem npm, sem CDN).
+Sistema web pessoal para organizar estudos. Uso local, sem login — mas com
+perfis, para mais de uma pessoa (ou mais de uma vida de estudo) caberem na
+mesma máquina. Django + SQLite no backend; HTML, CSS e JavaScript puro no
+frontend (sem npm, sem CDN).
 
 ## Rodar do zero
 
@@ -12,7 +14,56 @@ python manage.py popular_dados    # opcional: dados de exemplo
 python manage.py runserver
 ```
 
-Abra http://127.0.0.1:8000/
+Abra http://127.0.0.1:8000/ — a primeira tela pede para criar um perfil.
+
+## Perfis
+
+A porta do app é "Quem está estudando?", no padrão da TV da sala: uma grade de
+avatares, um clique, pronto. Não é login e não tem senha — é só a pergunta de
+quem está usando agora, guardada num cookie.
+
+**Cada perfil tem os próprios dados.** Matérias, tópicos, cartões, sessões,
+revisões, provas, planner e configurações: nada atravessa de um para o outro.
+Dois perfis podem cursar "Cálculo" sem disputar o nome, e a meta de horas de
+quem faz faculdade não é a de quem estuda para concurso.
+
+O avatar é a inicial sobre a cor escolhida, ou uma foto enviada na hora. A foto
+é conferida pelos bytes iniciais, não pela extensão: sem Pillow não dá para
+abrir a imagem e perguntar se ela é imagem, e confiar no nome do arquivo nunca
+foi conferir nada. Teto de 5MB.
+
+"Gerenciar perfis" é onde se renomeia, troca cor e foto, e exclui. O aviso de
+exclusão diz o tamanho do estrago em números do próprio perfil ("vão junto: 6
+matérias, 73 tópicos, 117 sessões…"), porque excluir perfil parece apagar um
+nome e apaga um semestre.
+
+### Como o isolamento é garantido
+
+O escopo não é escrito consulta a consulta. São mais de cem `.objects.` no app,
+e bastaria esquecer uma para a matéria de outra pessoa aparecer numa tela — sem
+erro nenhum, o que é o pior jeito de errar. Então o filtro é o padrão:
+
+- `estudos/escopo.py` guarda o perfil atual num `ContextVar` e define o manager
+  `PorPerfil`, que já nasce filtrado. Todo modelo com dono herda de `ComDono`,
+  cujo `objects` é esse manager.
+- O middleware `perfil_atual` resolve o cookie, deixa o perfil valendo durante
+  o request e o desfaz no fim — um perfil vazando para o request seguinte seria
+  o pior defeito possível aqui.
+- O dono se preenche sozinho no `save()`: nos modelos-raiz vem do perfil atual,
+  nos que têm pai vem do pai (um cartão é do tópico, um tópico é da matéria).
+- Para ver tudo é preciso dizer em voz alta: `Modelo.todos` ou
+  `Modelo.de_todos_os_perfis()`. Só a migração e scripts usam.
+
+O efeito prático é que `backup.py`, `services.py` e as views não precisaram de
+uma linha de mudança para ficarem isolados — e exportar backup passou a
+exportar só o perfil atual, de graça.
+
+Fora de um request (shell, migração) não há perfil definido e o manager não
+filtra: filtrar por "ninguém" devolveria nada e transformaria todo script num
+mistério. `popular_dados --perfil Ana` roda dentro de um perfil escolhido.
+
+Quem já usava o app antes dos perfis não perde nada: a migração cria um perfil
+"Eu" e adota todas as linhas existentes.
 
 ## Revisar do celular
 
@@ -87,6 +138,7 @@ e a lista de "teimosos" é escrita à mão.
 | `/historico/` | Histórico          |
 | `/configuracoes/` | Configurações  |
 | `/dados/`    | Backup: exportar e importar |
+| `/perfis/`   | Quem está estudando |
 
 ## Sessão de estudo e pomodoro
 
