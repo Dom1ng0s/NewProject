@@ -34,16 +34,53 @@ Gerar a chave:
 python -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
-## Comandos do deploy
+## Deploy automatico
 
-Ja estao no `Procfile`, que Railway, Render, Fly e Heroku leem sozinhos:
+`railway.json` descreve build, migrate e start, entao nao ha campo para
+preencher no painel: o Railway le o arquivo a cada push na branch que ele
+observa e publica sozinho.
 
 - build: `pip install -r requirements.txt && python manage.py collectstatic --noinput`
-- release: `python manage.py migrate --noinput`
-- web: `gunicorn config.wsgi --bind 0.0.0.0:$PORT --workers 2 --timeout 60`
+- preDeploy: `python manage.py migrate --noinput`
+- start: `gunicorn config.wsgi --bind 0.0.0.0:$PORT --workers 2 --timeout 60`
+- healthcheck: `/perfis/`, que responde 200 sem depender de cookie
 
-Alguns provedores (Render) nao usam `Procfile` para o build -- cole o comando de
-build no campo correspondente do painel.
+O `migrate` fica em `preDeployCommand` de proposito: o Railway **ignora** a
+linha `release:` do Procfile, que e convencao do Heroku. Se ele mudar de lugar,
+o banco para de acompanhar o codigo sem ninguem avisar.
+
+O healthcheck aponta para `/perfis/` e nao para `/`, porque `/` responde 302
+para la quando nao ha perfil escolhido.
+
+No painel do Railway, uma vez: ligar o repo, escolher a branch observada e
+criar o Postgres como servico. O resto e push.
+
+`.github/workflows/testes.yml` roda a suite, confere se falta migration e
+valida a configuracao de producao em cada push e PR. Nao e ele que publica --
+isso e o Railway -- mas e o que faz o commit quebrado aparecer marcado no
+GitHub antes de voce notar pelo celular.
+
+## Qual branch publica
+
+`deploy-railway` e a branch publicada; a `main` segue sendo onde o trabalho
+acontece. No painel do Railway, a branch observada e `deploy-railway`.
+
+Publicar, entao, e um merge consciente:
+
+```bash
+git switch deploy-railway
+git merge main
+git push
+```
+
+O push dispara o build, o migrate e o start. Nada vai para o celular sem esse
+merge -- e a vantagem de separar: a `main` pode ficar quebrada no meio de uma
+implementacao sem derrubar o app instalado.
+
+Um detalhe do CI: o workflow dispara em push nas duas branches, mas o GitHub
+le o arquivo da branch que recebeu o push. Enquanto `.github/` existir so em
+`deploy-railway`, push na `main` nao roda a suite -- os PRs rodam. Se quiser a
+`main` coberta tambem, leve so a pasta `.github/` para ela.
 
 ## Os dois discos
 

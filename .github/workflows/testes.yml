@@ -1,0 +1,40 @@
+# Roda a suite antes do Railway publicar. O Railway sobe o deploy por conta
+# dele ao receber o push; aqui o que importa e o X vermelho aparecer no commit
+# quando algo quebrou, para voce nao descobrir pelo app no celular.
+name: testes
+
+on:
+  push:
+    branches: [main, deploy-railway]
+  pull_request:
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: suite
+        run: python manage.py test --verbosity 2
+
+      - name: conferir migrations
+        run: python manage.py makemigrations --check --dry-run
+
+      # Mesmas variaveis do ambiente publicado, para pegar aqui um erro de
+      # configuracao que hoje so apareceria depois de subir.
+      - name: conferir configuracao de producao
+        env:
+          SECRET_KEY: chave-de-ci-longa-e-aleatoria-sem-valor-nenhum-em-producao
+          DEBUG: "0"
+          ALLOWED_HOSTS: exemplo.com
+          CSRF_TRUSTED_ORIGINS: https://exemplo.com
+        run: |
+          python manage.py check --deploy --fail-level ERROR
+          python manage.py collectstatic --noinput
