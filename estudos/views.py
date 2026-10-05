@@ -446,7 +446,7 @@ def api_materia_excluir(request, pk):
 def api_arvore(request):
     """Materias com seus topicos em arvore de ate 3 niveis."""
     filhos = {}
-    for topico in Topico.objects.all():
+    for topico in Topico.por_completude():
         filhos.setdefault(topico.pai_id, []).append(topico)
 
     # Os ultimos intervalos de cada topico, para a escadinha na linha do ramo.

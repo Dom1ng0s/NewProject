@@ -288,11 +288,27 @@ class Topico(ComDono):
     intervalo_dias = models.PositiveIntegerField(default=0)
     acertos_seguidos = models.PositiveIntegerField(default=0)
 
+    # A arvore mostra o topico mais estudado primeiro, e o status e um texto:
+    # ordenar por ele daria "dominado, estudando, nao_iniciado, revisado", que
+    # nao quer dizer nada. Entao a ordem e esta lista, nao o alfabeto.
+    ORDEM_DA_COMPLETUDE = [DOMINADO, REVISADO, ESTUDANDO, NAO_INICIADO]
+
     class Meta(ComDono.Meta):
         ordering = ["nome"]
 
     def __str__(self):
         return f"{self.materia.nome} / {self.nome}"
+
+    @classmethod
+    def por_completude(cls):
+        """Do mais estudado ao intocado, e em ordem alfabetica dentro do status."""
+        degraus = [
+            models.When(status=status, then=posicao)
+            for posicao, status in enumerate(cls.ORDEM_DA_COMPLETUDE)
+        ]
+        return cls.objects.order_by(
+            models.Case(*degraus, default=len(degraus)), "nome"
+        )
 
     @property
     def nivel(self):
