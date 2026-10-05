@@ -41,7 +41,7 @@ preencher no painel: o Railway le o arquivo a cada push na branch que ele
 observa e publica sozinho.
 
 - build: `pip install -r requirements.txt && python manage.py collectstatic --noinput`
-- preDeploy: `python manage.py migrate --noinput`
+- preDeploy: `python manage.py esperar_banco --prazo 90 && python manage.py migrate --noinput`
 - start: `gunicorn config.wsgi --bind 0.0.0.0:$PORT --workers 2 --timeout 60`
 - healthcheck: `/perfis/`, que responde 200 sem depender de cookie
 
@@ -59,6 +59,32 @@ criar o Postgres como servico. O resto e push.
 valida a configuracao de producao em cada push e PR. Nao e ele que publica --
 isso e o Railway -- mas e o que faz o commit quebrado aparecer marcado no
 GitHub antes de voce notar pelo celular.
+
+## Quando o migrate nao acha o banco
+
+```
+failed to resolve host 'postgres.railway.internal': Name or service not known
+```
+
+Esse erro quer dizer que a `DATABASE_URL` chegou e o Django tentou Postgres --
+nao resolveu o nome, o que e outra coisa. As causas, em ordem de frequencia:
+
+1. **A rede privada ainda nao subiu.** Ela leva alguns segundos depois do
+   container, e o migrate roda logo no inicio. E para isso que existe o
+   `esperar_banco` no preDeploy: ele tenta de novo com espera dobrada ate o
+   banco responder.
+2. **O Postgres nao esta no ar.** Veja o servico dele no painel: se o primeiro
+   deploy falhou ou esta em pausa, nao existe nome para resolver.
+3. **Ambiente ou projeto diferente.** O DNS `.railway.internal` so vale entre
+   servicos do mesmo projeto *e* do mesmo ambiente. App em `production` e banco
+   em outro ambiente nao se enxergam.
+4. **Nome do servico trocado.** Se voce renomeou o Postgres, a referencia
+   `${{Postgres.DATABASE_URL}}` aponta para um host que nao existe mais.
+
+Rodar `railway run python manage.py migrate` da sua maquina da o mesmo erro, e
+ai e esperado: `railway run` executa local, e `postgres.railway.internal` so
+resolve de dentro da rede do Railway. Para conectar de fora use a
+`DATABASE_PUBLIC_URL`.
 
 ## Qual branch publica
 
