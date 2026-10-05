@@ -24,7 +24,7 @@ Cadastre no painel do provedor. O modelo completo esta em `.env.example`.
 | `DEBUG` | sim | `0`. Com `1` o provedor exibe traceback e dados na tela de erro |
 | `ALLOWED_HOSTS` | nao no Railway | o dominio. No Railway sai do `RAILWAY_PUBLIC_DOMAIN` sozinho; defina so se usar dominio proprio |
 | `CSRF_TRUSTED_ORIGINS` | nao no Railway | idem, com esquema: `https://estudos.exemplo.com` |
-| `DATABASE_URL` | sim | Postgres. O provedor costuma injetar ao criar o banco |
+| `DATABASE_URL` | sim | Postgres. **Nao aparece sozinha**: veja "Ligar o app ao banco" |
 | `MEDIA_ROOT` | se usa anexos | caminho de um disco persistente, ex. `/dados/arquivos` |
 | `SECURE_SSL_REDIRECT` | nao | `1` por padrao; desligue so se o provedor ja forca https |
 
@@ -33,6 +33,39 @@ Gerar a chave:
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
+
+## Ligar o app ao banco
+
+Criar o Postgres nao conecta nada. As variaveis dele (`DATABASE_URL`,
+`DATABASE_PUBLIC_URL`, `PGHOST`...) nascem **no servico do Postgres**, e o
+servico do app nao as ve -- ele sobe em SQLite, dentro de um disco efemero, e
+voce descobre quando os dados somem no deploy seguinte.
+
+Quem liga os dois e uma variavel de referencia, no servico do **app**:
+
+```
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+```
+
+`Postgres` ai e o nome do servico do banco, como esta no painel. Renomeou? A
+referencia tem de acompanhar, senao ela aponta para um host que nao existe.
+
+Referencia, e nao a URL copiada: a Railway resolve na hora do deploy, entao
+rotacao de senha ou troca de host continuam valendo sem voce reeditar o campo.
+
+Use a `DATABASE_URL` (privada, `postgres.railway.internal`) e nao a
+`DATABASE_PUBLIC_URL`. A privada fica na rede interna; a publica sai pelo proxy
+TCP, e mais lenta e conta como trafego de saida. A publica serve para conectar
+da sua maquina -- veja "Quando o app responde 500 em tudo".
+
+Para confirmar que pegou, nos logs do deploy, antes do gunicorn:
+
+```
+banco respondeu (postgresql) na tentativa 1
+Applying estudos.0001_initial... OK
+```
+
+Se vier `banco respondeu (sqlite)`, a variavel nao chegou ao servico do app.
 
 ## Deploy automatico
 
