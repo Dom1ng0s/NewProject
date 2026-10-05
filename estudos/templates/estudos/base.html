@@ -4,7 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>{% block titulo %}Estudos{% endblock %} · Estudos</title>
+  {% comment %}A fila pendente no título: a aba fica "(7) Revisar hoje · Estudos"
+  no meio das outras e cobra sem notificação, sem permissão e sem app instalado.{% endcomment %}
+  <title>{% if revisoes_pendentes %}({{ revisoes_pendentes }}) {% endif %}{% block titulo %}Estudos{% endblock %} · Estudos</title>
+
+  {# Atalho na tela inicial: o manifesto abre em /agora/, ja estudando. #}
+  <link rel="manifest" href="{% estatico 'manifest.json' %}">
+  <link rel="icon" href="{% estatico 'icone-192.png' %}" sizes="192x192">
+  <link rel="apple-touch-icon" href="{% estatico 'icone-apple-180.png' %}">
+  <meta name="theme-color" content="#15161a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Estudos">
+  <meta name="mobile-web-app-capable" content="yes">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -158,6 +169,17 @@
 
   {# destino dos avisos e dos dialogos criados em comum.js #}
   <div class="pilha-avisos" id="pilha-avisos" role="status" aria-live="polite"></div>
+
+  {# Registra o service worker da raiz; sem ele o app não instala nem abre offline. #}
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+          /* http sem localhost, aba anônima: o app continua funcionando online */
+        });
+      });
+    }
+  </script>
 
   <script src="{% estatico 'js/comum.js' %}"></script>
   {% block scripts %}{% endblock %}

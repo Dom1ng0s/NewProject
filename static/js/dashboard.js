@@ -123,12 +123,64 @@ function desenharContinuar(c) {
       ]),
       el('p', { className: 'ajuda', textContent: `${c.motivo} · foco de ${c.minutos} min` }),
     ]),
+    // `/agora/` em vez da URL montada aqui: quem decide é o servidor, e é a
+    // mesma porta que o atalho da tela inicial abre. Um destino, uma regra.
     el('a', {
       className: 'botao',
-      href: `/sessao/?topico_id=${c.topico_id}&minutos=${c.minutos}&iniciar=1`,
+      href: '/agora/',
       textContent: 'Estudar agora',
     })
   );
+}
+
+/* O anel do dia e a sequência: as duas contas que decidem se o app abre amanhã.
+
+   O anel conta só o que cabe no teto, então fecha; a sequência é de semanas na
+   meta, não de dias seguidos, porque o dia escorrega e a semana não. */
+function desenharProgresso(d) {
+  const p = d.progresso;
+  document.getElementById('progresso').replaceChildren(
+    anelProgresso(
+      p.percentual,
+      p.total ? `${p.feitas}/${p.total}` : '—',
+      p.total ? `${p.feitas} de ${p.total} revisões de hoje` : 'nada marcado para hoje'
+    ),
+    el('div', { className: 'progresso-texto cresce' }, [
+      el('span', {
+        className: 'ajuda',
+        textContent: p.zerada
+          ? p.total
+            ? 'fila de hoje zerada'
+            : 'nada marcado para hoje'
+          : `${plural(p.restantes, 'revisão', 'revisões')} para fechar o dia`,
+      }),
+      el('a', {
+        className: 'botao botao-mini' + (p.zerada ? ' botao-discreto' : ''),
+        href: p.zerada ? '/revisar/' : '/revisar/?iniciar=1',
+        textContent: p.zerada ? 'Ver a fila' : 'Revisar agora',
+      }),
+    ])
+  );
+}
+
+function desenharSequencia(s) {
+  document.getElementById('n-semanas').textContent = s.semanas;
+  document.getElementById('semanas-unidade').textContent =
+    s.semanas === 1 ? ' semana' : ' semanas';
+
+  const partes = [];
+  if (s.dias) partes.push(plural(s.dias, 'dia seguido', 'dias seguidos'));
+  if (s.maior_semanas > s.semanas) partes.push(`recorde de ${s.maior_semanas}`);
+  // A folga é o que impede a sequência de morrer numa semana de prova; dizer
+  // quantas restam é o que a torna utilizável sem medo.
+  if (s.folgas) {
+    partes.push(
+      s.folgas_restantes
+        ? `${plural(s.folgas_restantes, 'folga', 'folgas')} na semana`
+        : 'sem folga esta semana'
+    );
+  }
+  document.getElementById('sequencia-detalhe').textContent = partes.join(' · ');
 }
 
 /* Carga futura: o que o SM-2 já marcou para os próximos dias.
@@ -222,7 +274,6 @@ function desenharColisoes(alertas) {
 async function carregar() {
   const [d, carga] = await Promise.all([pegar('/api/dashboard/'), pegar('/api/carga/')]);
 
-  document.getElementById('n-hoje').textContent = d.revisoes_hoje.length;
   document.getElementById('n-atrasadas').textContent = d.revisoes_atrasadas.length;
   document.getElementById('horas-semana').textContent = d.horas_semana;
   document.getElementById('meta-semana').textContent = d.meta_horas_semanais;
@@ -239,6 +290,8 @@ async function carregar() {
     'Nenhuma atrasada.'
   );
 
+  desenharProgresso(d);
+  desenharSequencia(d.sequencia);
   desenharContinuar(d.continuar);
   desenharCarga(carga);
   desenharColisoes(carga.alertas);
@@ -246,5 +299,7 @@ async function carregar() {
   desenharDominio(d.materias);
   desenharParadas(d.materias_paradas);
 }
+
+document.getElementById('surpresa').onclick = () => abrirSurpresa();
 
 carregar().catch(reclamar);

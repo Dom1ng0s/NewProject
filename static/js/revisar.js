@@ -29,6 +29,31 @@ function quando(dias) {
   return `em ${plural(dias, 'dia', 'dias')}`;
 }
 
+/* O degrau que a nota acabou de mover.
+
+   É a única recompensa que esta tela tem para dar, e ela é verdadeira: não é
+   um ponto inventado, é a escada do SM-2 andando. "1 → 6 dias" diz mais do que
+   qualquer parabéns, porque diz o que mudou. */
+function escadaEmPalavras(antes, depois) {
+  if (!antes) return `entra na escada: volta ${quando(depois)}`;
+  if (depois > antes) return `${antes} → ${depois} dias`;
+  if (depois < antes) return `caiu de ${antes} para ${depois} dias`;
+  return `segue em ${plural(depois, 'dia', 'dias')}`;
+}
+
+/* A fila corre sozinha: respondeu um cartão, o próximo abre.
+
+   Entre dois cartões não cabe uma tela de lista — é ali que se fecha o app. A
+   corrida começa ao clicar "Revisar" ou ao chegar com `?iniciar=1` (o atalho
+   da tela inicial, o botão do dashboard), e só para quando a fila zera ou
+   quando a pessoa fecha o cartão: fechar é "chega por hoje", e reabrir sozinho
+   depois disso seria sequestro, não comodidade. */
+let correndo = new URLSearchParams(location.search).get('iniciar') === '1';
+if (correndo) {
+  // A URL já cumpriu o papel; um F5 não recomeça a corrida sem pedir.
+  history.replaceState(null, '', location.pathname);
+}
+
 // ---------------------------------------------------------------- revisão
 
 /* Abre a revisão: mostra a pergunta, espera, revela a resposta e só então
@@ -37,8 +62,10 @@ function quando(dias) {
 async function revisar(r) {
   const { cartoes } = await pegar(`/api/revisoes/${r.id}/cartoes/`);
 
+  correndo = true;
   let indice = 0;
   let revelado = false;
+  let respondeu = false;
 
   const titulo = el('h2', { textContent: `${r.materia} · ${r.topico}` });
   const contador = el('p', { className: 'ajuda' });
@@ -92,9 +119,15 @@ async function revisar(r) {
   async function responder(resposta) {
     try {
       const saida = await enviar(`/api/revisoes/${r.id}/responder/`, { resposta });
+      respondeu = true;
       dialogo.close();
-      // A nota errada é fácil de dar e caro de manter: o aviso já diz a saída.
-      avisar(`${r.topico}: volta ${quando(saida.intervalo_dias)}. Errou a nota? "u" desfaz.`, 'ok');
+      // O degrau movido é a recompensa; a saída para a nota errada vem junto,
+      // porque ela é fácil de dar e cara de manter.
+      avisar(
+        `${r.topico}: ${escadaEmPalavras(saida.intervalo_antes, saida.intervalo_depois)}. ` +
+          'Errou a nota? "u" desfaz.',
+        'ok'
+      );
       carregar();
     } catch (erro) {
       reclamar(erro);
@@ -145,6 +178,10 @@ async function revisar(r) {
 
   desenharCartao();
   dialogo.addEventListener('keydown', teclar);
+  // Fechar sem responder é "chega por hoje": a corrida para aqui.
+  dialogo.addEventListener('close', () => {
+    if (!respondeu) correndo = false;
+  });
 }
 
 // ---------------------------------------------------------------- lista
@@ -189,14 +226,69 @@ function resumo(d) {
   const partes = [];
   if (d.atrasadas) partes.push(plural(d.atrasadas, 'atrasada', 'atrasadas'));
   if (d.hoje) partes.push(`${d.hoje} de hoje`);
-  if (d.esperando) {
-    partes.push(
-      `${d.esperando} além do teto de ${d.maximo_por_dia}/dia — ${
-        d.esperando === 1 ? 'volta' : 'voltam'
-      } amanhã`
-    );
-  }
   return partes.join(' · ');
+}
+
+/* O progresso do dia como um anel que fecha, e a dívida atrás de um toque.
+
+   O que estava na manchete era a dívida: "23 esperando" todo dia, um número
+   que nunca zera. Fila que não fecha é fila que se abandona — então a conta
+   grande é a do dia, que chega a 100%, e o excedente continua existindo numa
+   linha que só aparece para quem perguntar. Esconder não é mentir: é pôr o
+   número que decide alguma coisa hoje na frente do que não decide. */
+function desenharProgresso(d) {
+  const p = d.progresso;
+  const alvo = document.getElementById('progresso');
+  const rotulo = p.total
+    ? `${p.feitas} de ${p.total} revisões de hoje`
+    : 'nada marcado para hoje';
+
+  const linhas = [
+    el('strong', {
+      className: 'progresso-conta',
+      textContent: p.total ? `${p.feitas} / ${p.total}` : 'livre',
+    }),
+    el('span', { className: 'ajuda', textContent: resumo(d) || 'fila de hoje fechada' }),
+  ];
+
+  if (d.esperando) {
+    const detalhe = el('p', {
+      className: 'ajuda progresso-divida',
+      hidden: true,
+      textContent:
+        `${plural(d.esperando, 'revisão', 'revisões')} além do teto de ` +
+        `${d.maximo_por_dia}/dia — ${d.esperando === 1 ? 'volta' : 'voltam'} amanhã, ` +
+        'na ordem da prova mais próxima.',
+    });
+    const abrir = el('button', {
+      type: 'button',
+      className: 'botao botao-fantasma botao-mini',
+      textContent: `+${d.esperando} depois`,
+      'aria-expanded': 'false',
+      onclick: () => {
+        detalhe.hidden = !detalhe.hidden;
+        abrir.setAttribute('aria-expanded', String(!detalhe.hidden));
+      },
+    });
+    linhas.push(abrir, detalhe);
+  }
+
+  alvo.replaceChildren(
+    anelProgresso(p.percentual, p.total ? `${p.percentual}%` : '—', rotulo),
+    el('div', { className: 'progresso-texto cresce' }, linhas)
+  );
+}
+
+/* Fila zerada: o fim da tarefa dito como fim, uma vez só.
+
+   É o momento que o anel existe para produzir. Sem ele, terminar a fila é
+   indistinguível de desistir dela — a tela fica igual nos dois casos. */
+function celebrar(d) {
+  const sequencia = d.sequencia || {};
+  const partes = ['Fila de hoje zerada.'];
+  if (sequencia.dias > 1) partes.push(`${plural(sequencia.dias, 'dia', 'dias')} seguidos.`);
+  if (d.esperando) partes.push(`${d.esperando} voltam amanhã.`);
+  avisar(partes.join(' '), 'ok');
 }
 
 // ---------------------------------------------------------------- desfazer
@@ -240,8 +332,17 @@ function desenharDesfazer(ultima) {
 async function carregar() {
   const d = await pegar('/api/revisoes/hoje/');
   desenhar(d.fila);
-  document.getElementById('resumo-fila').textContent = resumo(d);
+  desenharProgresso(d);
   desenharDesfazer(d.ultima_resposta);
+
+  if (!correndo) return;
+  if (d.fila.length) {
+    // O próximo cartão abre sozinho: entre dois cartões não cabe uma lista.
+    await revisar(d.fila[0]);
+    return;
+  }
+  correndo = false;
+  if (d.progresso.fechou_agora) celebrar(d);
 }
 
 registrarAtalhos({ u: { rotulo: 'Desfazer a última nota', acao: desfazer } });

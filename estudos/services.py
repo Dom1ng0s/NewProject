@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from .models import (
     Avaliacao,
+    Cartao,
     Configuracao,
     BlocoPlanejado,
     Materia,
@@ -84,6 +85,94 @@ def _ordem_da_fila(item):
     return (prazo is None, prazo if prazo is not None else 0, item["data_prevista"])
 
 
+def revisoes_feitas_hoje(hoje=None):
+    hoje = hoje or timezone.localdate()
+    comeco = timezone.make_aware(datetime.combine(hoje, time.min))
+    return Revisao.objects.filter(
+        feita=True, feita_em__gte=comeco, feita_em__lt=comeco + timedelta(days=1)
+    ).count()
+
+
+def revisoes_que_ainda_cabem_hoje(hoje=None, config=None):
+    """Quantas revisoes ainda cabem hoje, descontando as que ja foram feitas.
+
+    O que ja foi respondido hoje conta contra o teto -- senao o teto nao e um
+    teto do dia, e so um limite de quantas linhas a lista mostra de cada vez: a
+    cada resposta outra subiria do atraso e a tarefa nunca encolheria. E uma
+    tarefa que nao encolhe ninguem termina.
+
+    `None` quando nao ha teto: a fila inteira e o dia.
+    """
+    config = config or Configuracao.atual()
+    if not config.maximo_revisoes_por_dia:
+        return None
+    return max(config.maximo_revisoes_por_dia - revisoes_feitas_hoje(hoje), 0)
+
+
+def restantes_do_dia(hoje=None, config=None):
+    """Quantas revisoes ainda contam para hoje, ja cortadas no teto do dia."""
+    hoje = hoje or timezone.localdate()
+    pendentes = Revisao.objects.filter(feita=False, data_prevista__lte=hoje).count()
+    vagas = revisoes_que_ainda_cabem_hoje(hoje, config)
+    return pendentes if vagas is None else min(pendentes, vagas)
+
+
+def progresso_do_dia(restantes, hoje=None):
+    """Quanto da fila de hoje ja foi fechado, numa conta que chega a 100%.
+
+    A divida -- o que passou do teto e volta amanha -- fica de fora de
+    proposito. Um contador que nunca zera nao e progresso, e cobranca: a fila
+    que da para terminar e a que se termina, e a que mostra 23 pendentes todo
+    dia e a que se abandona. O excedente continua existindo em
+    `fila_esperando`, so nao disputa a manchete com ela.
+    """
+    feitas = revisoes_feitas_hoje(hoje)
+    total = feitas + restantes
+    return {
+        "feitas": feitas,
+        "restantes": restantes,
+        "total": total,
+        # Sem nada marcado o dia ja esta cumprido; 0% seria mentira.
+        "percentual": round(feitas * 100 / total) if total else 100,
+        "zerada": restantes == 0,
+        "fechou_agora": restantes == 0 and feitas > 0,
+    }
+
+
+def folgas_restantes(dias_estudados, hoje, folgas):
+    """Quantos dias a sequencia ainda perdoa nesta janela de sete.
+
+    Hoje nao entra na conta: o dia nao acabou, e contar como perdido um dia que
+    ainda da para salvar e justamente o aviso que faz desistir dele.
+    """
+    perdidos = sum(
+        1
+        for i in range(1, JANELA_DA_FOLGA)
+        if (hoje - timedelta(days=i)) not in dias_estudados
+    )
+    return max(folgas - perdidos, 0)
+
+
+def resumo_da_sequencia(hoje=None, config=None):
+    """Dias seguidos, semanas na meta e o que a sequencia ainda perdoa."""
+    hoje = hoje or timezone.localdate()
+    config = config or Configuracao.atual()
+    por_dia = minutos_por_dia(hoje - timedelta(days=DIAS_DO_MAPA - 1))
+    estudados = set(por_dia)
+
+    dias, maior_dias = sequencia(estudados, hoje, config.folgas_por_semana)
+    semanas, maior_semanas = semanas_na_meta(por_dia, hoje, config.meta_horas_semanais)
+    return {
+        "dias": dias,
+        "maior_dias": maior_dias,
+        "semanas": semanas,
+        "maior_semanas": maior_semanas,
+        "folgas": config.folgas_por_semana,
+        "folgas_restantes": folgas_restantes(estudados, hoje, config.folgas_por_semana),
+        "estudou_hoje": hoje in estudados,
+    }
+
+
 def dados_dashboard():
     config = Configuracao.atual()
     hoje = timezone.localdate()
@@ -109,8 +198,13 @@ def dados_dashboard():
     # O teto do dia vale para o que ja venceu tambem: um acumulo de atrasadas
     # nao pode transformar hoje num dia impossivel. A fila ja vem ordenada por
     # prova mais proxima, entao o corte deixa passar o que mais urge.
+    #
+    # O corte desconta o que ja foi respondido hoje: sem isso, cada resposta
+    # puxaria outra do atraso para o lugar dela e a tarefa do dia nunca
+    # encolheria -- a fila ficaria sempre em dez, qualquer que fosse o esforco.
     teto = config.maximo_revisoes_por_dia
-    do_dia = fila[:teto] if teto else fila
+    vagas = revisoes_que_ainda_cabem_hoje(hoje, config)
+    do_dia = fila if vagas is None else fila[:vagas]
     esperando = len(fila) - len(do_dia)
 
     minutos = SessaoEstudo.objects.filter(inicio__gte=inicio, inicio__lt=fim).aggregate(
@@ -165,6 +259,10 @@ def dados_dashboard():
         "materias": por_materia,
         "materias_paradas": paradas,
         "continuar": continuar_de_onde_parou(),
+        "progresso": progresso_do_dia(len(do_dia), hoje),
+        # A sequencia mora no historico, mas e no dashboard que ela sustenta o
+        # habito: saber que ha uma corrida em pe e o que faz abrir amanha.
+        "sequencia": resumo_da_sequencia(hoje, config),
     }
 
 
@@ -265,28 +363,106 @@ def nivel_do_dia(minutos, teto):
     return min(4, 1 + int(minutos * 3 / teto))
 
 
-def sequencia(dias_estudados, hoje):
+# Janela da folga. Uma semana e o periodo em que "um dia perdido" ainda e um
+# acidente: dois dias perdidos em sete viraram outro habito, nao um tropeco.
+JANELA_DA_FOLGA = 7
+
+
+def sequencia(dias_estudados, hoje, folgas=None):
     """(sequência atual, maior sequência) em dias seguidos com sessao.
 
     A sequencia atual aceita terminar ontem: o dia de hoje ainda nao acabou, e
     zerar a contagem as 00h01 so puniria quem estuda de manha.
+
+    Um dia perdido tambem nao zera tudo. `folgas` e quantos dias a sequencia
+    perdoa dentro de qualquer janela de sete -- uma semana de prova derruba o
+    dia de estudo, e uma sequencia que morre por isso e uma sequencia que
+    ninguem recomeca. Perdoar e o que mantem a conta util: o que ela deve medir
+    e o habito, nao a sorte do calendario.
+
+    A mesma regra vale para a maior sequencia: duas contas com dois criterios
+    seriam dois numeros que nunca se explicam um ao outro.
     """
+    if folgas is None:
+        folgas = Configuracao.atual().folgas_por_semana
     if not dias_estudados:
         return 0, 0
 
-    ordenados = sorted(dias_estudados)
-    maior = atual_corrida = 1
-    for anterior, seguinte in zip(ordenados, ordenados[1:]):
-        if (seguinte - anterior).days == 1:
-            atual_corrida += 1
-            maior = max(maior, atual_corrida)
-        else:
-            atual_corrida = 1
+    def cabe(perdidos, usadas, ate):
+        """Os dias perdidos ainda cabem nas folgas da janela que termina em `ate`?"""
+        recentes = [d for d in usadas if (ate - d).days < JANELA_DA_FOLGA]
+        return len(recentes) + len(perdidos) <= folgas
 
-    ultimo = ordenados[-1]
-    if (hoje - ultimo).days > 1:
-        return 0, maior
-    return atual_corrida, maior
+    def buraco(anterior, seguinte):
+        """Os dias sem estudo entre dois dias estudados."""
+        return [
+            anterior + timedelta(days=i + 1)
+            for i in range((seguinte - anterior).days - 1)
+        ]
+
+    ordenados = sorted(dias_estudados)
+    maior = corrida = 1
+    usadas = []  # dias ja perdoados dentro da corrida em andamento
+    for anterior, seguinte in zip(ordenados, ordenados[1:]):
+        perdidos = buraco(anterior, seguinte)
+        if not perdidos:
+            corrida += 1
+        elif cabe(perdidos, usadas, seguinte):
+            usadas = [
+                d for d in usadas if (seguinte - d).days < JANELA_DA_FOLGA
+            ] + perdidos
+            corrida += 1
+        else:
+            corrida = 1
+            usadas = []
+        maior = max(maior, corrida)
+
+    # O fim da corrida tem a mesma regra do meio dela: ontem conta porque hoje
+    # ainda nao acabou, e um buraco antes disso pode caber numa folga.
+    perdidos = buraco(ordenados[-1], hoje)
+    if not perdidos or cabe(perdidos, usadas, hoje):
+        return corrida, maior
+    return 0, maior
+
+
+def semanas_na_meta(por_dia, hoje, meta):
+    """(semanas seguidas batendo a meta, maior sequência de semanas).
+
+    A manchete do historico e esta, nao a sequencia de dias: numa grade de
+    faculdade o dia certo escorrega -- a prova rouba a terca e devolve o sabado
+    -- e a semana e a menor unidade em que isso se compensa. Dias seguidos
+    quebram na semana de prova de quem estudou mais, nao menos.
+
+    A semana corrente nao quebra a conta enquanto nao acaba: ela entra quando
+    bate a meta, e antes disso so nao conta.
+    """
+    if not meta:
+        return 0, 0
+
+    totais = {}
+    for dia, minutos in por_dia.items():
+        semana = segunda_da_semana(dia)
+        totais[semana] = totais.get(semana, 0) + minutos
+
+    def bateu(semana):
+        return totais.get(semana, 0) / 60 >= meta
+
+    atual = segunda_da_semana(hoje)
+    corrida = 0
+    semana = atual if bateu(atual) else atual - timedelta(weeks=1)
+    while bateu(semana):
+        corrida += 1
+        semana -= timedelta(weeks=1)
+
+    maior = seguidas = 0
+    if totais:
+        semana = min(totais)
+        while semana <= atual:
+            seguidas = seguidas + 1 if bateu(semana) else 0
+            maior = max(maior, seguidas)
+            semana += timedelta(weeks=1)
+
+    return corrida, max(maior, corrida)
 
 
 def dados_historico(dias=DIAS_DO_MAPA):
@@ -310,7 +486,11 @@ def dados_historico(dias=DIAS_DO_MAPA):
         )
         dia += timedelta(days=1)
 
-    atual, maior = sequencia(set(por_dia), hoje)
+    config = Configuracao.atual()
+    atual, maior = sequencia(set(por_dia), hoje, config.folgas_por_semana)
+    semanas_seguidas, maior_semanas = semanas_na_meta(
+        por_dia, hoje, config.meta_horas_semanais
+    )
 
     # Tendencia: horas estudadas e revisoes fechadas, semana a semana.
     semanas = []
@@ -359,6 +539,14 @@ def dados_historico(dias=DIAS_DO_MAPA):
         "mapa": mapa,
         "sequencia_atual": atual,
         "maior_sequencia": maior,
+        # A manchete da tela: a semana aguenta a grade da faculdade, o dia nao.
+        "semanas_na_meta": semanas_seguidas,
+        "maior_semanas_na_meta": maior_semanas,
+        "meta_horas_semanais": config.meta_horas_semanais,
+        "folgas_por_semana": config.folgas_por_semana,
+        "folgas_restantes": folgas_restantes(
+            set(por_dia), hoje, config.folgas_por_semana
+        ),
         "dias_ativos": dias_ativos,
         "dias_no_periodo": len(mapa),
         "total_horas": round(total_minutos / 60, 1),
@@ -482,6 +670,62 @@ def registrar_resposta(revisao, qualidade):
         intervalo_depois=topico.intervalo_dias,
     )
     return resposta, nova
+
+
+# Passos que a escadinha de um topico mostra. Oito cabem num tracinho de 54px
+# e ja dizem a forma: subindo, travada no primeiro degrau, ou serrote.
+PASSOS_DA_ESCADA = 8
+
+
+def escada_dos_topicos(quantos=PASSOS_DA_ESCADA):
+    """topico_id -> os ultimos intervalos que o SM-2 deu, do antigo ao novo.
+
+    A recompensa da revisao nao e um ponto nem um medalha: e ver o intervalo
+    subir. Um topico que foi de 1 para 6 para 15 dias esta sendo aprendido, e um
+    que bate em 1 toda vez esta pedindo um cartao melhor -- as duas coisas se
+    leem de relance num tracinho, e nenhuma se le numa tabela de facilidade.
+
+    Uma consulta so, todas as respostas: num app de uma pessoa o log e pequeno,
+    e uma consulta por topico seria uma dezena delas para desenhar uma tela.
+    """
+    escada = {}
+    for topico_id, intervalo in RespostaRevisao.objects.order_by(
+        "-respondida_em", "-id"
+    ).values_list("topico_id", "intervalo_depois"):
+        passos = escada.setdefault(topico_id, [])
+        if len(passos) < quantos:
+            passos.append(intervalo)
+    return {topico_id: passos[::-1] for topico_id, passos in escada.items()}
+
+
+def cartao_surpresa():
+    """Um cartao ao acaso de um topico ja dominado, sem nota e sem SM-2.
+
+    E a porta de entrada mais barata do app: custa um clique, a resposta quase
+    sempre vem -- e por isso so pesca em topico dominado (ou revisado, se nenhum
+    estiver) -- e quem abre por curiosidade com frequencia fica para a sessao.
+    Nao e revisao: nao fecha fila, nao da nota, nao mexe em intervalo nenhum.
+    Variar o conteudo, nao a recompensa: o acaso aqui escolhe qual cartao
+    aparece, nunca quanto ele vale.
+    """
+    for status in (Topico.DOMINADO, Topico.REVISADO):
+        cartao = (
+            Cartao.objects.filter(topico__status=status)
+            .select_related("topico__materia")
+            .order_by("?")
+            .first()
+        )
+        if cartao:
+            return {
+                "cartao": cartao.json(),
+                "topico_id": cartao.topico_id,
+                "topico": cartao.topico.nome,
+                "materia": cartao.topico.materia.nome,
+                "cor": cartao.topico.materia.cor,
+                "status": cartao.topico.status,
+                "minutos": Configuracao.atual().pomodoro_foco_min,
+            }
+    return None
 
 
 class NadaParaDesfazer(Exception):

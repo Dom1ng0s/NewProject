@@ -26,7 +26,8 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],
         "APP_DIRS": True,
-        "OPTIONS": {"context_processors": []},
+        # O numero de revisoes pendentes vai no <title> de toda tela.
+        "OPTIONS": {"context_processors": ["estudos.contexto.pendentes"]},
     },
 ]
 

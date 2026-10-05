@@ -154,9 +154,24 @@ function desenharInterrupcoes(d) {
 async function carregar() {
   const d = await pegar('/api/historico/');
 
+  document.getElementById('semanas').textContent = d.semanas_na_meta;
+  document.getElementById('semanas-unidade').textContent =
+    d.semanas_na_meta === 1 ? ' semana' : ' semanas';
+  document.getElementById('semanas-detalhe').textContent = d.meta_horas_semanais
+    ? `seguidas com ${d.meta_horas_semanais}h ou mais · recorde de ${d.maior_semanas_na_meta}`
+    : 'defina uma meta semanal nas configurações';
+
   document.getElementById('sequencia').textContent = d.sequencia_atual;
+  // A folga é o que mantém a sequência utilizável: uma semana de prova derruba
+  // um dia, e uma contagem que morre por isso ninguém recomeça.
   document.getElementById('sequencia-detalhe').textContent = d.sequencia_atual
-    ? 'seguidos com pelo menos uma sessão'
+    ? d.folgas_por_semana
+      ? `${
+          d.folgas_restantes
+            ? plural(d.folgas_restantes, 'folga', 'folgas')
+            : 'nenhuma folga'
+        } nesta semana`
+      : 'sem folga: um dia perdido zera'
     : 'estude hoje para começar de novo';
 
   document.getElementById('dias-ativos').textContent = d.dias_ativos;

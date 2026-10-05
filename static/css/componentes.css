@@ -673,3 +673,79 @@ kbd {
 }
 
 .plano-dia .ajuda { margin: 0; font-family: var(--fonte-mono); font-size: var(--t-xs); }
+
+/* =======================  anel de progresso  =======================
+   A fila do dia como coisa que fecha. O arco anda, o número no meio diz onde
+   está, e o estado cheio muda de cor: terminar tem de parecer diferente de
+   quase terminar. */
+
+.progresso {
+  display: flex;
+  align-items: center;
+  gap: var(--e4);
+  flex-wrap: wrap;
+}
+
+.anel {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+}
+
+.anel-trilho { stroke: var(--superficie-afundada); }
+.anel-arco {
+  stroke: var(--acento);
+  transition: stroke-dasharray var(--medio), stroke var(--medio);
+}
+.anel-cheio .anel-arco { stroke: var(--ok); }
+
+.anel-texto {
+  fill: var(--texto);
+  font-family: var(--fonte-mono);
+  font-size: 15px;
+  font-weight: 600;
+}
+.anel-cheio .anel-texto { fill: var(--ok); }
+
+.progresso-texto {
+  display: grid;
+  gap: var(--e2);
+  justify-items: start;
+  min-width: 0;
+}
+
+.progresso-conta {
+  font-family: var(--fonte-titulo);
+  font-size: var(--t-lg);
+  letter-spacing: var(--rastro-apertado);
+}
+
+/* A dívida existe, mas não disputa a manchete com o que fecha hoje. */
+.progresso-divida {
+  flex: 1 0 100%;
+  margin: 0;
+}
+
+.progresso a.botao { text-decoration: none; }
+
+/* =======================  escadinha  =======================
+   Os últimos intervalos do SM-2 de um tópico. Pequena de propósito: é um sinal
+   na linha, não um gráfico para analisar. */
+
+.escadinha {
+  width: 54px;
+  height: 16px;
+  flex: 0 0 auto;
+  overflow: visible;
+  opacity: 0.75;
+}
+
+.escadinha polyline { stroke: var(--acento); }
+.escadinha-fim { fill: var(--acento); }
+
+.ramo-linha:hover .escadinha { opacity: 1; }
+
+@media (max-width: 640px) {
+  /* Numa tela de 390px o nome do tópico vale mais que o traço. */
+  .escadinha { display: none; }
+}

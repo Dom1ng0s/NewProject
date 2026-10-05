@@ -25,6 +25,9 @@ class Configuracao(models.Model):
     meta_horas_semanais = models.FloatField(default=10)
     dias_materia_parada = models.PositiveSmallIntegerField(default=7)
     dias_proximas_avaliacoes = models.PositiveSmallIntegerField(default=30)
+    folgas_por_semana = models.PositiveSmallIntegerField(
+        default=1, help_text="dias que a sequência perdoa por semana; 0 = nenhum"
+    )
 
     # pomodoro
     pomodoro_foco_min = models.PositiveSmallIntegerField(default=25)

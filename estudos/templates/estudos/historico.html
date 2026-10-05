@@ -6,8 +6,18 @@
 
 {% block corpo %}
 <div class="metricas">
+  {% comment %}A manchete é a semana: numa grade de faculdade o dia de estudo
+  escorrega (a prova rouba a terça e devolve o sábado) e a semana é a menor
+  unidade em que isso se compensa. Dias seguidos quebram na semana de quem
+  estudou mais, não menos — por isso viraram a linha de baixo.{% endcomment %}
   <section class="metrica metrica-principal">
-    <span class="rotulo">Sequência atual</span>
+    <span class="rotulo">Semanas na meta</span>
+    <p class="numero"><span id="semanas">—</span><span class="unidade" id="semanas-unidade"> semanas</span></p>
+    <p class="ajuda" id="semanas-detalhe"></p>
+  </section>
+
+  <section class="metrica">
+    <span class="rotulo">Dias seguidos</span>
     <p class="numero"><span id="sequencia">—</span><span class="unidade"> dias</span></p>
     <p class="ajuda" id="sequencia-detalhe"></p>
   </section>

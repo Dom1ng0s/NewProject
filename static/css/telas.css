@@ -558,3 +558,12 @@ select.status { padding: 3px 6px; font-size: var(--t-xs); flex: 0 0 auto; max-wi
   white-space: nowrap;
 }
 
+
+/* A entrada de custo zero do dashboard: um cartão que você já sabe. */
+.linha-surpresa {
+  display: flex;
+  justify-content: flex-end;
+  margin: calc(var(--e3) * -1) 0 var(--e4);
+}
+
+.linha-surpresa kbd { margin-left: var(--e2); }

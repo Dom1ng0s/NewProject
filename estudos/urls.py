@@ -5,6 +5,8 @@ from . import views
 urlpatterns = [
     # paginas
     path("", views.pagina_dashboard, name="dashboard"),
+    # A URL que abre o app ja estudando; e o start_url do atalho do celular.
+    path("agora/", views.ir_para_agora, name="agora"),
     path("materias/", views.pagina_materias, name="materias"),
     path("sessao/", views.pagina_sessao, name="sessao"),
     path("planner/", views.pagina_planner, name="planner"),
@@ -14,6 +16,8 @@ urlpatterns = [
     path("historico/", views.pagina_historico, name="historico"),
     path("configuracoes/", views.pagina_configuracoes, name="configuracoes"),
     path("dados/", views.pagina_dados, name="dados"),
+    # Precisa estar na raiz para o service worker controlar o app todo.
+    path("sw.js", views.service_worker, name="service-worker"),
     # api
     path("api/dashboard/", views.api_dashboard),
     path("api/materias/", views.api_materias),
@@ -42,6 +46,7 @@ urlpatterns = [
     path("api/revisoes/desfazer/", views.api_revisao_desfazer),
     path("api/cartoes/", views.api_cartoes),
     path("api/cartoes/criar/", views.api_cartao_criar),
+    path("api/cartoes/surpresa/", views.api_cartao_surpresa),
     path("api/topicos/<int:pk>/cartoes-da-nota/", views.api_cartoes_da_nota),
     path("api/cartoes/<int:pk>/editar/", views.api_cartao_editar),
     path("api/cartoes/<int:pk>/excluir/", views.api_cartao_excluir),

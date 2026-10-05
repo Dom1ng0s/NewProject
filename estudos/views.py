@@ -4,7 +4,8 @@ from datetime import date, datetime, time, timedelta
 
 from django.conf import settings
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
@@ -26,7 +27,11 @@ from .ical import eventos_de_ics
 from .services import (
     NadaParaDesfazer,
     avaliacoes_proximas,
+    bloco_de_agora,
     carga_futura,
+    cartao_surpresa,
+    continuar_de_onde_parou,
+    escada_dos_topicos,
     gravar_plano,
     plano_de_ataque,
     desfazer_ultima_resposta,
@@ -34,6 +39,8 @@ from .services import (
     ultima_resposta,
     dados_dashboard,
     dados_historico,
+    progresso_do_dia,
+    restantes_do_dia,
     dados_planner,
     parse_semana,
     segunda_da_semana,
@@ -100,6 +107,44 @@ def pagina_revisar(request):
     return render(request, "estudos/revisar.html", {"pagina": "revisar"})
 
 
+def fila_de_hoje_existe():
+    return Revisao.objects.filter(
+        feita=False, data_prevista__lte=timezone.localdate()
+    ).exists()
+
+
+def ir_para_agora(request):
+    """/agora/: a URL que abre o app com o trabalho ja comecado.
+
+    E o `start_url` do atalho da tela inicial e o destino do botao do
+    dashboard. Quem decide e o servidor, de proposito: uma tela intermediaria
+    para escolher o que fazer e exatamente o ponto em que se fecha o app em vez
+    de estudar. Abrir e ja estar estudando nao e comodidade, e a diferenca
+    entre abrir amanha e nao abrir.
+
+    A ordem e a da urgencia real: o bloco do planner que cobre esta hora manda
+    (a agenda ja decidiu), depois a fila de revisao (o SM-2 tem data e vence),
+    e por fim o topico da ultima sessao. Sem nada disso, o dashboard.
+    """
+    atalho = continuar_de_onde_parou()
+    bloco, _ = bloco_de_agora()
+
+    def para_a_sessao():
+        destino = reverse("sessao")
+        return redirect(
+            f"{destino}?topico_id={atalho['topico_id']}"
+            f"&minutos={atalho['minutos']}&iniciar=1"
+        )
+
+    if bloco and atalho:
+        return para_a_sessao()
+    if fila_de_hoje_existe():
+        return redirect(f"{reverse('revisar')}?iniciar=1")
+    if atalho:
+        return para_a_sessao()
+    return redirect("dashboard")
+
+
 # ---------------------------------------------------------------- dashboard / revisoes
 
 
@@ -125,6 +170,9 @@ def api_revisoes_hoje(request):
             "maximo_por_dia": dados["maximo_por_dia"],
             "hoje": len(dados["revisoes_hoje"]),
             "atrasadas": len(dados["revisoes_atrasadas"]),
+            # Quanto da fila do dia ja fechou: e o que pode chegar a 100%.
+            "progresso": dados["progresso"],
+            "sequencia": dados["sequencia"],
             # O que o botao "Desfazer" devolveria; None esconde o botao.
             "ultima_resposta": ultima_resposta(),
         }
@@ -164,6 +212,14 @@ def api_revisao_responder(request, pk):
             "intervalo_dias": topico.intervalo_dias,
             "facilidade": topico.facilidade,
             "resposta_id": log.id,
+            # O degrau que a nota moveu. Ver "1 dia -> 6 dias" e a unica
+            # recompensa honesta que a tela tem para dar: nao e um ponto
+            # inventado, e a propria escada do SM-2 andando.
+            "intervalo_antes": log.intervalo_antes,
+            "intervalo_depois": log.intervalo_depois,
+            "topico": topico.nome,
+            # Fechar a fila e o fim da tarefa; a tela precisa saber quando foi.
+            "progresso": progresso_do_dia(restantes_do_dia()),
         }
     )
 
@@ -191,6 +247,17 @@ def api_cartoes(request):
     if request.GET.get("topico_id"):
         cartoes = cartoes.filter(topico_id=request.GET["topico_id"])
     return JsonResponse({"cartoes": [c.json() for c in cartoes]})
+
+
+@require_GET
+def api_cartao_surpresa(request):
+    """Um cartao ao acaso de um topico dominado. Nao e revisao: nao da nota."""
+    surpresa = cartao_surpresa()
+    if not surpresa:
+        return JsonResponse(
+            {"erro": "Nenhum tópico dominado tem cartão ainda."}, status=404
+        )
+    return JsonResponse(surpresa)
 
 
 def ler_cartao(dados, cartao):
@@ -341,8 +408,12 @@ def api_arvore(request):
     for topico in Topico.objects.all():
         filhos.setdefault(topico.pai_id, []).append(topico)
 
+    # Os ultimos intervalos de cada topico, para a escadinha na linha do ramo.
+    escada = escada_dos_topicos()
+
     def ramo(topico):
         dados = topico.json()
+        dados["escada"] = escada.get(topico.id, [])
         dados["filhos"] = [ramo(f) for f in filhos.get(topico.id, [])]
         return dados
 
@@ -705,6 +776,7 @@ FAIXAS = {
     "meta_horas_semanais": (0, 168),
     "dias_materia_parada": (1, 365),
     "dias_proximas_avaliacoes": (1, 365),
+    "folgas_por_semana": (0, 7),
     "pomodoro_foco_min": (1, 180),
     "pomodoro_pausa_min": (1, 60),
     "pomodoro_pausa_longa_min": (1, 120),
@@ -712,6 +784,24 @@ FAIXAS = {
 }
 
 DECIMAIS = {"facilidade_minima", "meta_horas_semanais"}
+
+
+def service_worker(request):
+    """O `sw.js`, servido da raiz porque so dali ele controla o app inteiro.
+
+    Um service worker so enxerga o que esta no escopo do caminho onde foi
+    servido: em `/static/js/sw.js` ele cuidaria de `/static/`, que e o que menos
+    precisa. Por isso ele passa por uma view, e nao pela pasta de estaticos.
+
+    Sem cache ele proprio: um service worker velho e eterno, e um app de uma
+    pessoa nao tem como depurar isso.
+    """
+    resposta = render(
+        request, "estudos/sw.js", content_type="application/javascript; charset=utf-8"
+    )
+    resposta["Cache-Control"] = "no-store"
+    resposta["Service-Worker-Allowed"] = "/"
+    return resposta
 
 
 def pagina_configuracoes(request):

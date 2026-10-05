@@ -7,7 +7,8 @@
 {% block corpo %}
 <section class="painel-foco">
   <h2 class="painel-titulo">Fila de hoje <span class="etiqueta" id="n-fila">0</span></h2>
-  <p class="ajuda" id="resumo-fila"></p>
+  {# O anel conta só o que cabe no teto do dia: é uma fila que dá para fechar. #}
+  <div class="progresso" id="progresso"></div>
   <div id="fila"></div>
   {# a saida para a nota dada por engano; o JS esconde quando nao ha o que desfazer #}
   <div class="linha-desfazer" id="desfazer"></div>

@@ -30,8 +30,32 @@ casa, e exigir configuração para isso seria burocracia.
 
 A tela de revisão foi feita para 390px: o diálogo ocupa a tela, as quatro notas
 ficam em 2x2 ao alcance do polegar, os alvos crescem em aparelho de toque e as
-dicas de tecla (`(1)`, `(espaço)`) desaparecem onde não há teclado. Não há nada
-para instalar: é o mesmo app, no navegador do celular.
+dicas de tecla (`(1)`, `(espaço)`) desaparecem onde não há teclado.
+
+### Como ícone na tela inicial
+
+O app tem manifesto e service worker, então o navegador do celular oferece
+"adicionar à tela inicial": vira um ícone (o cubo da marca, gerado por
+`python manage.py gerar_icones`), abre sem barra de endereço e carrega a última
+tela mesmo sem sinal — o que importa numa fila de ônibus.
+
+O atalho abre em `/agora/`, não no dashboard. Essa URL decide no servidor o que
+fazer e já manda para lá: o bloco do planner que cobre esta hora, senão a fila
+de revisão, senão o tópico da última sessão. Abrir o app e já estar trabalhando
+é a diferença entre abrir amanhã e não abrir.
+
+Uma ressalva honesta: service worker exige contexto seguro. No `localhost` ele
+registra; em `http://192.168.x.x:8000` o Chrome do Android recusa, e aí o
+atalho vira só um marcador (sem offline). Para instalar de verdade na rede
+local, libere a origem em `chrome://flags/#unsafely-treat-insecure-origin-as-secure`.
+No Safari do iPhone, "Adicionar à Tela de Início" funciona por HTTP: o ícone e
+o modo sem barra de endereço vêm, só o offline não.
+
+O número de revisões pendentes vai no título da aba — `(7) Revisar hoje ·
+Estudos`. É o lembrete mais barato que existe: cobra no meio das outras abas,
+sem notificação, sem permissão e sem app instalado.
+
+## Dados de exemplo
 
 `popular_dados --limpar` apaga tudo antes de popular.
 
@@ -100,8 +124,11 @@ não aparece.
 A busca abre com `/` e a lista de atalhos com `?`. Navegar é um acorde: `g` e
 depois a letra da tela (`g d` dashboard, `g s` sessão, `g r` revisar, `g m`
 matérias, `g p` planner, `g a` provas, `g q` quadro, `g h` histórico, `g c`
-configurações, `g b` dados). `n` abre uma sessão nova. O `g` solto é esquecido
-em um segundo e meio.
+configurações, `g b` dados). `n` abre uma sessão nova e `s` puxa uma **carta da
+manga** — um cartão ao acaso de um tópico já dominado, sem nota para dar e sem
+mexer em intervalo nenhum. É a porta de entrada mais barata do app: custa um
+clique, quase sempre é um acerto, e o botão no fim do diálogo transforma a
+curiosidade em sessão. O `g` solto é esquecido em um segundo e meio.
 
 Na tela de matérias, as teclas agem sobre o **tópico em foco** (o foco chega na
 linha pelo Tab): `c` abre os cartões, `e` as notas, `t` cria um subtópico. Sem
@@ -248,9 +275,16 @@ corrente:
 - **Mapa de constância** das últimas 26 semanas, uma coluna por semana e uma
   linha por dia. A intensidade de cada quadrado é relativa ao melhor dia do
   período, então um mês fraco continua legível.
-- **Sequência atual e maior sequência** de dias seguidos com pelo menos uma
-  sessão. A sequência atual aceita terminar ontem — o dia de hoje ainda não
-  acabou, e zerar a contagem às 00h01 só puniria quem estuda de manhã.
+- **Semanas na meta**, a manchete: semanas seguidas em que as horas bateram a
+  meta semanal. Numa grade de faculdade o dia de estudo escorrega — a prova
+  rouba a terça e devolve o sábado — e a semana é a menor unidade em que isso se
+  compensa. A semana corrente não quebra a conta enquanto não acaba.
+- **Dias seguidos**, agora com folga. A sequência aceita terminar ontem (o dia
+  de hoje ainda não acabou) e perdoa um dia perdido por janela de sete, ajustável
+  em `folgas_por_semana` — 0 volta à regra antiga. Uma sequência que morre na
+  semana de prova é uma sequência que ninguém recomeça, e quem perde o dia
+  costuma ser quem estudou mais naquela semana, não menos. A maior sequência usa
+  a mesma regra: dois critérios seriam dois números que nunca se explicam.
 - **Últimas 12 semanas** com horas estudadas e revisões fechadas em cada uma.
 - **Tópicos com mais tempo** no período — o dashboard só agrega por matéria.
 - **Tópicos frágeis**: os que erram de novo. Sai do log de respostas, porque o

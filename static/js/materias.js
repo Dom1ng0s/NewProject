@@ -423,6 +423,14 @@ function montarRamo(topico, nivel) {
     gatilho.remove();
   }
 
+  /* A escada do SM-2 do tópico, num traço de 54px: é a recompensa de revisar
+     posta onde ela se acumula. Subindo é aprendizado; serrote é cartão mal
+     escrito; reto no chão é um tópico que erra sempre — três diagnósticos que
+     a facilidade em número nunca entregou de relance. Some com menos de dois
+     passos: um ponto só não é uma escada. */
+  const escada = escadinha(topico.escada);
+  if (escada) linha.insertBefore(escada, acoes);
+
   // o status fica fora de .ramo-acoes: e informacao, tem de estar sempre visivel
   linha.insertBefore(seletorStatus(topico), acoes);
 

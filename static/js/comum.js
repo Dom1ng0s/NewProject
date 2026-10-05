@@ -87,6 +87,106 @@ function vazio(texto, compacto) {
   ]);
 }
 
+// ----------------------------------------------------------------- progresso
+
+function svg(tag, atributos) {
+  const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [chave, valor] of Object.entries(atributos || {})) {
+    node.setAttribute(chave, valor);
+  }
+  return node;
+}
+
+/* Anel de progresso: a fila do dia como uma coisa que fecha.
+
+   Uma barra que mostra "23 pendentes" todo dia é uma dívida, e dívida se
+   abandona. O anel conta só o que cabe no teto do dia, então ele chega a 100%
+   — e chegar a 100% é o que faz voltar amanhã. O excedente continua dito, em
+   letra miúda, longe da manchete. */
+function anelProgresso(percentual, dentro, rotulo) {
+  const raio = 26;
+  const volta = 2 * Math.PI * raio;
+  const fatia = Math.max(0, Math.min(percentual, 100)) / 100;
+
+  const trilho = svg('circle', {
+    class: 'anel-trilho',
+    cx: 32, cy: 32, r: raio, fill: 'none', 'stroke-width': 7,
+  });
+  const arco = svg('circle', {
+    class: 'anel-arco',
+    cx: 32, cy: 32, r: raio, fill: 'none', 'stroke-width': 7,
+    'stroke-linecap': 'round',
+    'stroke-dasharray': `${volta * fatia} ${volta}`,
+    // Começa no topo, não às 3 horas.
+    transform: 'rotate(-90 32 32)',
+  });
+
+  const grafico = svg('svg', {
+    viewBox: '0 0 64 64',
+    class: 'anel' + (fatia >= 1 ? ' anel-cheio' : ''),
+    role: 'img',
+    'aria-label': rotulo || `${percentual}%`,
+  });
+  grafico.append(trilho, arco);
+
+  const texto = svg('text', {
+    x: 32, y: 32, class: 'anel-texto',
+    'text-anchor': 'middle', 'dominant-baseline': 'central',
+  });
+  texto.textContent = dentro;
+  grafico.append(texto);
+  return grafico;
+}
+
+/* Escadinha: os últimos intervalos que o SM-2 deu a um tópico.
+
+   A recompensa de acertar não é um ponto inventado, é o intervalo subindo —
+   e a forma do traço diz de relance o que nenhuma tabela de facilidade diz:
+   subindo é aprendizado, serrote é cartão mal escrito, reto no chão é um
+   tópico que erra sempre. Escala logarítmica porque os degraus crescem
+   multiplicando: em escala linear, 1 e 6 ficariam colados sob um 90. */
+function escadinha(passos) {
+  if (!passos || passos.length < 2) return null;
+
+  const largura = 54;
+  const altura = 16;
+  const teto = Math.log(Math.max(...passos) + 1) || 1;
+  const pontos = passos
+    .map((valor, i) => {
+      const x = (i * largura) / (passos.length - 1);
+      const y = altura - (Math.log(valor + 1) / teto) * (altura - 2) - 1;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
+
+  const rotulo = `escada do intervalo: ${passos.join(' → ')} dias`;
+  const grafico = svg('svg', {
+    viewBox: `0 0 ${largura} ${altura}`,
+    class: 'escadinha',
+    role: 'img',
+    'aria-label': rotulo,
+  });
+  grafico.append(
+    svg('polyline', {
+      points: pontos,
+      fill: 'none',
+      'stroke-width': 1.5,
+      'stroke-linejoin': 'round',
+      'stroke-linecap': 'round',
+    }),
+    svg('circle', {
+      class: 'escadinha-fim',
+      cx: largura,
+      cy: altura - (Math.log(passos[passos.length - 1] + 1) / teto) * (altura - 2) - 1,
+      r: 1.8,
+    })
+  );
+  const titulo = svg('title', {});
+  titulo.textContent = rotulo;
+  grafico.append(titulo);
+  return grafico;
+}
+
 // ----------------------------------------------------------------- formatacao
 
 function minutosParaTexto(min) {
@@ -365,6 +465,7 @@ function mostrarAtalhos() {
     el('h3', { className: 'busca-grupo', textContent: 'Em qualquer tela' }),
     linha(['/'], 'Buscar em tudo'),
     linha(['n'], 'Nova sessão de estudo'),
+    linha(['s'], 'Um cartão ao acaso (sem nota)'),
     linha(['?'], 'Esta lista'),
     el('h3', { className: 'busca-grupo', textContent: 'Ir para (g e a letra)' }),
     ...IR_PARA.map(([tecla, , nome]) => linha(['g', tecla], nome)),
@@ -386,6 +487,98 @@ function mostrarAtalhos() {
   const dialogo = abrirDialogo(corpo, () => fechar.focus());
   dialogo.classList.add('dialogo-atalhos');
   return dialogo;
+}
+
+// ----------------------------------------------------------------- surpresa
+
+/* Um cartão ao acaso de um tópico dominado, em qualquer tela (tecla `s`).
+
+   É a porta de entrada mais barata do app: não cobra nada, quase sempre é um
+   acerto — só pesca em tópico dominado — e não há nota para dar, então nada do
+   SM-2 se move. O que varia é o conteúdo, nunca a recompensa: sorteio de
+   cartão é curiosidade, sorteio de prêmio seria outra coisa.
+
+   O botão no fim é o ponto todo: quem abriu por curiosidade sai estudando. */
+async function abrirSurpresa() {
+  let d;
+  try {
+    d = await pegar('/api/cartoes/surpresa/');
+  } catch (erro) {
+    avisar('Nenhum tópico dominado tem cartão ainda.', 'info');
+    return;
+  }
+
+  let revelado = false;
+  const verso = el('p', { className: 'cartao-verso', hidden: true });
+  const acoes = el('div', { className: 'dialogo-acoes' });
+
+  const dialogo = abrirDialogo([
+    el('h2', { textContent: 'Carta da manga' }),
+    el('p', { className: 'ajuda' }, [
+      ponto(d.cor),
+      el('span', { textContent: `${d.materia} · ${d.topico} — sem nota, nada muda de lugar` }),
+    ]),
+    el('div', { className: 'cartao-palco' }, [
+      el('p', { className: 'cartao-frente', textContent: d.cartao.frente }),
+      verso,
+    ]),
+    acoes,
+  ]);
+
+  const estudar = el('a', {
+    className: 'botao',
+    href: `/sessao/?topico_id=${d.topico_id}&minutos=${d.minutos}&iniciar=1`,
+    textContent: 'Estudar este tópico',
+  });
+
+  function desenhar() {
+    verso.textContent = revelado ? d.cartao.verso : '';
+    verso.hidden = !revelado;
+    acoes.replaceChildren();
+
+    if (!revelado) {
+      acoes.append(
+        el('button', {
+          type: 'button',
+          className: 'botao botao-discreto',
+          textContent: 'Fechar',
+          onclick: () => dialogo.close(),
+        }),
+        el('button', {
+          type: 'button',
+          className: 'botao',
+          textContent: 'Mostrar resposta',
+          onclick: () => {
+            revelado = true;
+            desenhar();
+          },
+        })
+      );
+      return;
+    }
+
+    acoes.append(
+      el('button', {
+        type: 'button',
+        className: 'botao botao-discreto',
+        textContent: 'Outro',
+        onclick: () => {
+          dialogo.close();
+          abrirSurpresa();
+        },
+      }),
+      estudar
+    );
+  }
+
+  desenhar();
+  dialogo.addEventListener('keydown', (evento) => {
+    if (evento.key === ' ' && !revelado) {
+      evento.preventDefault();
+      revelado = true;
+      desenhar();
+    }
+  });
 }
 
 function ligarAtalhos() {
@@ -434,6 +627,12 @@ function ligarAtalhos() {
     if (evento.key === 'n') {
       evento.preventDefault();
       location.href = '/sessao/';
+      return;
+    }
+
+    if (evento.key === 's') {
+      evento.preventDefault();
+      abrirSurpresa();
       return;
     }
 

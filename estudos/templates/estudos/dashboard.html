@@ -10,10 +10,19 @@
   <div class="continuar-corpo" id="continuar-corpo"></div>
 </section>
 
+{% comment %}Entrada de custo zero: um cartão que você já sabe, sem nota para
+dar. Quem abre por curiosidade com frequência fica para a sessão.{% endcomment %}
+<p class="linha-surpresa">
+  <button type="button" class="botao botao-fantasma botao-mini" id="surpresa">
+    Carta da manga <kbd>s</kbd>
+  </button>
+</p>
+
 <div class="metricas">
+  {# A fila do dia como coisa que fecha: o anel chega a 100%, a dívida não. #}
   <section class="metrica metrica-principal">
     <span class="rotulo">Revisões de hoje</span>
-    <p class="numero" id="n-hoje">—</p>
+    <div class="progresso" id="progresso"></div>
     <ul class="lista" id="lista-hoje"></ul>
   </section>
 
@@ -21,6 +30,15 @@
     <span class="rotulo">Atrasadas</span>
     <p class="numero alerta" id="n-atrasadas">—</p>
     <ul class="lista" id="lista-atrasadas"></ul>
+  </section>
+
+  {% comment %}A manchete da constância é a semana, não o dia: a grade da
+  faculdade move o dia de estudo, e uma sequência que morre por isso ninguém
+  recomeça.{% endcomment %}
+  <section class="metrica">
+    <span class="rotulo">Semanas na meta</span>
+    <p class="numero"><span id="n-semanas">—</span><span class="unidade" id="semanas-unidade"></span></p>
+    <p class="ajuda" id="sequencia-detalhe"></p>
   </section>
 
   <section class="metrica">
