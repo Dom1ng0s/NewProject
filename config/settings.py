@@ -30,11 +30,28 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-uso-local-apenas")
 DEBUG = ligado("DEBUG", "1")
 
 # Local vale qualquer host (o celular entra pelo IP da rede). Publicado, vale
-# so o dominio que voce listar -- e o Django recusa o resto.
+# so o dominio que voce listar -- e o Django recusa o resto com 400.
 ALLOWED_HOSTS = lista("ALLOWED_HOSTS", "*" if DEBUG else "")
 
 # Dominio https do app, para o Django aceitar POST vindo dele.
 CSRF_TRUSTED_ORIGINS = lista("CSRF_TRUSTED_ORIGINS")
+
+# O dominio publicado so existe depois do primeiro deploy, e exigir que voce
+# copie ele para uma variavel e um 400 esperando acontecer. O Railway injeta o
+# nome sozinho, entao e dele que a lista sai.
+_dominio = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip()
+if _dominio and _dominio not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_dominio)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{_dominio}")
+
+# O healthcheck do Railway bate na porta do container com Host proprio, nao com
+# o dominio publico. Fora desta lista ele leva 400, o deploy e marcado como
+# doente e o Railway derruba uma versao que estava de pe.
+_interno = os.environ.get("RAILWAY_PRIVATE_DOMAIN", "").strip()
+if os.environ.get("RAILWAY_ENVIRONMENT_NAME") or _dominio:
+    ALLOWED_HOSTS.append("healthcheck.railway.app")
+    if _interno:
+        ALLOWED_HOSTS.append(_interno)
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",

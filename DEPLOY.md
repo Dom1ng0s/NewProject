@@ -22,8 +22,8 @@ Cadastre no painel do provedor. O modelo completo esta em `.env.example`.
 | --- | --- | --- |
 | `SECRET_KEY` | sim | assina cookies e tokens. 50+ caracteres aleatorios |
 | `DEBUG` | sim | `0`. Com `1` o provedor exibe traceback e dados na tela de erro |
-| `ALLOWED_HOSTS` | sim | o dominio, ex. `estudos.exemplo.com` |
-| `CSRF_TRUSTED_ORIGINS` | sim | o mesmo dominio com esquema: `https://estudos.exemplo.com` |
+| `ALLOWED_HOSTS` | nao no Railway | o dominio. No Railway sai do `RAILWAY_PUBLIC_DOMAIN` sozinho; defina so se usar dominio proprio |
+| `CSRF_TRUSTED_ORIGINS` | nao no Railway | idem, com esquema: `https://estudos.exemplo.com` |
 | `DATABASE_URL` | sim | Postgres. O provedor costuma injetar ao criar o banco |
 | `MEDIA_ROOT` | se usa anexos | caminho de um disco persistente, ex. `/dados/arquivos` |
 | `SECURE_SSL_REDIRECT` | nao | `1` por padrao; desligue so se o provedor ja forca https |
@@ -66,6 +66,21 @@ criar o Postgres como servico. O resto e push.
 valida a configuracao de producao em cada push e PR. Nao e ele que publica --
 isso e o Railway -- mas e o que faz o commit quebrado aparecer marcado no
 GitHub antes de voce notar pelo celular.
+
+## Quando o app responde 400 em tudo
+
+E `DisallowedHost`: o Django recebeu uma requisicao para um host que nao esta em
+`ALLOWED_HOSTS` e recusou antes de olhar a URL. Nos logs aparece como
+`Invalid HTTP_HOST header`.
+
+No Railway isso se resolve sozinho: o `settings.py` le o `RAILWAY_PUBLIC_DOMAIN`
+que o proprio Railway injeta e monta a lista a partir dele, junto com
+`healthcheck.railway.app` -- o healthcheck bate com Host proprio, e fora da
+lista ele levaria 400, marcaria o deploy como doente e derrubaria uma versao
+que estava de pe.
+
+Dominio proprio, ai sim e manual: ponha o seu em `ALLOWED_HOSTS` e
+`CSRF_TRUSTED_ORIGINS`. O que vem do Railway continua valendo junto.
 
 ## Quando o migrate nao acha o banco
 
