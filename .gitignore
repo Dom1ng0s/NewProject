@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 .claude/launch.json
 arquivos/
+estaticos-coletados/
+.env
