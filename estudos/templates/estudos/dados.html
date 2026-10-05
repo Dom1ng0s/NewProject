@@ -2,14 +2,15 @@
 {% load estaticos %}
 {% block titulo %}Dados{% endblock %}
 {% block cabecalho %}Dados{% endblock %}
-{% block legenda %}<p class="legenda">Tudo fica num SQLite nesta máquina. O backup é a única cópia que existe.</p>{% endblock %}
+{% block legenda %}<p class="legenda">Tudo fica num banco só seu. O backup é a única cópia que sai dele.</p>{% endblock %}
 
 {% block corpo %}
 <section class="painel-foco">
   <h2 class="painel-titulo">Exportar</h2>
   <p class="ajuda">
     Baixa um JSON com matérias, tópicos, sessões, blocos do planner e revisões.
-    Guarde fora desta pasta — um <code>db.sqlite3</code> perdido leva o histórico inteiro.
+    Guarde em outro lugar — um banco perdido leva o histórico inteiro, e os
+    arquivos anexados aos tópicos não vêm neste JSON.
   </p>
   <div class="linha-form" style="margin-top: var(--e3)">
     <a class="botao" href="/api/backup/exportar/" download>Baixar backup</a>

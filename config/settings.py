@@ -101,7 +101,20 @@ DATABASES = {
 if os.environ.get("DATABASE_URL"):
     import dj_database_url
 
-    DATABASES["default"] = dj_database_url.config(conn_max_age=600)
+    # conn_health_checks porque conn_max_age mantem a conexao de pe entre
+    # requisicoes: sem o teste, uma conexao que o Postgres derrubou volta do
+    # cache e a primeira pagina depois disso quebra sozinha.
+    DATABASES["default"] = dj_database_url.config(
+        conn_max_age=600, conn_health_checks=True
+    )
+    # connect_timeout porque o libpq, sem ele, espera o tempo do sistema
+    # operacional -- e um host que some em vez de recusar pendura a tentativa
+    # para sempre. Era isso que fazia o --prazo do esperar_banco nao valer: o
+    # prazo so e checado entre tentativas, e a tentativa nunca voltava.
+    DATABASES["default"].setdefault("OPTIONS", {})
+    DATABASES["default"]["OPTIONS"].setdefault(
+        "connect_timeout", int(os.environ.get("DB_CONNECT_TIMEOUT", "5"))
+    )
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
