@@ -23,5 +23,10 @@ COPY . .
 RUN SECRET_KEY=chave-de-build-descartavel DEBUG=0 ALLOWED_HOSTS=build \
     python manage.py collectstatic --noinput
 
-# O Railway injeta PORT em tempo de execucao, entao a porta vai no shell form.
-CMD gunicorn config.wsgi --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 60
+# O migrate mora aqui, e nao num preDeployCommand: aquele nao rodou, o Postgres
+# ficou sem tabela nenhuma e o app subiu dando 500 em tudo. No start ele roda
+# dentro do container, com a rede de pe, e nao tem configuracao de painel que
+# o pule. Migrar e idempotente, entao repetir a cada boot nao custa nada.
+#
+# A porta vai no shell form porque o Railway injeta PORT em tempo de execucao.
+CMD python manage.py esperar_banco --prazo 90     && python manage.py migrate --noinput     && gunicorn config.wsgi --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 60

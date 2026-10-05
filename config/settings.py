@@ -141,6 +141,33 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
+# O logging padrao do Django so escreve no console com DEBUG ligado: desligado,
+# ele manda erro de requisicao por email para ADMINS -- que aqui nao existe. O
+# efeito e um 500 que nao aparece em lugar nenhum. Aqui o traceback vai para a
+# saida padrao, que e onde o Railway le.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simples": {"format": "{levelname} {name} {message}", "style": "{"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simples",
+        },
+    },
+    "root": {"handlers": ["console"], "level": "INFO"},
+    "loggers": {
+        # propagate desligado para o traceback nao sair duas vezes pela raiz.
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
+
 # Regras do app
 # Os ajustes de estudo (intervalos, metas, pomodoro) ficam no banco, em
 # estudos.models.Configuracao, e mudam pela tela /configuracoes/.

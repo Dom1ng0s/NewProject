@@ -48,13 +48,18 @@ em nenhuma circunstancia. O deploy morria nisso, e nao havia campo para limpar
 que resolvesse, porque o comando nao vinha de campo nenhum.
 
 - build: o `Dockerfile` -- instala as dependencias e roda o collectstatic
-- preDeploy: `python manage.py esperar_banco --prazo 90 && python manage.py migrate --noinput`
-- start: `gunicorn config.wsgi --bind 0.0.0.0:$PORT --workers 2 --timeout 60`
+- start: `esperar_banco && migrate --noinput && gunicorn config.wsgi ...`
 - healthcheck: `/perfis/`, que responde 200 sem depender de cookie
 
-O `migrate` fica em `preDeployCommand` de proposito: o Railway **ignora** a
-linha `release:` do Procfile, que e convencao do Heroku. Se ele mudar de lugar,
-o banco para de acompanhar o codigo sem ninguem avisar.
+O `migrate` fica no **start**, nao num `preDeployCommand` nem na linha
+`release:` do Procfile. As duas alternativas foram tentadas e nenhuma rodou: o
+Railway ignora o `release:` (convencao do Heroku) e o preDeploy passou batido,
+deixando o Postgres sem tabela nenhuma e o app dando 500 em tudo. No start ele
+roda dentro do container, com a rede privada de pe, e nao ha configuracao de
+painel que o pule. Migrar e idempotente: repetir a cada boot nao custa nada.
+
+Por isso o `healthcheckTimeout` e 180s -- o primeiro boot tem o migrate inteiro
+antes do gunicorn abrir a porta.
 
 O healthcheck aponta para `/perfis/` e nao para `/`, porque `/` responde 302
 para la quando nao ha perfil escolhido.
@@ -66,6 +71,25 @@ criar o Postgres como servico. O resto e push.
 valida a configuracao de producao em cada push e PR. Nao e ele que publica --
 isso e o Railway -- mas e o que faz o commit quebrado aparecer marcado no
 GitHub antes de voce notar pelo celular.
+
+## Quando o app responde 500 em tudo
+
+Quase sempre e banco sem tabela: o `migrate` nao rodou e a primeira consulta
+morre com `relation "estudos_perfil" does not exist`. Confira nos logs do start
+se aparece o `migrate` antes do gunicorn.
+
+Para migrar na hora, da sua maquina, sem esperar deploy -- o host interno nao
+resolve de fora, entao vai pela URL publica:
+
+```bash
+railway variables       # copie o valor de DATABASE_PUBLIC_URL
+DATABASE_URL="<a public url>" python manage.py migrate
+```
+
+O traceback de um 500 aparece nos logs porque o `settings.py` define `LOGGING`
+mandando `django.request` para a saida padrao. Sem isso o Django, com
+`DEBUG=0`, manda erro por email para `ADMINS` -- que nao existe aqui -- e o 500
+nao aparece em lugar nenhum.
 
 ## Quando o app responde 400 em tudo
 
